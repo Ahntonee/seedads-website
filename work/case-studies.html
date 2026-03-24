@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Case Studies | AdMedia Agency</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 220px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            top: 100%;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .dropdown-content a {
+            color: var(--dark);
+            padding: 0.9rem 1.5rem;
+            display: block;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .dropdown-content a:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
+            padding: 10rem 2rem 6rem;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Case Studies Grid */
+        .case-studies {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--light-gray);
+            background: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .filter-tab:hover, .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .case-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .case-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        .case-image {
+            height: 220px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+
+        .case-content {
+            padding: 2rem;
+        }
+
+        .case-tag {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .case-content h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .case-content p {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .case-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .case-stat {
+            text-align: center;
+        }
+
+        .case-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .case-stat-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .read-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 5rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            background: white;
+            color: var(--primary);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: transform 0.3s;
+        }
+
+        .cta-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-section ul li a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section ul li a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 3rem;
+            margin-top: 3rem;
+            border-top: 1px solid #334155;
+            color: #64748b;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 999;
+            padding: 6rem 2rem 2rem;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active {
+            display: block;
+        }
+
+        .mobile-menu-links {
+            list-style: none;
+        }
+
+        .mobile-menu-links li {
+            margin-bottom: 1rem;
+        }
+
+        .mobile-menu-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: block;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .mobile-dropdown {
+            margin-left: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .mobile-dropdown a {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 968px) {
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .hero {
+                padding: 8rem 1.5rem 4rem;
+            }
+
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+
+            .case-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .case-stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">AdMedia</a>
+            <ul class="nav-links">
+                <li class="dropdown">
+                    <a href="#">Our Services <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../services/seo.html">SEO Optimization</a>
+                        <a href="../services/lead-generation.html">Lead Generation</a>
+                        <a href="../services/mobile-marketing.html">Mobile Marketing</a>
+                        <a href="../services/ppc.html">PPC Advertising</a>
+                        <a href="../services/social-media.html">Social Media</a>
+                        <a href="../services/content-marketing.html">Content Marketing</a>
+                        <a href="../services/email-marketing.html">Email Marketing</a>
+                        <a href="../services/analytics.html">Analytics & CRO</a>
+                        <a href="../services/consultancy.html">Digital Consultancy</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Our Work <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="case-studies.html">Case Studies</a>
+                        <a href="success-stories.html">Success Stories</a>
+                        <a href="industries.html">Industries We Serve</a>
+                        <a href="portfolio.html">Client Portfolio</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">About Us <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../about/company.html">Our Company</a>
+                        <a href="../about/team.html">Our Team</a>
+                        <a href="../about/partners.html">Partners</a>
+                        <a href="../about/contact.html">Contact Us</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Blog <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../blog/articles.html">Latest Articles</a>
+                        <a href="../blog/tips.html">Marketing Tips</a>
+                        <a href="../blog/insights.html">Industry Insights</a>
+                        <a href="../blog/guides.html">Free Guides</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Resources <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../resources/guides.html">Marketing Guides</a>
+                        <a href="../resources/tools.html">Free Tools</a>
+                        <a href="../resources/templates.html">Templates</a>
+                        <a href="../resources/faqs.html">FAQs</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">DMI <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../dmi/index.html">Digital Marketing Institute</a>
+                        <a href="../dmi/courses.html">Our Courses</a>
+                        <a href="../dmi/certification.html">Certification</a>
+                    </div>
+                </li>
+                <li><a href="../pricing.html">Pricing</a></li>
+            </ul>
+            <button class="mobile-menu-btn" onclick="openMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="close-menu" onclick="closeMobileMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+        <ul class="mobile-menu-links">
+            <li><a href="#" onclick="toggleMobileDropdown('services')">Our Services <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-services" style="display:none;">
+                    <a href="../services/seo.html">SEO Optimization</a>
+                    <a href="../services/lead-generation.html">Lead Generation</a>
+                    <a href="../services/mobile-marketing.html">Mobile Marketing</a>
+                    <a href="../services/ppc.html">PPC Advertising</a>
+                    <a href="../services/social-media.html">Social Media</a>
+                    <a href="../services/content-marketing.html">Content Marketing</a>
+                    <a href="../services/email-marketing.html">Email Marketing</a>
+                    <a href="../services/analytics.html">Analytics & CRO</a>
+                    <a href="../services/consultancy.html">Digital Consultancy</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('work')">Our Work <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-work" style="display:none;">
+                    <a href="case-studies.html">Case Studies</a>
+                    <a href="success-stories.html">Success Stories</a>
+                    <a href="industries.html">Industries We Serve</a>
+                    <a href="portfolio.html">Client Portfolio</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('about')">About Us <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-about" style="display:none;">
+                    <a href="../about/company.html">Our Company</a>
+                    <a href="../about/team.html">Our Team</a>
+                    <a href="../about/partners.html">Partners</a>
+                    <a href="../about/contact.html">Contact Us</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('blog')">Blog <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-blog" style="display:none;">
+                    <a href="../blog/articles.html">Latest Articles</a>
+                    <a href="../blog/tips.html">Marketing Tips</a>
+                    <a href="../blog/insights.html">Industry Insights</a>
+                    <a href="../blog/guides.html">Free Guides</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('resources')">Resources <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-resources" style="display:none;">
+                    <a href="../resources/guides.html">Marketing Guides</a>
+                    <a href="../resources/tools.html">Free Tools</a>
+                    <a href="../resources/templates.html">Templates</a>
+                    <a href="../resources/faqs.html">FAQs</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('dmi')">DMI <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-dmi" style="display:none;">
+                    <a href="../dmi/index.html">Digital Marketing Institute</a>
+                    <a href="../dmi/courses.html">Our Courses</a>
+                    <a href="../dmi/certification.html">Certification</a>
+                </div>
+            </li>
+            <li><a href="../pricing.html">Pricing</a></li>
+        </ul>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Our <span>Case Studies</span></h1>
+        <p>Explore detailed analyses of how we've helped businesses overcome challenges and achieve remarkable results through strategic digital marketing.</p>
+    </section>
+
+    <!-- Case Studies Section -->
+    <section class="case-studies">
+        <div class="section-header">
+            <h2>Featured Case Studies</h2>
+            <p>Real challenges. Real solutions. Real results. See how we transform businesses.</p>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterCases('all')">All</button>
+            <button class="filter-tab" onclick="filterCases('ecommerce')">E-Commerce</button>
+            <button class="filter-tab" onclick="filterCases('b2b')">B2B</button>
+            <button class="filter-tab" onclick="filterCases('healthcare')">Healthcare</button>
+            <button class="filter-tab" onclick="filterCases('saas')">SaaS</button>
+        </div>
+
+        <div class="case-grid">
+            <div class="case-card" data-category="ecommerce">
+                <div class="case-image">
+                    <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag">E-Commerce</span>
+                    <h3>Fashion Retailer Transformation</h3>
+                    <p>How we helped a struggling fashion retailer increase online sales by 340% through comprehensive digital transformation and targeted marketing strategies.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value">340%</div>
+                            <div class="case-stat-label">Sales Growth</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value">5.2x</div>
+                            <div class="case-stat-label">ROAS</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value">180K</div>
+                            <div class="case-stat-label">New Customers</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="case-card" data-category="b2b">
+                <div class="case-image" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">B2B</span>
+                    <h3>Enterprise Lead Generation</h3>
+                    <p>Developed a multi-channel lead generation strategy that helped a B2B software company increase qualified leads by 280% while reducing cost per lead by 45%.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #ec4899;">280%</div>
+                            <div class="case-stat-label">Lead Increase</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #ec4899;">-45%</div>
+                            <div class="case-stat-label">Cost Per Lead</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #ec4899;">$2.4M</div>
+                            <div class="case-stat-label">Pipeline Value</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="case-card" data-category="healthcare">
+                <div class="case-image" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                    <i class="fas fa-heartbeat"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Healthcare</span>
+                    <h3>Healthcare Provider Growth</h3>
+                    <p>Implemented local SEO and patient acquisition strategies that helped a healthcare group increase appointment bookings by 195% and improve online reputation.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #10b981;">195%</div>
+                            <div class="case-stat-label">Bookings</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #10b981;">4.8</div>
+                            <div class="case-stat-label">Star Rating</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #10b981;">12K</div>
+                            <div class="case-stat-label">New Patients</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="case-card" data-category="saas">
+                <div class="case-image" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                    <i class="fas fa-cloud"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">SaaS</span>
+                    <h3>SaaS Product Launch</h3>
+                    <p>Launched a new SaaS product with a comprehensive go-to-market strategy, achieving 10,000 signups in the first month and a 25% free-to-paid conversion rate.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #f59e0b;">10K</div>
+                            <div class="case-stat-label">Signups</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #f59e0b;">25%</div>
+                            <div class="case-stat-label">Conversion</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #f59e0b;">$500K</div>
+                            <div class="case-stat-label">MRR Achieved</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="case-card" data-category="ecommerce">
+                <div class="case-image" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag">E-Commerce</span>
+                    <h3>Mobile App Marketing</h3>
+                    <p>Drove 500,000 app downloads for a new e-commerce app through influencer partnerships, ASO optimization, and targeted social media campaigns.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value">500K</div>
+                            <div class="case-stat-label">Downloads</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value">$1.20</div>
+                            <div class="case-stat-label">Cost/Install</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value">35%</div>
+                            <div class="case-stat-label">Retention</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+
+            <div class="case-card" data-category="b2b">
+                <div class="case-image" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="case-content">
+                    <span class="case-tag" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">B2B</span>
+                    <h3>ABM Campaign Success</h3>
+                    <p>Executed an account-based marketing campaign targeting Fortune 500 companies, resulting in 15 enterprise deals worth $8 million in annual contract value.</p>
+                    <div class="case-stats">
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #06b6d4;">15</div>
+                            <div class="case-stat-label">Enterprise Deals</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #06b6d4;">$8M</div>
+                            <div class="case-stat-label">ACV Won</div>
+                        </div>
+                        <div class="case-stat">
+                            <div class="case-stat-value" style="color: #06b6d4;">32%</div>
+                            <div class="case-stat-label">Win Rate</div>
+                        </div>
+                    </div>
+                    <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Ready to Be Our Next Success Story?</h2>
+        <p>Let's discuss how we can help you achieve similar results for your business.</p>
+        <a href="../about/contact.html" class="cta-btn">Start Your Project</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="../about/company.html">About Us</a></li>
+                    <li><a href="../about/team.html">Our Team</a></li>
+                    <li><a href="../about/careers.html">Careers</a></li>
+                    <li><a href="../about/contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="../services/seo.html">SEO</a></li>
+                    <li><a href="../services/ppc.html">PPC</a></li>
+                    <li><a href="../services/social-media.html">Social Media</a></li>
+                    <li><a href="../services/content-marketing.html">Content</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="../blog/articles.html">Blog</a></li>
+                    <li><a href="../resources/guides.html">Guides</a></li>
+                    <li><a href="../resources/tools.html">Tools</a></li>
+                    <li><a href="../resources/faqs.html">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect</h4>
+                <ul>
+                    <li><a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                    <li><a href="#"><i class="fab fa-twitter"></i> Twitter</a></li>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 AdMedia Agency. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function openMobileMenu() {
+            document.getElementById('mobileMenu').classList.add('active');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+
+        function toggleMobileDropdown(id) {
+            const dropdown = document.getElementById('mobile-' + id);
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function filterCases(category) {
+            const cards = document.querySelectorAll('.case-card');
+            const tabs = document.querySelectorAll('.filter-tab');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+
+            cards.forEach(card => {
+                if (category === 'all' || card.dataset.category === category) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

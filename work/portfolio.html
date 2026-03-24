@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Portfolio | SeedsAds Digital Marketing</title>
+    <meta name="description" content="Explore our client portfolio showcasing successful digital marketing campaigns across various industries. See the brands we've helped grow.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #0A2540;
+            --primary-blue: #0066FF;
+            --accent-blue: #4D9FFF;
+            --light-blue: #E6F0FF;
+            --soft-white: #FAFBFC;
+            --text-dark: #1A1A2E;
+            --text-gray: #6B7280;
+            --success: #00D4AA;
+            --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%);
+            --nav-padding-y: 1.1rem;
+            --nav-padding-x: 6%;
+            --nav-item-gap: 0.5rem;
+            --nav-button-gap: 0.75rem;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--soft-white); color: var(--text-dark); line-height: 1.6; overflow-x: hidden; }
+
+        /* Navigation */
+        nav { position: fixed; top: 0; width: 100%; background: rgba(250, 251, 252, 0.95); backdrop-filter: blur(20px); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 102, 255, 0.1); transition: all 0.3s ease; padding: var(--nav-padding-y) var(--nav-padding-x); min-height: 80px; }
+        nav.scrolled { box-shadow: 0 10px 40px rgba(10, 37, 64, 0.1); }
+        .logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--primary-dark); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+        .logo span { color: var(--primary-blue); }
+        
+        .nav-links { display: flex; gap: var(--nav-item-gap); list-style: none; align-items: center; margin: 0 auto; }
+        .nav-item { position: relative; }
+        .nav-link { text-decoration: none; color: var(--text-dark); font-weight: 500; font-size: 0.9rem; padding: 0.6rem 0.8rem; display: flex; align-items: center; gap: 0.3rem; transition: all 0.3s; cursor: pointer; border-radius: 8px; white-space: nowrap; }
+        .nav-link:hover { color: var(--primary-blue); background: var(--light-blue); }
+        .nav-link i { font-size: 0.7rem; transition: transform 0.3s; }
+        .nav-item:hover .nav-link i { transform: rotate(180deg); }
+        
+        .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); }
+        .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem; border-radius: 12px; text-decoration: none; transition: all 0.3s; }
+        .dropdown-item:hover { background: var(--light-blue); }
+        .dropdown-icon { width: 36px; height: 36px; background: var(--light-blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary-blue); font-size: 0.9rem; flex-shrink: 0; transition: all 0.3s; }
+        .dropdown-item:hover .dropdown-icon { background: var(--primary-blue); color: white; }
+        .dropdown-content h4 { font-size: 0.9rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 0.2rem; }
+        .dropdown-content p { font-size: 0.75rem; color: var(--text-gray); line-height: 1.3; }
+        .dropdown-divider { height: 1px; background: rgba(0, 102, 255, 0.1); margin: 0.5rem 0; }
+        
+        .nav-buttons { display: flex; gap: var(--nav-button-gap); align-items: center; flex-shrink: 0; }
+        .nav-cta { background: var(--gradient-blue); color: white; padding: 0.65rem 1.25rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3); display: flex; align-items: center; gap: 0.4rem; position: relative; overflow: hidden; white-space: nowrap; }
+        .nav-cta::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); transition: left 0.5s; }
+        .nav-cta:hover::before { left: 100%; }
+        .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 102, 255, 0.5); }
+        .nav-contact { background: transparent; color: var(--primary-dark); padding: 0.65rem 1.25rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.3s; border: 2px solid var(--primary-blue); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+        .nav-contact:hover { background: var(--primary-blue); color: white; transform: translateY(-2px); }
+        
+        .mobile-menu-btn { display: none; font-size: 1.5rem; cursor: pointer; color: var(--primary-dark); background: none; border: none; padding: 0.5rem; z-index: 1002; }
+
+        /* Mobile Menu */
+        .mobile-menu-overlay { position: fixed; top: 0; right: -100%; width: 85%; max-width: 380px; height: 100vh; background: white; z-index: 1001; padding: 5rem 1.5rem 2rem; transition: right 0.4s ease; box-shadow: -10px 0 40px rgba(10, 37, 64, 0.2); overflow-y: auto; }
+        .mobile-menu-overlay.active { right: 0; }
+        .mobile-nav-item { border-bottom: 1px solid rgba(0, 102, 255, 0.1); }
+        .mobile-nav-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; cursor: pointer; }
+        .mobile-nav-header span { font-size: 1.1rem; font-weight: 600; color: var(--primary-dark); }
+        .mobile-nav-header i { font-size: 0.9rem; color: var(--text-gray); transition: transform 0.3s; }
+        .mobile-nav-item.active .mobile-nav-header i { transform: rotate(180deg); }
+        .mobile-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+        .mobile-nav-item.active .mobile-dropdown { max-height: 600px; }
+        .mobile-dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 0 0.875rem 1rem; text-decoration: none; color: var(--text-gray); font-size: 0.95rem; transition: color 0.3s; }
+        .mobile-dropdown-item:hover { color: var(--primary-blue); }
+        .mobile-dropdown-item i { width: 28px; height: 28px; background: var(--light-blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--primary-blue); }
+        .mobile-menu-overlay .nav-cta { display: block; margin-top: 1rem; text-align: center; width: 100%; justify-content: center; }
+        .mobile-menu-overlay .nav-contact { display: block; margin-top: 0.75rem; text-align: center; width: 100%; justify-content: center; }
+        .menu-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(10, 37, 64, 0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .menu-backdrop.active { opacity: 1; visibility: visible; }
+        body.menu-open { overflow: hidden; }
+
+        /* Hero Section */
+        .page-hero { min-height: 45vh; display: flex; align-items: center; padding: 8rem 5% 4rem; position: relative; overflow: hidden; background: var(--gradient-blue); }
+        .page-hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%); animation: rotate 20s linear infinite; }
+        @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .page-hero-container { max-width: 1400px; margin: 0 auto; position: relative; z-index: 1; text-align: center; }
+        .page-hero h1 { font-size: 3rem; font-weight: 800; color: white; margin-bottom: 1rem; }
+        .page-hero p { font-size: 1.2rem; color: rgba(255, 255, 255, 0.8); max-width: 700px; margin: 0 auto; }
+        .breadcrumb { display: flex; justify-content: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .breadcrumb a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
+        .breadcrumb a:hover { color: white; }
+
+        /* Stats Section */
+        .stats-section { background: var(--primary-dark); padding: 3rem 5%; position: relative; overflow: hidden; }
+        .stats-section::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.2) 0%, transparent 50%); }
+        .stats-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; position: relative; z-index: 1; text-align: center; }
+        .stat-item h3 { font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 0.5rem; }
+        .stat-item p { color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; }
+
+        /* Portfolio Section */
+        .portfolio { padding: 5rem 5%; background: var(--soft-white); }
+        .portfolio-container { max-width: 1400px; margin: 0 auto; }
+        .section-header { text-align: center; max-width: 700px; margin: 0 auto 3rem; }
+        .section-header h2 { font-size: 2.5rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem; }
+        .section-header p { color: var(--text-gray); font-size: 1.1rem; }
+
+        /* Filter Tabs */
+        .filter-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 3rem; flex-wrap: wrap; }
+        .filter-btn { padding: 0.75rem 1.5rem; border-radius: 50px; border: 2px solid rgba(0, 102, 255, 0.2); background: white; color: var(--text-dark); font-weight: 600; cursor: pointer; transition: all 0.3s; font-size: 0.9rem; }
+        .filter-btn:hover { border-color: var(--primary-blue); color: var(--primary-blue); }
+        .filter-btn.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
+
+        /* Portfolio Grid */
+        .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; }
+        .portfolio-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 40px rgba(10, 37, 64, 0.08); border: 1px solid rgba(0, 102, 255, 0.1); transition: all 0.3s; }
+        .portfolio-card:hover { transform: translateY(-5px); box-shadow: 0 20px 60px rgba(10, 37, 64, 0.15); }
+        .portfolio-image { height: 200px; background: var(--gradient-blue); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; position: relative; overflow: hidden; }
+        .portfolio-image::before { content: ''; position: absolute; width: 200%; height: 200%; background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px); animation: slide 20s linear infinite; }
+        @keyframes slide { 0% { transform: translate(-50%, -50%); } 100% { transform: translate(0, 0); } }
+        .portfolio-content { padding: 2rem; }
+        .portfolio-tag { display: inline-block; background: var(--light-blue); color: var(--primary-blue); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; margin-bottom: 1rem; }
+        .portfolio-content h3 { font-size: 1.3rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 0.75rem; }
+        .portfolio-content p { color: var(--text-gray); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+        .portfolio-stats { display: flex; gap: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(0, 102, 255, 0.1); }
+        .portfolio-stat h4 { font-size: 1.5rem; font-weight: 800; color: var(--success); }
+        .portfolio-stat p { color: var(--text-gray); font-size: 0.8rem; }
+
+        /* Trusted By Section */
+        .trusted-by { padding: 4rem 5%; background: white; }
+        .trusted-container { max-width: 1400px; margin: 0 auto; text-align: center; }
+        .trusted-by h2 { font-size: 2rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 2rem; }
+        .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2rem; align-items: center; }
+        .client-logo-item { background: var(--soft-white); padding: 2rem; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: 700; color: var(--text-gray); transition: all 0.3s; border: 1px solid rgba(0, 102, 255, 0.1); }
+        .client-logo-item:hover { border-color: var(--primary-blue); color: var(--primary-blue); transform: translateY(-3px); }
+
+        /* CTA Section */
+        .cta-section { background: var(--light-blue); text-align: center; padding: 4rem 5%; }
+        .cta-content { max-width: 700px; margin: 0 auto; }
+        .cta-section h2 { font-size: 2rem; color: var(--primary-dark); margin-bottom: 1rem; }
+        .cta-section p { color: var(--text-gray); margin-bottom: 1.5rem; }
+        .cta-btn { background: var(--gradient-blue); color: white; padding: 1rem 2.5rem; border-radius: 50px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3); }
+        .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 102, 255, 0.5); }
+
+        /* WhatsApp Float */
+        .whatsapp-float { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.8rem; text-decoration: none; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); transition: all 0.3s; z-index: 999; }
+        .whatsapp-float:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6); }
+
+        /* Footer */
+        footer { background: var(--primary-dark); color: white; padding: 4rem 5% 2rem; }
+        .footer-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; }
+        .footer-brand h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; margin-bottom: 1rem; }
+        .footer-brand h3 span { color: var(--accent-blue); }
+        .footer-brand p { color: rgba(255, 255, 255, 0.7); line-height: 1.6; margin-bottom: 2rem; }
+        .social-links { display: flex; gap: 1rem; }
+        .social-links a { width: 40px; height: 40px; background: rgba(255, 255, 255, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: all 0.3s; }
+        .social-links a:hover { background: var(--primary-blue); transform: translateY(-3px); }
+        .footer-links h4 { font-size: 1.1rem; margin-bottom: 1.5rem; color: white; }
+        .footer-links ul { list-style: none; }
+        .footer-links li { margin-bottom: 0.8rem; }
+        .footer-links a { color: rgba(255, 255, 255, 0.7); text-decoration: none; transition: color 0.3s; }
+        .footer-links a:hover { color: var(--accent-blue); }
+        .footer-bottom { max-width: 1400px; margin: 4rem auto 0; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); display: flex; justify-content: space-between; align-items: center; color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; }
+        .footer-bottom-links { display: flex; gap: 2rem; }
+        .footer-bottom-links a { color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s; }
+        .footer-bottom-links a:hover { color: white; }
+
+        /* Responsive */
+        @media (max-width: 1200px) { :root { --nav-padding-x: 4%; } .nav-link { font-size: 0.85rem; padding: 0.5rem 0.6rem; } .nav-cta, .nav-contact { padding: 0.6rem 1rem; font-size: 0.8rem; } }
+        @media (max-width: 1024px) { .nav-buttons .nav-contact { display: none; } .nav-link { font-size: 0.8rem; padding: 0.5rem 0.5rem; } .stats-container { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) { .nav-links { display: none; } .nav-buttons { display: none; } .mobile-menu-btn { display: block; } }
+        @media (max-width: 768px) {
+            .page-hero { padding: 6rem 4% 3rem; }
+            .page-hero h1 { font-size: 2rem; }
+            .stats-container { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+            .stat-item h3 { font-size: 2rem; }
+            .portfolio { padding: 3rem 4%; }
+            .portfolio-grid { grid-template-columns: 1fr; }
+            .filter-tabs { gap: 0.5rem; }
+            .filter-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }
+            .footer-container { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
+            .social-links { justify-content: center; }
+            .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+            .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Backdrop -->
+    <div class="menu-backdrop" id="menuBackdrop"></div>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobileMenu">
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>Our Services</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="../services/seo.html" class="mobile-dropdown-item"><i class="fas fa-search"></i> Search Engine Optimization</a>
+                <a href="../services/lead-generation.html" class="mobile-dropdown-item"><i class="fas fa-bullseye"></i> Lead Generation</a>
+                <a href="../services/mobile-marketing.html" class="mobile-dropdown-item"><i class="fas fa-mobile-alt"></i> Mobile Marketing</a>
+                <a href="../services/ppc.html" class="mobile-dropdown-item"><i class="fas fa-ad"></i> PPC Advertising</a>
+                <a href="../services/social-media.html" class="mobile-dropdown-item"><i class="fas fa-share-alt"></i> Social Media Marketing</a>
+                <a href="../services/content-marketing.html" class="mobile-dropdown-item"><i class="fas fa-pen-fancy"></i> Content Marketing</a>
+                <a href="../services/email-marketing.html" class="mobile-dropdown-item"><i class="fas fa-envelope"></i> Email Marketing</a>
+                <a href="../services/analytics.html" class="mobile-dropdown-item"><i class="fas fa-chart-line"></i> Analytics & CRO</a>
+                <a href="../services/consultancy.html" class="mobile-dropdown-item"><i class="fas fa-handshake"></i> Digital Consultancy</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>Our Work</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="case-studies.html" class="mobile-dropdown-item"><i class="fas fa-briefcase"></i> Case Studies</a>
+                <a href="success-stories.html" class="mobile-dropdown-item"><i class="fas fa-trophy"></i> Success Stories</a>
+                <a href="industries.html" class="mobile-dropdown-item"><i class="fas fa-industry"></i> Industries We Serve</a>
+                <a href="portfolio.html" class="mobile-dropdown-item"><i class="fas fa-project-diagram"></i> Client Portfolio</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>About Us</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="../about/company.html" class="mobile-dropdown-item"><i class="fas fa-building"></i> Our Company</a>
+                <a href="../about/team.html" class="mobile-dropdown-item"><i class="fas fa-users"></i> Our Team</a>
+                <a href="../about/partners.html" class="mobile-dropdown-item"><i class="fas fa-handshake"></i> Partners</a>
+                <a href="../about/contact.html" class="mobile-dropdown-item"><i class="fas fa-phone"></i> Contact Us</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>Blog</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="../blog/articles.html" class="mobile-dropdown-item"><i class="fas fa-newspaper"></i> Latest Articles</a>
+                <a href="../blog/tips.html" class="mobile-dropdown-item"><i class="fas fa-lightbulb"></i> Marketing Tips</a>
+                <a href="../blog/insights.html" class="mobile-dropdown-item"><i class="fas fa-chart-bar"></i> Industry Insights</a>
+                <a href="../blog/guides.html" class="mobile-dropdown-item"><i class="fas fa-download"></i> Free Guides</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>Resources</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="../resources/guides.html" class="mobile-dropdown-item"><i class="fas fa-book"></i> Marketing Guides</a>
+                <a href="../resources/tools.html" class="mobile-dropdown-item"><i class="fas fa-tools"></i> Free Tools</a>
+                <a href="../resources/templates.html" class="mobile-dropdown-item"><i class="fas fa-file-alt"></i> Templates</a>
+                <a href="../resources/faqs.html" class="mobile-dropdown-item"><i class="fas fa-question-circle"></i> FAQs</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>DMI</span><i class="fas fa-chevron-down"></i></div>
+            <div class="mobile-dropdown">
+                <a href="../dmi/index.html" class="mobile-dropdown-item"><i class="fas fa-graduation-cap"></i> Digital Marketing Institute</a>
+                <a href="../dmi/courses.html" class="mobile-dropdown-item"><i class="fas fa-book-open"></i> Our Courses</a>
+                <a href="../dmi/certification.html" class="mobile-dropdown-item"><i class="fas fa-certificate"></i> Certification</a>
+            </div>
+        </div>
+        <div class="mobile-nav-item">
+            <a href="../pricing.html" class="mobile-dropdown-item" style="padding: 1rem 0; font-weight: 600;"><i class="fas fa-tags"></i> Pricing</a>
+        </div>
+        <a href="../about/contact.html" class="nav-cta" onclick="closeMenu()">Get Started</a>
+        <a href="../about/contact.html" class="nav-contact" onclick="closeMenu()">Contact Us</a>
+    </div>
+
+    <!-- Navigation -->
+    <nav id="navbar">
+        <a href="../index.html" class="logo"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></a>
+        <ul class="nav-links">
+            <li class="nav-item">
+                <a href="../index.html#services" class="nav-link">Our Services <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="../services/seo.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-search"></i></div><div class="dropdown-content"><h4>Search Engine Optimization</h4><p>Rank higher and drive organic traffic</p></div></a>
+                    <a href="../services/lead-generation.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-bullseye"></i></div><div class="dropdown-content"><h4>Lead Generation</h4><p>Convert visitors into qualified leads</p></div></a>
+                    <a href="../services/mobile-marketing.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-mobile-alt"></i></div><div class="dropdown-content"><h4>Mobile Marketing</h4><p>Reach customers on every device</p></div></a>
+                    <a href="../services/ppc.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-ad"></i></div><div class="dropdown-content"><h4>PPC Advertising</h4><p>Maximize ROI with paid campaigns</p></div></a>
+                    <div class="dropdown-divider"></div>
+                    <a href="../services/social-media.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-share-alt"></i></div><div class="dropdown-content"><h4>Social Media Marketing</h4><p>Build engaged communities</p></div></a>
+                    <a href="../services/content-marketing.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-pen-fancy"></i></div><div class="dropdown-content"><h4>Content Marketing</h4><p>Create content that converts</p></div></a>
+                    <a href="../services/email-marketing.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-envelope"></i></div><div class="dropdown-content"><h4>Email Marketing</h4><p>Nurture leads with automation</p></div></a>
+                    <a href="../services/analytics.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-chart-line"></i></div><div class="dropdown-content"><h4>Analytics & CRO</h4><p>Data-driven optimization</p></div></a>
+                    <a href="../services/consultancy.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-handshake"></i></div><div class="dropdown-content"><h4>Digital Consultancy</h4><p>Strategic transformation guidance</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../index.html#work" class="nav-link">Our Work <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="case-studies.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-briefcase"></i></div><div class="dropdown-content"><h4>Case Studies</h4><p>See our client success stories</p></div></a>
+                    <a href="success-stories.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-trophy"></i></div><div class="dropdown-content"><h4>Success Stories</h4><p>Real results from real clients</p></div></a>
+                    <a href="industries.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-industry"></i></div><div class="dropdown-content"><h4>Industries We Serve</h4><p>Explore our industry expertise</p></div></a>
+                    <a href="portfolio.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-project-diagram"></i></div><div class="dropdown-content"><h4>Client Portfolio</h4><p>Browse our project showcase</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../index.html#about" class="nav-link">About Us <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="../about/company.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-building"></i></div><div class="dropdown-content"><h4>Our Company</h4><p>Learn about our mission & values</p></div></a>
+                    <a href="../about/team.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-users"></i></div><div class="dropdown-content"><h4>Our Team</h4><p>Meet the experts behind SeedsAds</p></div></a>
+                    <a href="../about/partners.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-handshake"></i></div><div class="dropdown-content"><h4>Partners</h4><p>Our technology & agency partners</p></div></a>
+                    <a href="../about/contact.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-phone"></i></div><div class="dropdown-content"><h4>Contact Us</h4><p>Get in touch with our team</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../index.html#blog" class="nav-link">Blog <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="../blog/articles.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-newspaper"></i></div><div class="dropdown-content"><h4>Latest Articles</h4><p>Fresh insights & updates</p></div></a>
+                    <a href="../blog/tips.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-lightbulb"></i></div><div class="dropdown-content"><h4>Marketing Tips</h4><p>Actionable strategies & tactics</p></div></a>
+                    <a href="../blog/insights.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-chart-bar"></i></div><div class="dropdown-content"><h4>Industry Insights</h4><p>Trends & market analysis</p></div></a>
+                    <a href="../blog/guides.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-download"></i></div><div class="dropdown-content"><h4>Free Guides</h4><p>Downloadable resources</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../index.html#resources" class="nav-link">Resources <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="../resources/guides.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-book"></i></div><div class="dropdown-content"><h4>Marketing Guides</h4><p>Comprehensive how-to guides</p></div></a>
+                    <a href="../resources/tools.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-tools"></i></div><div class="dropdown-content"><h4>Free Tools</h4><p>Marketing tools & utilities</p></div></a>
+                    <a href="../resources/templates.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-file-alt"></i></div><div class="dropdown-content"><h4>Templates</h4><p>Ready-to-use templates</p></div></a>
+                    <a href="../resources/faqs.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-question-circle"></i></div><div class="dropdown-content"><h4>FAQs</h4><p>Common questions answered</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../dmi/index.html" class="nav-link">DMI <i class="fas fa-chevron-down"></i></a>
+                <div class="dropdown">
+                    <a href="../dmi/index.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-graduation-cap"></i></div><div class="dropdown-content"><h4>Digital Marketing Institute</h4><p>Learn digital marketing</p></div></a>
+                    <a href="../dmi/courses.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-book-open"></i></div><div class="dropdown-content"><h4>Our Courses</h4><p>Professional training programs</p></div></a>
+                    <a href="../dmi/certification.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-certificate"></i></div><div class="dropdown-content"><h4>Certification</h4><p>Get certified with SeedsAds</p></div></a>
+                </div>
+            </li>
+            <li class="nav-item">
+                <a href="../pricing.html" class="nav-link">Pricing</a>
+            </li>
+        </ul>
+        <div class="nav-buttons">
+            <a href="../about/contact.html" class="nav-contact"><i class="fas fa-phone"></i> Contact Us</a>
+            <a href="../about/contact.html" class="nav-cta"><i class="fas fa-rocket"></i> Get Started</a>
+        </div>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars" id="menuIcon"></i></button>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div class="page-hero-container">
+            <div class="breadcrumb">
+                <a href="../index.html">Home</a> <i class="fas fa-chevron-right"></i> <a href="../index.html#work">Our Work</a> <i class="fas fa-chevron-right"></i> Client Portfolio
+            </div>
+            <h1>Client Portfolio</h1>
+            <p>A showcase of brands we've helped transform through strategic digital marketing. Real projects, real results, real growth.</p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stat-item">
+                <h3>150+</h3>
+                <p>Clients Served</p>
+            </div>
+            <div class="stat-item">
+                <h3>12</h3>
+                <p>Industries</p>
+            </div>
+            <div class="stat-item">
+                <h3>$50M+</h3>
+                <p>Revenue Generated</p>
+            </div>
+            <div class="stat-item">
+                <h3>340%</h3>
+                <p>Avg. ROI Increase</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section class="portfolio">
+        <div class="portfolio-container">
+            <div class="section-header">
+                <h2>Featured Projects</h2>
+                <p>Browse through some of our most impactful campaigns and the results we've delivered for our clients.</p>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-btn active" data-filter="all">All Projects</button>
+                <button class="filter-btn" data-filter="ecommerce">E-Commerce</button>
+                <button class="filter-btn" data-filter="saas">SaaS</button>
+                <button class="filter-btn" data-filter="healthcare">Healthcare</button>
+                <button class="filter-btn" data-filter="realestate">Real Estate</button>
+            </div>
+
+            <!-- Portfolio Grid -->
+            <div class="portfolio-grid">
+                <!-- Project 1 -->
+                <div class="portfolio-card" data-category="ecommerce">
+                    <div class="portfolio-image"><i class="fas fa-seedling"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">E-Commerce</span>
+                        <h3>Harvesters</h3>
+                        <p>Complete digital transformation for an agricultural e-commerce platform. Implemented SEO, PPC, and social media strategies that drove massive growth.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>350%</h4><p>Sales Growth</p></div>
+                            <div class="portfolio-stat"><h4>10x</h4><p>ROAS</p></div>
+                            <div class="portfolio-stat"><h4>-40%</h4><p>CPA</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2 -->
+                <div class="portfolio-card" data-category="saas">
+                    <div class="portfolio-image"><i class="fas fa-plug"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">SaaS</span>
+                        <h3>Konnect</h3>
+                        <p>B2B lead generation campaign for a SaaS platform. Optimized LinkedIn and Google Ads to reduce cost per acquisition while scaling lead volume.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>60%</h4><p>Lower CPA</p></div>
+                            <div class="portfolio-stat"><h4>3x</h4><p>Lead Volume</p></div>
+                            <div class="portfolio-stat"><h4>500%</h4><p>ROI</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="portfolio-card" data-category="realestate">
+                    <div class="portfolio-image"><i class="fas fa-home"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Real Estate</span>
+                        <h3>GreenField Realty</h3>
+                        <p>Targeted Facebook campaigns for property sales. Generated qualified buyer and seller leads with high conversion rates.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>250%</h4><p>More Leads</p></div>
+                            <div class="portfolio-stat"><h4>45%</h4><p>Conversion</p></div>
+                            <div class="portfolio-stat"><h4>8x</h4><p>ROAS</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 4 -->
+                <div class="portfolio-card" data-category="healthcare">
+                    <div class="portfolio-image"><i class="fas fa-heartbeat"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Healthcare</span>
+                        <h3>MedCare Plus</h3>
+                        <p>Patient acquisition campaign for healthcare services. HIPAA-compliant marketing that generated steady patient inquiries.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>180%</h4><p>Patient Inquiries</p></div>
+                            <div class="portfolio-stat"><h4>35%</h4><p>Booking Rate</p></div>
+                            <div class="portfolio-stat"><h4>4x</h4><p>ROAS</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 5 -->
+                <div class="portfolio-card" data-category="ecommerce">
+                    <div class="portfolio-image"><i class="fas fa-tshirt"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">E-Commerce</span>
+                        <h3>StyleHub</h3>
+                        <p>Fashion e-commerce growth campaign. Combined influencer marketing with paid ads to drive brand awareness and sales.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>420%</h4><p>Revenue Growth</p></div>
+                            <div class="portfolio-stat"><h4>2.5M</h4><p>Reach</p></div>
+                            <div class="portfolio-stat"><h4>6x</h4><p>ROAS</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 6 -->
+                <div class="portfolio-card" data-category="saas">
+                    <div class="portfolio-image"><i class="fas fa-chart-pie"></i></div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">SaaS</span>
+                        <h3>FinEdge</h3>
+                        <p>B2B financial services marketing. LinkedIn and Google Ads strategy that brought high-value enterprise clients.</p>
+                        <div class="portfolio-stats">
+                            <div class="portfolio-stat"><h4>400%</h4><p>B2B Leads</p></div>
+                            <div class="portfolio-stat"><h4>28%</h4><p>Close Rate</p></div>
+                            <div class="portfolio-stat"><h4>6x</h4><p>ROAS</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trusted By Section -->
+    <section class="trusted-by">
+        <div class="trusted-container">
+            <h2>Brands That Trust Us</h2>
+            <div class="logo-grid">
+                <div class="client-logo-item">Harvesters</div>
+                <div class="client-logo-item">Konnect</div>
+                <div class="client-logo-item">GreenField</div>
+                <div class="client-logo-item">MedCare</div>
+                <div class="client-logo-item">StyleHub</div>
+                <div class="client-logo-item">FinEdge</div>
+                <div class="client-logo-item">EduLearn</div>
+                <div class="client-logo-item">TechFlow</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Join Our Portfolio?</h2>
+            <p>Let's create a success story for your brand. Get in touch to discuss your project.</p>
+            <a href="../about/contact.html" class="cta-btn">Start Your Project <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </section>
+
+    <!-- WhatsApp Float -->
+    <a href="https://wa.me/2347061112102" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-brand">
+                <h3>SeedsAds<span>.</span></h3>
+                <p>Data-driven digital marketing that delivers measurable growth.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="footer-links">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="../services/seo.html">SEO</a></li>
+                    <li><a href="../services/ppc.html">PPC</a></li>
+                    <li><a href="../services/social-media.html">Social Media</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="../about/company.html">About</a></li>
+                    <li><a href="case-studies.html">Case Studies</a></li>
+                    <li><a href="../about/contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4>Connect</h4>
+                <ul>
+                    <li><a href="#">LinkedIn</a></li>
+                    <li><a href="#">Twitter</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 SeedsAds Digital Marketing. All rights reserved.</p>
+            <div class="footer-bottom-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar scroll
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) navbar.classList.add('scrolled');
+            else navbar.classList.remove('scrolled');
+        });
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuBackdrop = document.getElementById('menuBackdrop');
+        const menuIcon = document.getElementById('menuIcon');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            mobileMenu.classList.toggle('active', isMenuOpen);
+            menuBackdrop.classList.toggle('active', isMenuOpen);
+            document.body.classList.toggle('menu-open', isMenuOpen);
+            menuIcon.className = isMenuOpen ? 'fas fa-times' : 'fas fa-bars';
+        }
+
+        function closeMenu() {
+            isMenuOpen = false;
+            mobileMenu.classList.remove('active');
+            menuBackdrop.classList.remove('active');
+            document.body.classList.remove('menu-open');
+            menuIcon.className = 'fas fa-bars';
+            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMenu);
+        menuBackdrop.addEventListener('click', closeMenu);
+
+        function toggleMobileDropdown(header) {
+            const navItem = header.parentElement;
+            const isActive = navItem.classList.contains('active');
+            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+            if (!isActive) navItem.classList.add('active');
+        }
+
+        window.addEventListener('resize', () => { if (window.innerWidth > 900 && isMenuOpen) closeMenu(); });
+
+        // Filter functionality
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const portfolioCards = document.querySelectorAll('.portfolio-card');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                portfolioCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.category === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

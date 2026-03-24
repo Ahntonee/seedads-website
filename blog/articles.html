@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest Articles | AdMedia Agency Blog</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --light-gray: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .nav-links a:hover { color: var(--primary); }
+
+        .dropdown { position: relative; }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 220px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            border-radius: 12px;
+            top: 100%;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .dropdown-content a {
+            color: var(--dark);
+            padding: 0.9rem 1.5rem;
+            display: block;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .dropdown-content a:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .dropdown:hover .dropdown-content { display: block; }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
+            padding: 10rem 2rem 6rem;
+            text-align: center;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .blog-section {
+            padding: 6rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2.5rem;
+        }
+
+        .blog-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .blog-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+
+        .blog-image {
+            height: 220px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+        }
+
+        .blog-content {
+            padding: 2rem;
+        }
+
+        .blog-meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .blog-tag {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .blog-content h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
+        .blog-content p {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            line-height: 1.7;
+        }
+
+        .read-more {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .newsletter {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            padding: 5rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .newsletter h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .newsletter p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .newsletter-form {
+            max-width: 500px;
+            margin: 0 auto;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .newsletter-form input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+        }
+
+        .newsletter-form button {
+            padding: 1rem 2rem;
+            background: var(--dark);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .newsletter-form button:hover { transform: scale(1.05); }
+
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+        }
+
+        .footer-section h4 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-section ul li a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section ul li a:hover { color: var(--primary); }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 3rem;
+            margin-top: 3rem;
+            border-top: 1px solid #334155;
+            color: #64748b;
+        }
+
+        .mobile-menu {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.98);
+            z-index: 999;
+            padding: 6rem 2rem 2rem;
+            overflow-y: auto;
+        }
+
+        .mobile-menu.active { display: block; }
+
+        .mobile-menu-links { list-style: none; }
+
+        .mobile-menu-links li { margin-bottom: 1rem; }
+
+        .mobile-menu-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            font-weight: 500;
+            display: block;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .mobile-dropdown {
+            margin-left: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .mobile-dropdown a {
+            font-size: 1rem;
+            color: #94a3b8;
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 1.5rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 968px) {
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: block; }
+            .hero { padding: 8rem 1.5rem 4rem; }
+            .hero h1 { font-size: 2.2rem; }
+            .blog-grid { grid-template-columns: 1fr; }
+            .newsletter-form { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="../index.html" class="logo">AdMedia</a>
+            <ul class="nav-links">
+                <li class="dropdown">
+                    <a href="#">Our Services <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../services/seo.html">SEO Optimization</a>
+                        <a href="../services/lead-generation.html">Lead Generation</a>
+                        <a href="../services/mobile-marketing.html">Mobile Marketing</a>
+                        <a href="../services/ppc.html">PPC Advertising</a>
+                        <a href="../services/social-media.html">Social Media</a>
+                        <a href="../services/content-marketing.html">Content Marketing</a>
+                        <a href="../services/email-marketing.html">Email Marketing</a>
+                        <a href="../services/analytics.html">Analytics & CRO</a>
+                        <a href="../services/consultancy.html">Digital Consultancy</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Our Work <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../work/case-studies.html">Case Studies</a>
+                        <a href="../work/success-stories.html">Success Stories</a>
+                        <a href="../work/industries.html">Industries We Serve</a>
+                        <a href="../work/portfolio.html">Client Portfolio</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">About Us <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../about/company.html">Our Company</a>
+                        <a href="../about/team.html">Our Team</a>
+                        <a href="../about/partners.html">Partners</a>
+                        <a href="../about/contact.html">Contact Us</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Blog <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="articles.html">Latest Articles</a>
+                        <a href="tips.html">Marketing Tips</a>
+                        <a href="insights.html">Industry Insights</a>
+                        <a href="guides.html">Free Guides</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Resources <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../resources/guides.html">Marketing Guides</a>
+                        <a href="../resources/tools.html">Free Tools</a>
+                        <a href="../resources/templates.html">Templates</a>
+                        <a href="../resources/faqs.html">FAQs</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">DMI <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-content">
+                        <a href="../dmi/index.html">Digital Marketing Institute</a>
+                        <a href="../dmi/courses.html">Our Courses</a>
+                        <a href="../dmi/certification.html">Certification</a>
+                    </div>
+                </li>
+                <li><a href="../pricing.html">Pricing</a></li>
+            </ul>
+            <button class="mobile-menu-btn" onclick="openMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="close-menu" onclick="closeMobileMenu()">
+            <i class="fas fa-times"></i>
+        </button>
+        <ul class="mobile-menu-links">
+            <li><a href="#" onclick="toggleMobileDropdown('services')">Our Services <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-services" style="display:none;">
+                    <a href="../services/seo.html">SEO Optimization</a>
+                    <a href="../services/lead-generation.html">Lead Generation</a>
+                    <a href="../services/mobile-marketing.html">Mobile Marketing</a>
+                    <a href="../services/ppc.html">PPC Advertising</a>
+                    <a href="../services/social-media.html">Social Media</a>
+                    <a href="../services/content-marketing.html">Content Marketing</a>
+                    <a href="../services/email-marketing.html">Email Marketing</a>
+                    <a href="../services/analytics.html">Analytics & CRO</a>
+                    <a href="../services/consultancy.html">Digital Consultancy</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('work')">Our Work <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-work" style="display:none;">
+                    <a href="../work/case-studies.html">Case Studies</a>
+                    <a href="../work/success-stories.html">Success Stories</a>
+                    <a href="../work/industries.html">Industries We Serve</a>
+                    <a href="../work/portfolio.html">Client Portfolio</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('about')">About Us <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-about" style="display:none;">
+                    <a href="../about/company.html">Our Company</a>
+                    <a href="../about/team.html">Our Team</a>
+                    <a href="../about/partners.html">Partners</a>
+                    <a href="../about/contact.html">Contact Us</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('blog')">Blog <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-blog" style="display:none;">
+                    <a href="articles.html">Latest Articles</a>
+                    <a href="tips.html">Marketing Tips</a>
+                    <a href="insights.html">Industry Insights</a>
+                    <a href="guides.html">Free Guides</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('resources')">Resources <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-resources" style="display:none;">
+                    <a href="../resources/guides.html">Marketing Guides</a>
+                    <a href="../resources/tools.html">Free Tools</a>
+                    <a href="../resources/templates.html">Templates</a>
+                    <a href="../resources/faqs.html">FAQs</a>
+                </div>
+            </li>
+            <li><a href="#" onclick="toggleMobileDropdown('dmi')">DMI <i class="fas fa-chevron-down"></i></a>
+                <div class="mobile-dropdown" id="mobile-dmi" style="display:none;">
+                    <a href="../dmi/index.html">Digital Marketing Institute</a>
+                    <a href="../dmi/courses.html">Our Courses</a>
+                    <a href="../dmi/certification.html">Certification</a>
+                </div>
+            </li>
+            <li><a href="../pricing.html">Pricing</a></li>
+        </ul>
+    </div>
+
+    <section class="hero">
+        <h1>Latest <span>Articles</span></h1>
+        <p>Stay updated with the latest trends, strategies, and insights in digital marketing</p>
+    </section>
+
+    <section class="blog-section">
+        <div class="section-header">
+            <h2>Featured Articles</h2>
+            <p>Expert insights to help you grow your business</p>
+        </div>
+        <div class="blog-grid">
+            <div class="blog-card">
+                <div class="blog-image"><i class="fas fa-search"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag">SEO</span>
+                        <span><i class="far fa-calendar"></i> Dec 15, 2024</span>
+                    </div>
+                    <h3>The Complete Guide to SEO in 2025: Trends and Predictions</h3>
+                    <p>Discover the latest SEO trends that will shape search rankings in 2025, from AI-powered optimization to voice search strategies.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="blog-card">
+                <div class="blog-image" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"><i class="fas fa-ad"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">PPC</span>
+                        <span><i class="far fa-calendar"></i> Dec 12, 2024</span>
+                    </div>
+                    <h3>Maximizing ROAS: Advanced PPC Strategies for 2025</h3>
+                    <p>Learn how to optimize your paid advertising campaigns to achieve higher returns and lower customer acquisition costs.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="blog-card">
+                <div class="blog-image" style="background: linear-gradient(135deg, #10b981, #34d399);"><i class="fas fa-share-alt"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Social Media</span>
+                        <span><i class="far fa-calendar"></i> Dec 10, 2024</span>
+                    </div>
+                    <h3>Social Media Algorithms Explained: How to Beat Them in 2025</h3>
+                    <p>Understanding how social media algorithms work and strategies to increase your organic reach and engagement.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="blog-card">
+                <div class="blog-image" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);"><i class="fas fa-envelope"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Email</span>
+                        <span><i class="far fa-calendar"></i> Dec 8, 2024</span>
+                    </div>
+                    <h3>Email Marketing Automation: Building Campaigns That Convert</h3>
+                    <p>A comprehensive guide to setting up automated email sequences that nurture leads and drive conversions.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="blog-card">
+                <div class="blog-image" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);"><i class="fas fa-chart-line"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag">Analytics</span>
+                        <span><i class="far fa-calendar"></i> Dec 5, 2024</span>
+                    </div>
+                    <h3>Google Analytics 4: The Ultimate Setup Guide for Marketers</h3>
+                    <p>Everything you need to know about GA4, from basic setup to advanced tracking and reporting configurations.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="blog-card">
+                <div class="blog-image" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);"><i class="fas fa-mobile-alt"></i></div>
+                <div class="blog-content">
+                    <div class="blog-meta">
+                        <span class="blog-tag" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">Mobile</span>
+                        <span><i class="far fa-calendar"></i> Dec 3, 2024</span>
+                    </div>
+                    <h3>Mobile-First Marketing: Strategies for the Modern Consumer</h3>
+                    <p>How to optimize your marketing efforts for mobile users and capitalize on the mobile commerce revolution.</p>
+                    <a href="#" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="newsletter">
+        <h2>Subscribe to Our Newsletter</h2>
+        <p>Get the latest marketing insights delivered straight to your inbox</p>
+        <form class="newsletter-form">
+            <input type="email" placeholder="Enter your email address">
+            <button type="submit">Subscribe</button>
+        </form>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="../about/company.html">About Us</a></li>
+                    <li><a href="../about/team.html">Our Team</a></li>
+                    <li><a href="../about/careers.html">Careers</a></li>
+                    <li><a href="../about/contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Services</h4>
+                <ul>
+                    <li><a href="../services/seo.html">SEO</a></li>
+                    <li><a href="../services/ppc.html">PPC</a></li>
+                    <li><a href="../services/social-media.html">Social Media</a></li>
+                    <li><a href="../services/content-marketing.html">Content</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Resources</h4>
+                <ul>
+                    <li><a href="articles.html">Blog</a></li>
+                    <li><a href="../resources/guides.html">Guides</a></li>
+                    <li><a href="../resources/tools.html">Tools</a></li>
+                    <li><a href="../resources/faqs.html">FAQs</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Connect</h4>
+                <ul>
+                    <li><a href="#"><i class="fab fa-linkedin"></i> LinkedIn</a></li>
+                    <li><a href="#"><i class="fab fa-twitter"></i> Twitter</a></li>
+                    <li><a href="#"><i class="fab fa-facebook"></i> Facebook</a></li>
+                    <li><a href="#"><i class="fab fa-instagram"></i> Instagram</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 AdMedia Agency. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function openMobileMenu() {
+            document.getElementById('mobileMenu').classList.add('active');
+        }
+
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('active');
+        }
+
+        function toggleMobileDropdown(id) {
+            const dropdown = document.getElementById('mobile-' + id);
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
