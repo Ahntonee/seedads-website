@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -201,6 +201,7 @@
         .forgot-password a { font-size: 0.85rem; color: var(--primary-blue); text-decoration: none; font-weight: 500; }
         .forgot-password a:hover { text-decoration: underline; }
 </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -359,115 +360,23 @@
     </section>
 
     <!-- Leadership Team -->
-    <section class="team-section">
+    <section class="team-section" id="leadershipSection">
         <div class="section-header">
             <h2><i class="fas fa-crown"></i> Leadership Team</h2>
             <p>The visionaries behind our success</p>
         </div>
-        <div class="team-grid">
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Sarah Johnson</h3>
-                    <div class="team-role">CEO & Founder</div>
-                    <p>With 15+ years in digital marketing, Sarah leads our vision and strategy, ensuring we stay ahead of industry trends.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Michael Chen</h3>
-                    <div class="team-role">Chief Strategy Officer</div>
-                    <p>Michael brings data-driven insights and strategic thinking to every client campaign, maximizing ROI.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Emily Rodriguez</h3>
-                    <div class="team-role">Creative Director</div>
-                    <p>Emily leads our creative team, crafting compelling brand stories that resonate with target audiences.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-dribbble"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>David Park</h3>
-                    <div class="team-role">Head of Technology</div>
-                    <p>David ensures our tech stack and analytics capabilities deliver cutting-edge solutions for clients.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                        <a href="#"><i class="fab fa-github"></i></a>
-                    </div>
-                </div>
-            </div>
+        <div class="team-grid" id="leadershipGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-gray)"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</div>
         </div>
     </section>
 
     <!-- Department Heads -->
-    <section class="team-section" style="background: white; padding: 4rem 5%;">
+    <section class="team-section" id="departmentSection" style="background: white; padding: 4rem 5%;">
         <div class="section-header">
             <h2><i class="fas fa-users"></i> Department Heads</h2>
             <p>Experts leading our specialized teams</p>
         </div>
-        <div class="team-grid">
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Jessica Williams</h3>
-                    <div class="team-role">Head of SEO</div>
-                    <p>SEO expert with a track record of ranking clients on page one for competitive keywords.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>James Thompson</h3>
-                    <div class="team-role">Head of Paid Media</div>
-                    <p>PPC specialist who has managed over $50M in ad spend with exceptional ROAS.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Amanda Foster</h3>
-                    <div class="team-role">Head of Social Media</div>
-                    <p>Social media strategist who has grown brand followings into millions of engaged fans.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="team-card">
-                <div class="team-image"><i class="fas fa-user"></i></div>
-                <div class="team-info">
-                    <h3>Robert Kim</h3>
-                    <div class="team-role">Head of Content</div>
-                    <p>Content marketing expert who crafts narratives that convert readers into customers.</p>
-                    <div class="team-social">
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <div class="team-grid" id="departmentGrid"></div>
     </section>
 
     <!-- Join Team CTA -->
@@ -530,6 +439,34 @@
     </footer>
 
     <script>
+        // Load team members from CMS
+        function memberCard(m) {
+            const socials = [
+                m.linkedin_url ? `<a href="${m.linkedin_url}"><i class="fab fa-linkedin-in"></i></a>` : '',
+                m.twitter_url  ? `<a href="${m.twitter_url}"><i class="fab fa-twitter"></i></a>`      : '',
+                m.other_social_icon && m.other_social_url ? `<a href="${m.other_social_url}"><i class="${m.other_social_icon}"></i></a>` : '',
+            ].filter(Boolean).join('');
+            return `<div class="team-card">
+                <div class="team-image"><i class="fas fa-user"></i></div>
+                <div class="team-info">
+                    <h3>${m.name}</h3>
+                    <div class="team-role">${m.role || ''}</div>
+                    <p>${m.bio || ''}</p>
+                    ${socials ? `<div class="team-social">${socials}</div>` : ''}
+                </div>
+            </div>`;
+        }
+        (async function loadTeam() {
+            try {
+                const res = await fetch('/api/cms/team');
+                const { members } = await res.json();
+                const leadership = members.filter(m => m.team_type === 'leadership');
+                const department = members.filter(m => m.team_type !== 'leadership');
+                document.getElementById('leadershipGrid').innerHTML = leadership.length ? leadership.map(memberCard).join('') : '<p style="color:var(--text-gray)">Coming soon.</p>';
+                document.getElementById('departmentGrid').innerHTML = department.length ? department.map(memberCard).join('') : '<p style="color:var(--text-gray)">Coming soon.</p>';
+            } catch(e) { document.getElementById('leadershipGrid').innerHTML = '<p style="color:var(--text-gray)">Failed to load team.</p>'; }
+        })();
+
         // Navbar scroll effect
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');

@@ -1,0 +1,575 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard | SeedsAds</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-dark: #0A2540; --primary-blue: #0066FF; --accent-blue: #4D9FFF;
+      --light-blue: #E6F0FF; --soft-white: #FAFBFC; --text-dark: #1A1A2E;
+      --text-gray: #6B7280; --success: #00D4AA; --warning: #F59E0B;
+      --danger: #EF4444; --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%);
+      --sidebar-w: 250px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: var(--soft-white); color: var(--text-dark); display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar { width: var(--sidebar-w); background: var(--primary-dark); min-height: 100vh; position: fixed; top: 0; left: 0; display: flex; flex-direction: column; z-index: 100; transition: transform .3s; }
+    .sidebar-logo { padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-logo a { font-family: 'Space Grotesk', sans-serif; font-size: 1.35rem; font-weight: 700; color: white; text-decoration: none; display: flex; align-items: center; gap: .5rem; }
+    .sidebar-logo span { color: var(--accent-blue); }
+    .sidebar-nav { flex: 1; padding: 1rem 0; }
+    .nav-label { font-size: .65rem; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: .1em; padding: 1rem 1.5rem .4rem; }
+    .nav-item { display: flex; align-items: center; gap: .7rem; padding: .7rem 1.5rem; color: rgba(255,255,255,0.6); cursor: pointer; transition: all .2s; border-left: 3px solid transparent; font-size: .88rem; font-weight: 500; }
+    .nav-item:hover { color: white; background: rgba(255,255,255,0.06); }
+    .nav-item.active { color: white; background: rgba(0,102,255,0.2); border-left-color: var(--primary-blue); }
+    .nav-item i { width: 18px; text-align: center; }
+    .sidebar-footer { padding: 1rem 1.5rem; border-top: 1px solid rgba(255,255,255,0.08); }
+    .user-info { display: flex; align-items: center; gap: .7rem; margin-bottom: .75rem; }
+    .user-avatar { width: 36px; height: 36px; background: var(--primary-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: .9rem; flex-shrink: 0; }
+    .user-name { font-size: .85rem; font-weight: 600; color: white; }
+    .user-plan { font-size: .72rem; color: rgba(255,255,255,0.4); }
+    .logout-btn { width: 100%; padding: .55rem; background: rgba(239,68,68,0.12); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; font-size: .8rem; font-weight: 600; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+    .logout-btn:hover { background: rgba(239,68,68,0.22); }
+
+    /* Main */
+    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: white; border-bottom: 1px solid rgba(0,102,255,0.08); padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .topbar h1 { font-size: 1.15rem; font-weight: 700; color: var(--primary-dark); }
+    .hamburger { display: none; background: none; border: none; font-size: 1.3rem; color: var(--primary-dark); cursor: pointer; }
+    .content { padding: 2rem; flex: 1; }
+
+    /* Cards */
+    .card { background: white; border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(0,102,255,0.08); box-shadow: 0 2px 12px rgba(10,37,64,0.05); margin-bottom: 1.25rem; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .card-header h2 { font-size: 1rem; font-weight: 700; color: var(--primary-dark); display: flex; align-items: center; gap: .5rem; }
+    .card-header h2 i { color: var(--primary-blue); }
+
+    /* Status banner */
+    .status-banner { border-radius: 14px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .status-banner.approved { background: rgba(0,212,170,0.1); border: 1.5px solid rgba(0,212,170,0.3); }
+    .status-banner.pending { background: rgba(245,158,11,0.1); border: 1.5px solid rgba(245,158,11,0.3); }
+    .status-banner.unpaid { background: rgba(0,102,255,0.07); border: 1.5px solid rgba(0,102,255,0.15); }
+    .status-banner.rejected { background: rgba(239,68,68,0.08); border: 1.5px solid rgba(239,68,68,0.2); }
+    .status-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .status-banner.approved .status-icon { background: rgba(0,212,170,0.15); color: var(--success); }
+    .status-banner.pending .status-icon { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .status-banner.unpaid .status-icon { background: rgba(0,102,255,0.1); color: var(--primary-blue); }
+    .status-banner.rejected .status-icon { background: rgba(239,68,68,0.12); color: var(--danger); }
+    .status-text h3 { font-size: .95rem; font-weight: 700; margin-bottom: .2rem; }
+    .status-banner.approved .status-text h3 { color: var(--success); }
+    .status-banner.pending .status-text h3 { color: var(--warning); }
+    .status-banner.unpaid .status-text h3 { color: var(--primary-blue); }
+    .status-banner.rejected .status-text h3 { color: var(--danger); }
+    .status-text p { font-size: .83rem; color: var(--text-gray); }
+
+    /* Buttons */
+    .btn { padding: .6rem 1.1rem; border-radius: 8px; font-size: .83rem; font-weight: 600; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: .4rem; border: none; text-decoration: none; }
+    .btn-primary { background: var(--primary-blue); color: white; }
+    .btn-primary:hover { background: #0052CC; transform: translateY(-1px); }
+    .btn-outline { background: white; color: var(--primary-blue); border: 1.5px solid var(--primary-blue); }
+    .btn-outline:hover { background: var(--light-blue); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-success:hover { opacity: .9; }
+    .btn-lg { padding: .9rem 1.75rem; font-size: .95rem; border-radius: 10px; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    /* Upload area */
+    .upload-zone {
+      border: 2px dashed rgba(0,102,255,0.25); border-radius: 14px; padding: 2.5rem;
+      text-align: center; cursor: pointer; transition: all .2s; background: var(--soft-white);
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--primary-blue); background: var(--light-blue); }
+    .upload-zone i { font-size: 2.5rem; color: var(--primary-blue); margin-bottom: .75rem; display: block; opacity: .7; }
+    .upload-zone p { color: var(--text-gray); font-size: .9rem; margin-bottom: .5rem; }
+    .upload-zone span { font-size: .78rem; color: var(--text-gray); opacity: .7; }
+    .upload-preview { display: none; align-items: center; gap: 1rem; padding: 1rem; background: var(--light-blue); border-radius: 10px; margin-top: 1rem; }
+    .upload-preview.show { display: flex; }
+    .preview-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(0,102,255,0.15); }
+    .preview-info { flex: 1; min-width: 0; }
+    .preview-name { font-size: .85rem; font-weight: 600; color: var(--primary-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .preview-size { font-size: .75rem; color: var(--text-gray); }
+    .remove-file { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1rem; flex-shrink: 0; }
+
+    /* Form */
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: .82rem; font-weight: 600; color: var(--primary-dark); margin-bottom: .4rem; }
+    .form-group select, .form-group input {
+      width: 100%; padding: .75rem .9rem; border: 1.5px solid rgba(0,102,255,0.15);
+      border-radius: 10px; font-size: .88rem; font-family: 'Inter', sans-serif; outline: none;
+      background: var(--soft-white); color: var(--text-dark); transition: all .2s;
+    }
+    .form-group select:focus, .form-group input:focus { border-color: var(--primary-blue); background: white; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+
+    /* Payment history */
+    .payment-item { display: flex; align-items: center; gap: 1rem; padding: .9rem; background: var(--soft-white); border-radius: 10px; margin-bottom: .65rem; }
+    .payment-item:last-child { margin-bottom: 0; }
+    .pay-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .pay-icon.pending { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .pay-icon.approved { background: rgba(0,212,170,0.12); color: var(--success); }
+    .pay-icon.rejected { background: rgba(239,68,68,0.1); color: var(--danger); }
+    .pay-info { flex: 1; }
+    .pay-plan { font-size: .88rem; font-weight: 600; color: var(--primary-dark); }
+    .pay-date { font-size: .75rem; color: var(--text-gray); }
+    .pay-admin-note { font-size: .75rem; color: var(--danger); margin-top: .2rem; }
+    .badge { display: inline-flex; align-items: center; gap: .25rem; padding: .22rem .65rem; border-radius: 50px; font-size: .72rem; font-weight: 600; }
+    .badge-pending { background: rgba(245,158,11,0.12); color: var(--warning); }
+    .badge-approved { background: rgba(0,212,170,0.12); color: var(--success); }
+    .badge-rejected { background: rgba(239,68,68,0.1); color: var(--danger); }
+
+    /* DMI locked */
+    .dmi-locked { text-align: center; padding: 3rem 1.5rem; }
+    .dmi-locked i { font-size: 3rem; color: var(--warning); display: block; margin-bottom: 1rem; }
+    .dmi-locked h3 { font-size: 1.2rem; font-weight: 700; color: var(--primary-dark); margin-bottom: .5rem; }
+    .dmi-locked p { color: var(--text-gray); font-size: .9rem; max-width: 380px; margin: 0 auto 1.5rem; line-height: 1.6; }
+    .dmi-courses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+    .course-card { background: var(--soft-white); border-radius: 12px; padding: 1.25rem; border: 1px solid rgba(0,102,255,0.1); transition: all .2s; text-decoration: none; display: block; }
+    .course-card:hover { border-color: var(--primary-blue); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(10,37,64,0.08); }
+    .course-icon { font-size: 1.75rem; margin-bottom: .75rem; }
+    .course-title { font-size: .9rem; font-weight: 700; color: var(--primary-dark); margin-bottom: .3rem; }
+    .course-desc { font-size: .78rem; color: var(--text-gray); line-height: 1.5; }
+
+    /* Page views */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Toast */
+    .toast-wrap { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: .5rem; }
+    .toast { background: var(--primary-dark); color: white; padding: .8rem 1.2rem; border-radius: 10px; font-size: .85rem; font-weight: 500; display: flex; align-items: center; gap: .6rem; box-shadow: 0 8px 24px rgba(10,37,64,0.25); animation: slideIn .3s ease; }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    @media (max-width: 900px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: none; } .main { margin-left: 0; } .hamburger { display: block; } .form-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="../index.html"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">My Account</div>
+    <div class="nav-item active" onclick="showPage('home')"><i class="fas fa-home"></i> Dashboard</div>
+    <div class="nav-item" onclick="showPage('payment')"><i class="fas fa-credit-card"></i> Payment</div>
+    <div class="nav-item" onclick="showPage('dmi')"><i class="fas fa-graduation-cap"></i> DMI Courses</div>
+    <div class="nav-label">Site</div>
+    <div class="nav-item" onclick="window.location.href='../index.html'"><i class="fas fa-globe"></i> Main Website</div>
+    <div class="nav-item" onclick="window.location.href='../blog/articles.html'"><i class="fas fa-newspaper"></i> Blog</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar" id="sidebarAvatar">U</div>
+      <div>
+        <div class="user-name" id="sidebarName">Loading&hellip;</div>
+        <div class="user-plan" id="sidebarPlan">&mdash;</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+      <h1 id="pageTitle">Dashboard</h1>
+    </div>
+    <div id="topbarStatus"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div id="paymentStatusBanner"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;" class="home-grid">
+        <div class="card" style="margin-bottom:0;">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+            <div style="width:40px;height:40px;background:var(--light-blue);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--primary-blue);font-size:1rem;"><i class="fas fa-user"></i></div>
+            <div style="font-size:.78rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Account</div>
+          </div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--primary-dark);" id="homeName">&mdash;</div>
+          <div style="font-size:.8rem;color:var(--text-gray);" id="homeEmail">&mdash;</div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+            <div style="width:40px;height:40px;background:rgba(0,212,170,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--success);font-size:1rem;"><i class="fas fa-tags"></i></div>
+            <div style="font-size:.78rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Plan</div>
+          </div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--primary-dark);" id="homePlan">&mdash;</div>
+          <div style="font-size:.8rem;color:var(--text-gray);" id="homeJoined">&mdash;</div>
+        </div>
+        <div class="card" style="margin-bottom:0;">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+            <div style="width:40px;height:40px;background:rgba(245,158,11,0.12);border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--warning);font-size:1rem;"><i class="fas fa-shield-alt"></i></div>
+            <div style="font-size:.78rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Payment Status</div>
+          </div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--primary-dark);text-transform:capitalize;" id="homePayStatus">&mdash;</div>
+          <div style="font-size:.8rem;" id="homeApproved">&mdash;</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+        </div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="showPage('payment')"><i class="fas fa-upload"></i> Upload Payment Receipt</button>
+          <button class="btn btn-outline" onclick="showPage('dmi')"><i class="fas fa-graduation-cap"></i> DMI Courses</button>
+          <a href="../about/contact.html" class="btn btn-outline"><i class="fas fa-headset"></i> Contact Support</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="page" id="page-payment">
+      <div id="paymentStatusBanner2"></div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-upload"></i> Upload Payment Receipt</h2>
+        </div>
+        <p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;line-height:1.6;">
+          After making payment, upload your bank transfer receipt or screenshot here. Our admin team will verify and approve your account within 24 hours.
+        </p>
+
+        <div class="form-row" style="margin-bottom:1rem;">
+          <div class="form-group">
+            <label>Plan You Are Paying For</label>
+            <select id="uploadPlan">
+              <option value="">Select plan</option>
+              <option value="Starter">Starter &mdash; &#8358;250,000/month</option>
+              <option value="Growth">Growth &mdash; &#8358;700,000/month</option>
+              <option value="Enterprise">Enterprise &mdash; &#8358;1,500,000/month</option>
+              <option value="DMI Course">DMI Course Only</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount Paid (&#8358;)</label>
+            <input type="text" id="uploadAmount" placeholder="e.g. 250000">
+          </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('receiptFile').click()">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <p><strong>Click to upload</strong> or drag and drop your receipt</p>
+          <span>JPG, PNG, PDF up to 10MB</span>
+          <input type="file" id="receiptFile" accept="image/*,.pdf" style="display:none" onchange="handleFileSelect(this)">
+        </div>
+
+        <div class="upload-preview" id="uploadPreview">
+          <img id="previewThumb" class="preview-thumb" src="" alt="">
+          <div class="preview-info">
+            <div class="preview-name" id="previewName">&mdash;</div>
+            <div class="preview-size" id="previewSize">&mdash;</div>
+          </div>
+          <button class="remove-file" onclick="removeFile()"><i class="fas fa-times-circle"></i></button>
+        </div>
+
+        <div id="uploadError" style="display:none;background:#FEE2E2;color:#DC2626;padding:.75rem 1rem;border-radius:8px;font-size:.83rem;margin-top:1rem;"></div>
+
+        <button class="btn btn-primary btn-lg" style="margin-top:1.25rem;width:100%;" id="uploadBtn" onclick="submitReceipt()">
+          <i class="fas fa-paper-plane"></i> Submit Receipt for Verification
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><i class="fas fa-history"></i> Payment History</h2>
+          <button class="btn btn-outline" style="font-size:.78rem;padding:.4rem .85rem;" onclick="loadPaymentHistory()"><i class="fas fa-sync-alt"></i> Refresh</button>
+        </div>
+        <div id="paymentHistory"><div style="text-align:center;padding:2rem;color:var(--text-gray);"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</div></div>
+      </div>
+    </div>
+
+    <!-- DMI -->
+    <div class="page" id="page-dmi">
+      <div id="dmiContent"></div>
+    </div>
+
+  </div><!-- /content -->
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const API = window.location.origin + '/api';
+  const token = localStorage.getItem('seedads_user_token');
+  if (!token) window.location.href = 'login.html';
+
+  let userData = null;
+  let selectedFile = null;
+
+  // Escape HTML before inserting into innerHTML to prevent XSS
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+    document.getElementById('toastWrap').appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  function logout() {
+    localStorage.removeItem('seedads_user_token');
+    localStorage.removeItem('seedads_user');
+    window.location.href = 'login.html';
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    const titles = { home: 'Dashboard', payment: 'Payment', dmi: 'DMI Courses' };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    if (page === 'dmi') renderDMI();
+    if (page === 'payment') loadPaymentHistory();
+    if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function fmtDate(d) {
+    if (!d) return '&mdash;';
+    return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function paymentStatusBannerHtml(user, lastPayment) {
+    const s = user.payment_status;
+    if (s === 'paid' && user.approved) {
+      return `<div class="status-banner approved" style="margin-bottom:1.25rem;">
+        <div class="status-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="status-text"><h3>Payment Approved &mdash; Full Access Granted</h3><p>Your payment has been verified. You now have full access to all DMI courses and content. Approved on ${fmtDate(user.approved_at)}.</p></div>
+      </div>`;
+    }
+    if (s === 'pending') {
+      return `<div class="status-banner pending" style="margin-bottom:1.25rem;">
+        <div class="status-icon"><i class="fas fa-clock"></i></div>
+        <div class="status-text"><h3>Receipt Under Review</h3><p>Your payment receipt has been submitted and is being reviewed by our admin team. You'll receive full access within 24 hours.</p></div>
+      </div>`;
+    }
+    if (lastPayment && lastPayment.status === 'rejected') {
+      return `<div class="status-banner rejected" style="margin-bottom:1.25rem;">
+        <div class="status-icon"><i class="fas fa-times-circle"></i></div>
+        <div class="status-text"><h3>Payment Rejected</h3><p>${escHtml(lastPayment.admin_note) || 'Your receipt was not accepted. Please upload a new receipt or contact support.'}</p></div>
+      </div>`;
+    }
+    return `<div class="status-banner unpaid" style="margin-bottom:1.25rem;">
+      <div class="status-icon"><i class="fas fa-info-circle"></i></div>
+      <div class="status-text"><h3>No Payment On File</h3><p>Upload your payment receipt to gain full access to DMI courses and services. <a href="#" onclick="showPage('payment')" style="color:var(--primary-blue);font-weight:600;">Upload now &rarr;</a></p></div>
+    </div>`;
+  }
+
+  async function loadProfile() {
+    try {
+      const res = await fetch(API + '/users/me', { headers: { Authorization: 'Bearer ' + token } });
+      if (res.status === 401) { logout(); return; }
+      const data = await res.json();
+      userData = data.user;
+      const u = data.user;
+
+      // Sidebar
+      document.getElementById('sidebarName').textContent = u.first_name + ' ' + u.last_name;
+      document.getElementById('sidebarAvatar').textContent = u.first_name.charAt(0).toUpperCase();
+      document.getElementById('sidebarPlan').textContent = u.plan || 'No plan selected';
+
+      // Home cards
+      document.getElementById('homeName').textContent = u.first_name + ' ' + u.last_name;
+      document.getElementById('homeEmail').textContent = u.email;
+      document.getElementById('homePlan').textContent = u.plan || 'Not selected';
+      document.getElementById('homeJoined').textContent = 'Joined ' + fmtDate(u.created_at);
+      document.getElementById('homePayStatus').textContent = u.payment_status;
+      document.getElementById('homeApproved').innerHTML = u.approved
+        ? `<span style="color:var(--success);font-weight:600;"><i class="fas fa-check-circle"></i> Approved</span>`
+        : `<span style="color:var(--text-gray);">Pending approval</span>`;
+
+      // Status banners
+      const bannerHtml = paymentStatusBannerHtml(u, data.lastPayment);
+      document.getElementById('paymentStatusBanner').innerHTML = bannerHtml;
+      document.getElementById('paymentStatusBanner2').innerHTML = bannerHtml;
+    } catch (e) {
+      toast('Failed to load profile', 'error');
+    }
+  }
+
+  async function loadPaymentHistory() {
+    const el = document.getElementById('paymentHistory');
+    try {
+      const res = await fetch(API + '/payments/mine', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      if (!data.payments.length) {
+        el.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-gray);"><i class="fas fa-receipt" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.75rem;"></i>No payment submissions yet.</div>`;
+        return;
+      }
+      el.innerHTML = data.payments.map(p => `
+        <div class="payment-item">
+          <div class="pay-icon ${p.status}"><i class="fas fa-${p.status === 'approved' ? 'check' : p.status === 'rejected' ? 'times' : 'clock'}"></i></div>
+          <div class="pay-info">
+            <div class="pay-plan">${p.plan || 'Payment'} ${p.amount ? '&mdash; &#8358;' + Number(p.amount).toLocaleString() : ''}</div>
+            <div class="pay-date">Submitted ${fmtDate(p.created_at)}</div>
+            ${p.admin_note ? `<div class="pay-admin-note"><i class="fas fa-comment-alt"></i> ${escHtml(p.admin_note)}</div>` : ''}
+          </div>
+          <span class="badge badge-${p.status}">${p.status}</span>
+          ${p.receipt_path ? `<a href="${window.location.origin}/uploads/${p.receipt_path}" target="_blank" class="btn btn-outline" style="font-size:.75rem;padding:.35rem .7rem;"><i class="fas fa-eye"></i></a>` : ''}
+        </div>
+      `).join('');
+    } catch {
+      el.innerHTML = '<div style="color:var(--danger);padding:1rem;">Failed to load history.</div>';
+    }
+  }
+
+  // File upload
+  function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    selectedFile = file;
+    const preview = document.getElementById('uploadPreview');
+    document.getElementById('previewName').textContent = file.name;
+    document.getElementById('previewSize').textContent = (file.size / 1024).toFixed(1) + ' KB';
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = e => { document.getElementById('previewThumb').src = e.target.result; };
+      reader.readAsDataURL(file);
+      document.getElementById('previewThumb').style.display = 'block';
+    } else {
+      document.getElementById('previewThumb').src = '';
+      document.getElementById('previewThumb').style.display = 'none';
+    }
+    preview.classList.add('show');
+  }
+
+  function removeFile() {
+    selectedFile = null;
+    document.getElementById('receiptFile').value = '';
+    document.getElementById('uploadPreview').classList.remove('show');
+  }
+
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('receiptFile').files = dt.files; handleFileSelect(document.getElementById('receiptFile')); }
+  });
+
+  async function submitReceipt() {
+    const errEl = document.getElementById('uploadError');
+    errEl.style.display = 'none';
+    if (!selectedFile) { errEl.textContent = 'Please select a receipt file to upload.'; errEl.style.display = 'block'; return; }
+    const plan = document.getElementById('uploadPlan').value;
+    if (!plan) { errEl.textContent = 'Please select the plan you are paying for.'; errEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading&hellip;';
+
+    const form = new FormData();
+    form.append('receipt', selectedFile);
+    form.append('plan', plan);
+    form.append('amount', document.getElementById('uploadAmount').value);
+
+    try {
+      const res = await fetch(API + '/payments/upload', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + token },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      toast('Receipt submitted successfully! We will review within 24 hours.');
+      removeFile();
+      document.getElementById('uploadPlan').value = '';
+      document.getElementById('uploadAmount').value = '';
+      loadProfile();
+      loadPaymentHistory();
+    } catch (ex) {
+      errEl.textContent = ex.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Receipt for Verification';
+    }
+  }
+
+  async function renderDMI() {
+    const el = document.getElementById('dmiContent');
+    if (!userData) { el.innerHTML = '<div style="text-align:center;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>'; return; }
+
+    if (!userData.approved) {
+      const s = userData.payment_status;
+      const msg = s === 'pending'
+        ? 'Your payment receipt is being reviewed. DMI access will be granted once approved - usually within 24 hours.'
+        : 'DMI courses are available after your payment is verified. Upload your receipt on the Payment page to get started.';
+      el.innerHTML = `
+        <div class="card">
+          <div class="dmi-locked">
+            <i class="fas fa-lock"></i>
+            <h3>DMI Courses - Access Restricted</h3>
+            <p>${msg}</p>
+            ${s !== 'pending' ? `<button class="btn btn-primary btn-lg" onclick="showPage('payment')"><i class="fas fa-upload"></i> Upload Payment Receipt</button>` : `<div style="color:var(--warning);font-weight:600;font-size:.9rem;"><i class="fas fa-clock"></i> Review in progress...</div>`}
+          </div>
+        </div>`;
+      return;
+    }
+
+    el.innerHTML = '<div style="text-align:center;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> Loading courses...</div>';
+    try {
+      const res = await fetch(API + '/dmi', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      const items = data.items || [];
+      const planLabel = data.userPlan || userData.plan || '';
+      const typeIcon = { pdf:'fa-file-pdf', video:'fa-play-circle', zip:'fa-file-archive', link:'fa-external-link-alt' };
+      const typeColor = { pdf:'#ef4444', video:'#6366f1', zip:'#f59e0b', link:'#10b981' };
+      let contentHtml = '';
+      if (!items.length) {
+        contentHtml = '<p style="color:var(--text-gray);text-align:center;padding:2rem;">Course materials are being prepared. Check back soon!</p>';
+      } else {
+        const accessible = items.filter(i => i.accessible);
+        const locked = items.filter(i => !i.accessible);
+        if (accessible.length) {
+          contentHtml += `<div style="margin-bottom:1.5rem;"><h4 style="font-size:.9rem;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem;">Available Resources (${accessible.length})</h4><div class="dmi-courses">${accessible.map(item => {
+            const icon = typeIcon[item.type] || 'fa-file';
+            const color = typeColor[item.type] || '#6366f1';
+            let action = '';
+            if (item.type === 'video' && item.file_path) { action = `href="#" onclick="event.preventDefault();openDmiVideo('${item.file_path}','${item.title.replace(/'/g,"\\'")}')"`; }
+            else if (item.file_path) { action = `href="${item.file_path}" download target="_blank"`; }
+            else if (item.external_url) { action = `href="${item.external_url}" target="_blank" rel="noopener"`; }
+            else { action = 'href="../dmi/index.html"'; }
+            return `<a class="course-card" ${action}><div class="course-icon" style="background:${color}20;"><i class="fas ${icon}" style="color:${color};font-size:1.5rem;"></i></div><div class="course-title">${item.title}</div><div class="course-desc">${item.description || item.category || ''}</div></a>`;
+          }).join('')}</div></div>`;
+        }
+        if (locked.length) {
+          contentHtml += `<div style="margin-top:1.5rem;padding:1.25rem;background:#faf5ff;border-radius:12px;border:1px solid #e9d5ff;"><h4 style="font-size:.9rem;font-weight:700;color:#7c3aed;margin-bottom:.5rem;"><i class="fas fa-lock"></i> Upgrade to Unlock ${locked.length} More Resource${locked.length > 1 ? 's' : ''}</h4><p style="font-size:.83rem;color:var(--text-gray);margin-bottom:1rem;">These resources require a higher plan. <a href="../pricing.html" style="color:#6366f1;font-weight:600;">View Plans</a></p><div style="display:flex;flex-wrap:wrap;gap:.5rem;">${locked.map(i => `<span style="background:white;border:1px solid #e9d5ff;border-radius:50px;padding:.3rem .75rem;font-size:.78rem;color:#7c3aed;"><i class="fas fa-lock" style="font-size:.65rem;"></i> ${i.title}</span>`).join('')}</div></div>`;
+        }
+      }
+      el.innerHTML = `<div class="card"><div class="card-header"><h2><i class="fas fa-graduation-cap"></i> DMI - Digital Marketing Institute</h2><span style="background:rgba(0,212,170,0.1);color:var(--success);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px;"><i class="fas fa-check-circle"></i> ${planLabel ? planLabel + ' Plan' : 'Full Access'}</span></div><p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;">Welcome back, ${userData.first_name}! Here are your available DMI resources. <a href="../dmi/index.html" style="color:var(--primary-blue);font-weight:600;margin-left:.5rem;">Browse full library <i class="fas fa-arrow-right" style="font-size:.75rem;"></i></a></p>${contentHtml}</div>`;
+    } catch {
+      el.innerHTML = '<div class="card"><p style="color:var(--text-gray);text-align:center;padding:2rem;">Could not load DMI content. Please try again.</p></div>';
+    }
+  }
+
+  window.openDmiVideo = function(src, title) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;';
+    overlay.innerHTML = `<div style="width:100%;max-width:900px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;"><h3 style="color:white;font-size:1.1rem;">${title}</h3><button onclick="this.closest('div[style]').remove()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;"><i class="fas fa-times"></i></button></div><video src="${src}" controls autoplay style="width:100%;border-radius:12px;max-height:70vh;"></video></div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  };
+
+  loadProfile();
+</script>
+</body>
+</html>

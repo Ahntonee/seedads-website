@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -184,6 +184,7 @@
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -381,96 +382,8 @@
             </div>
 
             <!-- Portfolio Grid -->
-            <div class="portfolio-grid">
-                <!-- Project 1 -->
-                <div class="portfolio-card" data-category="ecommerce">
-                    <div class="portfolio-image"><i class="fas fa-seedling"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">E-Commerce</span>
-                        <h3>Harvesters</h3>
-                        <p>Complete digital transformation for an agricultural e-commerce platform. Implemented SEO, PPC, and social media strategies that drove massive growth.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>350%</h4><p>Sales Growth</p></div>
-                            <div class="portfolio-stat"><h4>10x</h4><p>ROAS</p></div>
-                            <div class="portfolio-stat"><h4>-40%</h4><p>CPA</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 2 -->
-                <div class="portfolio-card" data-category="saas">
-                    <div class="portfolio-image"><i class="fas fa-plug"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">SaaS</span>
-                        <h3>Konnect</h3>
-                        <p>B2B lead generation campaign for a SaaS platform. Optimized LinkedIn and Google Ads to reduce cost per acquisition while scaling lead volume.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>60%</h4><p>Lower CPA</p></div>
-                            <div class="portfolio-stat"><h4>3x</h4><p>Lead Volume</p></div>
-                            <div class="portfolio-stat"><h4>500%</h4><p>ROI</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 3 -->
-                <div class="portfolio-card" data-category="realestate">
-                    <div class="portfolio-image"><i class="fas fa-home"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">Real Estate</span>
-                        <h3>GreenField Realty</h3>
-                        <p>Targeted Facebook campaigns for property sales. Generated qualified buyer and seller leads with high conversion rates.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>250%</h4><p>More Leads</p></div>
-                            <div class="portfolio-stat"><h4>45%</h4><p>Conversion</p></div>
-                            <div class="portfolio-stat"><h4>8x</h4><p>ROAS</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 4 -->
-                <div class="portfolio-card" data-category="healthcare">
-                    <div class="portfolio-image"><i class="fas fa-heartbeat"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">Healthcare</span>
-                        <h3>MedCare Plus</h3>
-                        <p>Patient acquisition campaign for healthcare services. HIPAA-compliant marketing that generated steady patient inquiries.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>180%</h4><p>Patient Inquiries</p></div>
-                            <div class="portfolio-stat"><h4>35%</h4><p>Booking Rate</p></div>
-                            <div class="portfolio-stat"><h4>4x</h4><p>ROAS</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 5 -->
-                <div class="portfolio-card" data-category="ecommerce">
-                    <div class="portfolio-image"><i class="fas fa-tshirt"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">E-Commerce</span>
-                        <h3>StyleHub</h3>
-                        <p>Fashion e-commerce growth campaign. Combined influencer marketing with paid ads to drive brand awareness and sales.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>420%</h4><p>Revenue Growth</p></div>
-                            <div class="portfolio-stat"><h4>2.5M</h4><p>Reach</p></div>
-                            <div class="portfolio-stat"><h4>6x</h4><p>ROAS</p></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Project 6 -->
-                <div class="portfolio-card" data-category="saas">
-                    <div class="portfolio-image"><i class="fas fa-chart-pie"></i></div>
-                    <div class="portfolio-content">
-                        <span class="portfolio-tag">SaaS</span>
-                        <h3>FinEdge</h3>
-                        <p>B2B financial services marketing. LinkedIn and Google Ads strategy that brought high-value enterprise clients.</p>
-                        <div class="portfolio-stats">
-                            <div class="portfolio-stat"><h4>400%</h4><p>B2B Leads</p></div>
-                            <div class="portfolio-stat"><h4>28%</h4><p>Close Rate</p></div>
-                            <div class="portfolio-stat"><h4>6x</h4><p>ROAS</p></div>
-                        </div>
-                    </div>
-                </div>
+            <div class="portfolio-grid" id="portfolioGrid">
+                <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-gray)"><i class="fas fa-spinner fa-spin"></i> Loading projects&hellip;</div>
             </div>
         </div>
     </section>
@@ -593,25 +506,43 @@
 
         window.addEventListener('resize', () => { if (window.innerWidth > 900 && isMenuOpen) closeMenu(); });
 
-        // Filter functionality
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const portfolioCards = document.querySelectorAll('.portfolio-card');
+        // Category label map
+        const catLabels = { ecommerce:'E-Commerce', saas:'SaaS', healthcare:'Healthcare', realestate:'Real Estate', b2b:'B2B' };
 
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                const filter = btn.dataset.filter;
-                portfolioCards.forEach(card => {
-                    if (filter === 'all' || card.dataset.category === filter) {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = 'none';
-                    }
+        // Load portfolio from CMS
+        (async function loadPortfolio() {
+            const grid = document.getElementById('portfolioGrid');
+            try {
+                const res = await fetch('/api/cms/portfolio');
+                const { items } = await res.json();
+                if (!items || !items.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">No projects yet.</div>'; return; }
+                grid.innerHTML = items.map(p => `
+                    <div class="portfolio-card" data-category="${p.category || ''}">
+                        <div class="portfolio-image"><i class="${p.icon || 'fas fa-briefcase'}"></i></div>
+                        <div class="portfolio-content">
+                            <span class="portfolio-tag">${catLabels[p.category] || p.category || ''}</span>
+                            <h3>${p.title}</h3>
+                            <p>${p.description || ''}</p>
+                            <div class="portfolio-stats">
+                                ${p.stat1_value ? `<div class="portfolio-stat"><h4>${p.stat1_value}</h4><p>${p.stat1_label || ''}</p></div>` : ''}
+                                ${p.stat2_value ? `<div class="portfolio-stat"><h4>${p.stat2_value}</h4><p>${p.stat2_label || ''}</p></div>` : ''}
+                                ${p.stat3_value ? `<div class="portfolio-stat"><h4>${p.stat3_value}</h4><p>${p.stat3_label || ''}</p></div>` : ''}
+                            </div>
+                        </div>
+                    </div>`).join('');
+                // Wire up filter buttons after cards are rendered
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        const filter = btn.dataset.filter;
+                        document.querySelectorAll('.portfolio-card').forEach(card => {
+                            card.style.display = (filter === 'all' || card.dataset.category === filter) ? 'block' : 'none';
+                        });
+                    });
                 });
-            });
-        });
+            } catch(e) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">Failed to load portfolio.</div>'; }
+        })();
     </script>
 </body>
 </html>

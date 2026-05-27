@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -127,7 +127,17 @@
             .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
-    </style>
+            /* Logged-in user nav */
+        .user-nav-wrap { position: relative; display: none; align-items: center; gap: .5rem; cursor: pointer; padding: .3rem .5rem; border-radius: 50px; transition: background .2s; }
+        .user-nav-wrap:hover { background: var(--light-blue, #E6F0FF); }
+        .user-nav-avatar { width: 32px; height: 32px; background: linear-gradient(135deg,#0A2540,#0066FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+        .user-nav-name { font-size: .88rem; font-weight: 600; color: #0A2540; white-space: nowrap; }
+        .user-nav-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(10,37,64,0.15); padding: .4rem; min-width: 175px; z-index: 500; display: none; border: 1px solid rgba(0,102,255,0.08); }
+        .user-nav-wrap.open .user-nav-dropdown { display: block; }
+        .user-nav-dropdown a, .user-nav-dropdown button { display: flex; align-items: center; gap: .55rem; padding: .6rem .85rem; border-radius: 8px; font-size: .84rem; font-weight: 500; color: #1A1A2E; text-decoration: none; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; transition: background .15s; }
+        .user-nav-dropdown a:hover, .user-nav-dropdown button:hover { background: #E6F0FF; color: #0066FF; }
+        .user-nav-dropdown hr { border: none; border-top: 1px solid rgba(0,102,255,0.08); margin: .3rem 0; }</style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -267,11 +277,24 @@
                 <a href="../pricing.html" class="nav-link">Pricing</a>
             </li>
         </ul>
-        <div class="nav-buttons">
-            <a href="../about/contact.html" class="nav-contact"><i class="fas fa-phone"></i> Contact Us</a>
-            <a href="../about/contact.html" class="nav-cta"><i class="fas fa-rocket"></i> Get Started</a>
-        </div>
-        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars" id="menuIcon"></i></button>
+                <div class="nav-buttons">
+            <div id="guestNavBtns" style="display:flex;align-items:center;gap:.5rem;">
+                <a href="../about/contact.html" class="nav-contact"><i class="fas fa-phone"></i> Contact Us</a>
+                <a href="../about/contact.html" class="nav-cta"><i class="fas fa-rocket"></i> Get Started</a>
+            </div>
+            <div class="user-nav-wrap" id="userNavWrap" onclick="this.classList.toggle('open')">
+                <div class="user-nav-avatar" id="navAvatar">U</div>
+                <span class="user-nav-name" id="navUserName">My Account</span>
+                <i class="fas fa-chevron-down" style="font-size:.65rem;color:#6B7280;"></i>
+                <div class="user-nav-dropdown">
+                    <a href="../user/dashboard.html"><i class="fas fa-tachometer-alt"></i> My Dashboard</a>
+                    <a href="../user/dashboard.html"><i class="fas fa-credit-card"></i> Payment</a>
+                    <a href="../user/dashboard.html"><i class="fas fa-graduation-cap"></i> DMI Courses</a>
+                    <hr>
+                    <button onclick="signOutUser()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+                </div>
+            </div>
+        </div>        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars" id="menuIcon"></i></button>
     </nav>
 
     <!-- Hero Section -->
@@ -283,6 +306,36 @@
             <h1>Industry Insights</h1>
             <p>Deep dives into marketing trends, research, and industry analysis</p>
         </div>
+    </section>
+
+    <!-- Live posts from admin (hidden when empty) -->
+    <style>
+        .live-blog-wrap{padding:4rem 5% 2rem;max-width:1400px;margin:0 auto;}
+        .live-blog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:2rem;}
+        .live-card{background:white;border-radius:24px;overflow:hidden;border:1px solid rgba(0,102,255,0.08);box-shadow:0 4px 20px rgba(10,37,64,0.06);transition:all .4s ease;}
+        .live-card:hover{transform:translateY(-6px);box-shadow:0 20px 50px rgba(10,37,64,0.12);border-color:rgba(0,102,255,0.2);}
+        .live-card-img{height:180px;display:flex;align-items:center;justify-content:center;font-size:3rem;color:white;}
+        .live-card-body{padding:1.75rem;}
+        .live-meta{display:flex;gap:1rem;margin-bottom:.85rem;align-items:center;flex-wrap:wrap;}
+        .live-tag{padding:.25rem .75rem;border-radius:50px;font-size:.72rem;font-weight:700;text-transform:uppercase;}
+        .live-card-body h3{font-size:1.1rem;font-weight:700;color:var(--primary-dark);margin-bottom:.75rem;line-height:1.4;}
+        .live-card-body p{color:var(--text-gray);font-size:.88rem;line-height:1.65;}
+            /* Logged-in user nav */
+        .user-nav-wrap { position: relative; display: none; align-items: center; gap: .5rem; cursor: pointer; padding: .3rem .5rem; border-radius: 50px; transition: background .2s; }
+        .user-nav-wrap:hover { background: var(--light-blue, #E6F0FF); }
+        .user-nav-avatar { width: 32px; height: 32px; background: linear-gradient(135deg,#0A2540,#0066FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+        .user-nav-name { font-size: .88rem; font-weight: 600; color: #0A2540; white-space: nowrap; }
+        .user-nav-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(10,37,64,0.15); padding: .4rem; min-width: 175px; z-index: 500; display: none; border: 1px solid rgba(0,102,255,0.08); }
+        .user-nav-wrap.open .user-nav-dropdown { display: block; }
+        .user-nav-dropdown a, .user-nav-dropdown button { display: flex; align-items: center; gap: .55rem; padding: .6rem .85rem; border-radius: 8px; font-size: .84rem; font-weight: 500; color: #1A1A2E; text-decoration: none; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; transition: background .15s; }
+        .user-nav-dropdown a:hover, .user-nav-dropdown button:hover { background: #E6F0FF; color: #0066FF; }
+        .user-nav-dropdown hr { border: none; border-top: 1px solid rgba(0,102,255,0.08); margin: .3rem 0; }</style>
+    <section class="live-blog-wrap" id="liveSection" style="display:none;">
+        <div style="text-align:center;margin-bottom:2.5rem;">
+            <h2 style="font-size:2rem;font-weight:700;color:var(--primary-dark);margin-bottom:.75rem;">Latest From Our Blog</h2>
+            <p style="color:var(--text-gray);font-size:1.05rem;">Published insights from the SeedsAds team</p>
+        </div>
+        <div class="live-blog-grid" id="liveGrid"></div>
     </section>
 
     <style>
@@ -306,7 +359,16 @@
         @media (max-width: 768px) {
             .insights-grid { grid-template-columns: 1fr; }
         }
-    </style>
+            /* Logged-in user nav */
+        .user-nav-wrap { position: relative; display: none; align-items: center; gap: .5rem; cursor: pointer; padding: .3rem .5rem; border-radius: 50px; transition: background .2s; }
+        .user-nav-wrap:hover { background: var(--light-blue, #E6F0FF); }
+        .user-nav-avatar { width: 32px; height: 32px; background: linear-gradient(135deg,#0A2540,#0066FF); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+        .user-nav-name { font-size: .88rem; font-weight: 600; color: #0A2540; white-space: nowrap; }
+        .user-nav-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: white; border-radius: 12px; box-shadow: 0 8px 32px rgba(10,37,64,0.15); padding: .4rem; min-width: 175px; z-index: 500; display: none; border: 1px solid rgba(0,102,255,0.08); }
+        .user-nav-wrap.open .user-nav-dropdown { display: block; }
+        .user-nav-dropdown a, .user-nav-dropdown button { display: flex; align-items: center; gap: .55rem; padding: .6rem .85rem; border-radius: 8px; font-size: .84rem; font-weight: 500; color: #1A1A2E; text-decoration: none; width: 100%; background: none; border: none; cursor: pointer; font-family: inherit; transition: background .15s; }
+        .user-nav-dropdown a:hover, .user-nav-dropdown button:hover { background: #E6F0FF; color: #0066FF; }
+        .user-nav-dropdown hr { border: none; border-top: 1px solid rgba(0,102,255,0.08); margin: .3rem 0; }</style>
 
     <section class="insights-section">
         <div class="section-header">
@@ -472,6 +534,30 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 900 && isMenuOpen) { closeMenu(); }
         });
+    </script>
+    <script>
+        (async function() {
+            const CAT = {
+                'SEO':{icon:'fa-search',bg:'linear-gradient(135deg,#0A2540,#0066FF)',color:'#0066FF'},
+                'PPC':{icon:'fa-ad',bg:'linear-gradient(135deg,#ec4899,#f43f5e)',color:'#ec4899'},
+                'Social Media':{icon:'fa-share-alt',bg:'linear-gradient(135deg,#10b981,#34d399)',color:'#10b981'},
+                'Email Marketing':{icon:'fa-envelope',bg:'linear-gradient(135deg,#f59e0b,#fbbf24)',color:'#f59e0b'},
+                'Analytics':{icon:'fa-chart-line',bg:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6'},
+                'Content Marketing':{icon:'fa-pen-fancy',bg:'linear-gradient(135deg,#06b6d4,#22d3ee)',color:'#06b6d4'},
+                'News':{icon:'fa-newspaper',bg:'linear-gradient(135deg,#0A2540,#0066FF)',color:'#0066FF'},
+                'Update':{icon:'fa-bell',bg:'linear-gradient(135deg,#f59e0b,#ef4444)',color:'#f59e0b'},
+            };
+            function fd(d){return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});}
+            try {
+                const data = await fetch('/api/blog?status=published&category=Industry+Insights&limit=6').then(r=>r.json());
+                if (!data.posts || !data.posts.length) return;
+                document.getElementById('liveSection').style.display = '';
+                document.getElementById('liveGrid').innerHTML = data.posts.map(p => {
+                    const c = CAT[p.category] || {icon:'fa-chart-bar',bg:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6'};
+                    return `<a href="post.html?id=${p.id}" class="live-card" style="text-decoration:none;color:inherit;display:block;"><div class="live-card-img" style="background:${c.bg}"><i class="fas ${c.icon}"></i></div><div class="live-card-body"><div class="live-meta"><span class="live-tag" style="background:rgba(0,0,0,0.06);color:${c.color}">${p.category||'Industry Insights'}</span><span style="font-size:.78rem;color:var(--text-gray)"><i class="far fa-calendar"></i> ${fd(p.created_at)}</span></div><h3>${p.title}</h3><p>${p.excerpt||''}</p></div></a>`;
+                }).join('');
+            } catch {}
+        })();
     </script>
 </body>
 </html>

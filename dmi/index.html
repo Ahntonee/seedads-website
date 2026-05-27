@@ -1,11 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Marketing Institute | AdMedia Agency</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Digital Marketing Institute | SeedsAds</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="dmi-guard.js"></script>
     <style>
         :root {
             --primary: #6366f1;
@@ -347,11 +348,12 @@
             .stats-container { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <nav>
         <div class="nav-container">
-            <a href="../index.html" class="logo">AdMedia</a>
+            <a href="../index.html" class="logo">SeedsAds</a>
             <ul class="nav-links">
                 <li class="dropdown">
                     <a href="#">Our Services <i class="fas fa-chevron-down"></i></a>
@@ -525,6 +527,184 @@
         </div>
     </section>
 
+    <!-- ── Dynamic Course Library (plan-based) ────────────────────────────── -->
+    <section id="course-library" style="padding:5rem 2rem;background:#f8fafc;">
+      <div style="max-width:1400px;margin:0 auto;">
+        <div class="section-header">
+          <h2>Course Library</h2>
+          <p id="librarySubtitle">Browse your available courses, PDFs and resources</p>
+        </div>
+
+        <!-- Category filter pills -->
+        <div id="categoryPills" style="display:flex;gap:.75rem;flex-wrap:wrap;justify-content:center;margin-bottom:2.5rem;"></div>
+
+        <!-- Content grid -->
+        <div id="dmiContentGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.5rem;">
+          <div style="grid-column:1/-1;text-align:center;padding:4rem;color:#64748b;">
+            <i class="fas fa-spinner fa-spin" style="font-size:2rem;display:block;margin-bottom:1rem;"></i>
+            <p>Loading resources...</p>
+          </div>
+        </div>
+
+        <!-- Upgrade CTA (shown when user has locked items) -->
+        <div id="upgradeCta" style="display:none;margin-top:3rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:20px;padding:2.5rem;text-align:center;">
+          <h3 style="color:white;font-size:1.4rem;font-weight:800;margin-bottom:.75rem;">Unlock More Resources</h3>
+          <p style="color:rgba(255,255,255,.85);margin-bottom:1.5rem;">Some resources require a higher plan. Upgrade to access the full library.</p>
+          <a href="../pricing.html" style="display:inline-flex;align-items:center;gap:.5rem;background:white;color:#6366f1;padding:.85rem 2rem;border-radius:50px;font-weight:700;text-decoration:none;">
+            <i class="fas fa-tags"></i> View Plans
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      .dmi-card { background:white; border-radius:16px; border:1px solid #e2e8f0; overflow:hidden; transition:transform .3s,box-shadow .3s; }
+      .dmi-card:hover { transform:translateY(-4px); box-shadow:0 12px 35px rgba(0,0,0,.1); }
+      .dmi-card-header { padding:1.5rem 1.5rem 1rem; display:flex; gap:1rem; align-items:flex-start; }
+      .dmi-type-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.3rem; color:white; flex-shrink:0; }
+      .dmi-card-body { padding:0 1.5rem 1.5rem; }
+      .dmi-card-body h4 { font-size:1rem; font-weight:700; color:#0f172a; margin-bottom:.4rem; line-height:1.4; }
+      .dmi-card-body p { font-size:.85rem; color:#64748b; line-height:1.6; margin-bottom:1rem; }
+      .dmi-plan-badge { display:inline-block; padding:.2rem .7rem; border-radius:50px; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+      .dmi-action-btn { display:inline-flex; align-items:center; gap:.5rem; padding:.65rem 1.25rem; border-radius:50px; font-size:.85rem; font-weight:600; text-decoration:none; border:none; cursor:pointer; font-family:inherit; transition:all .2s; }
+      .dmi-locked { opacity:.55; pointer-events:none; cursor:not-allowed; }
+      .cat-pill { padding:.45rem 1.1rem; border-radius:50px; font-size:.82rem; font-weight:600; cursor:pointer; border:2px solid #e2e8f0; background:white; color:#64748b; transition:all .2s; }
+      .cat-pill.active, .cat-pill:hover { background:#6366f1; color:white; border-color:#6366f1; }
+    </style>
+
+    <script>
+    (function () {
+      const token = localStorage.getItem('seedads_user_token');
+      let allItems = [];
+      let activeCategory = 'all';
+
+      const typeStyles = {
+        pdf:   { icon: 'fa-file-pdf',  bg: '#ef4444', label: 'PDF' },
+        video: { icon: 'fa-play-circle',bg: '#6366f1', label: 'Video' },
+        zip:   { icon: 'fa-file-archive',bg: '#f59e0b', label: 'Files' },
+        link:  { icon: 'fa-external-link-alt',bg: '#10b981', label: 'Link' },
+      };
+      function typeStyle(t) { return typeStyles[t] || typeStyles.pdf; }
+
+      function planColor(p) {
+        const m = { all: '#10b981', Starter: '#3b82f6', 'DMI Course': '#8b5cf6', Growth: '#f59e0b', Enterprise: '#ef4444' };
+        return m[p] || '#64748b';
+      }
+
+      function renderItems(items) {
+        const grid = document.getElementById('dmiContentGrid');
+        const hasLocked = items.some(i => !i.accessible);
+        document.getElementById('upgradeCta').style.display = hasLocked ? 'block' : 'none';
+
+        if (!items.length) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#64748b;"><i class="fas fa-box-open" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:1rem;"></i><p>No resources in this category yet.</p></div>';
+          return;
+        }
+
+        grid.innerHTML = items.map(item => {
+          const ts = typeStyle(item.type);
+          const pc = planColor(item.plan_access);
+          const planLabel = item.plan_access === 'all' ? 'Free' : item.plan_access;
+          const lockedClass = item.accessible ? '' : 'dmi-locked';
+
+          let actionBtn = '';
+          if (!item.accessible) {
+            actionBtn = `<a href="../pricing.html" class="dmi-action-btn" style="background:#6366f1;color:white;pointer-events:auto;opacity:1;cursor:pointer;" onclick="event.stopPropagation()"><i class="fas fa-unlock-alt"></i> Upgrade</a>`;
+          } else if (item.type === 'video' && item.file_path) {
+            actionBtn = `<button class="dmi-action-btn" style="background:#6366f1;color:white;" onclick="openVideo('${item.file_path}','${item.title.replace(/'/g,"\\'")}')"><i class="fas fa-play"></i> Watch</button>`;
+          } else if (item.type === 'video' && item.external_url) {
+            actionBtn = `<a href="${item.external_url}" class="dmi-action-btn" style="background:#6366f1;color:white;" target="_blank" rel="noopener"><i class="fas fa-play"></i> Watch</a>`;
+          } else if (item.file_path) {
+            actionBtn = `<a href="${item.file_path}" class="dmi-action-btn" style="background:#6366f1;color:white;" target="_blank" download><i class="fas fa-download"></i> Download</a>`;
+          } else if (item.external_url) {
+            actionBtn = `<a href="${item.external_url}" class="dmi-action-btn" style="background:#6366f1;color:white;" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> Open</a>`;
+          }
+
+          return `<div class="dmi-card">
+            <div class="dmi-card-header">
+              <div class="dmi-type-icon" style="background:${ts.bg}"><i class="fas ${ts.icon}"></i></div>
+              <div style="flex:1;min-width:0;">
+                <span class="dmi-plan-badge" style="background:${pc}20;color:${pc};">${planLabel}</span>
+                ${item.category ? `<span style="margin-left:.4rem;font-size:.72rem;color:#94a3b8;">${item.category}</span>` : ''}
+              </div>
+              ${!item.accessible ? '<i class="fas fa-lock" style="color:#94a3b8;font-size:1rem;"></i>' : ''}
+            </div>
+            <div class="dmi-card-body">
+              <h4>${item.title}</h4>
+              ${item.description ? `<p>${item.description}</p>` : ''}
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
+                <span style="font-size:.78rem;color:#94a3b8;"><i class="fas ${ts.icon}"></i> ${ts.label}</span>
+                ${actionBtn}
+              </div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+
+      function filterAndRender() {
+        const filtered = activeCategory === 'all' ? allItems : allItems.filter(i => i.category === activeCategory);
+        renderItems(filtered);
+      }
+
+      function buildCategoryPills(items) {
+        const cats = ['all', ...new Set(items.map(i => i.category).filter(Boolean))];
+        const pills = document.getElementById('categoryPills');
+        pills.innerHTML = cats.map(c => `<button class="cat-pill ${c === 'all' ? 'active' : ''}" onclick="setCategory('${c}')">${c === 'all' ? 'All Resources' : c}</button>`).join('');
+      }
+
+      window.setCategory = function (cat) {
+        activeCategory = cat;
+        document.querySelectorAll('.cat-pill').forEach(p => {
+          p.classList.toggle('active', p.textContent.trim() === (cat === 'all' ? 'All Resources' : cat));
+        });
+        filterAndRender();
+      };
+
+      window.openVideo = function (src, title) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem;';
+        overlay.innerHTML = `
+          <div style="width:100%;max-width:900px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+              <h3 style="color:white;font-size:1.1rem;">${title}</h3>
+              <button onclick="this.closest('div[style]').remove()" style="background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <video src="${src}" controls autoplay style="width:100%;border-radius:12px;max-height:70vh;"></video>
+          </div>`;
+        document.body.appendChild(overlay);
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      };
+
+      async function loadContent() {
+        const grid = document.getElementById('dmiContentGrid');
+        try {
+          const headers = {};
+          if (token) headers['Authorization'] = 'Bearer ' + token;
+          const res = await fetch('/api/dmi', { headers });
+          const data = await res.json();
+          allItems = data.items || [];
+
+          const userPlan = data.userPlan;
+          if (userPlan) {
+            document.getElementById('librarySubtitle').textContent = 'Viewing resources for your ' + userPlan + ' plan';
+          }
+
+          if (!allItems.length) {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:4rem;color:#64748b;"><i class="fas fa-graduation-cap" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:1rem;"></i><p style="font-size:1.05rem;">Course materials are being prepared. Check back soon!</p></div>';
+            return;
+          }
+
+          buildCategoryPills(allItems);
+          renderItems(allItems);
+        } catch {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#64748b;"><p>Could not load resources. Please try again later.</p></div>';
+        }
+      }
+
+      loadContent();
+    })();
+    </script>
+
     <section class="stats-section">
         <div class="stats-container">
             <div class="stat-item">
@@ -586,7 +766,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2024 AdMedia Agency. All rights reserved.</p>
+            <p>&copy; 2025 SeedsAds Digital Marketing. All rights reserved.</p>
         </div>
     </footer>
 

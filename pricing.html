@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -216,6 +216,7 @@
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -383,59 +384,7 @@
     <section class="pricing-section">
         <div class="pricing-container">
             <div class="pricing-grid" id="pricingGrid">
-                <!-- Starter Plan -->
-                <div class="pricing-card">
-                    <h3>Starter</h3>
-                    <div class="price"><span class="currency">₦</span><span class="amount">250,000</span><span>/month</span></div>
-                    <p class="description">Best for businesses testing and validating paid ads</p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> Meta Ads (Facebook & Instagram)</li>
-                        <li><i class="fas fa-check"></i> Campaign Strategy & Setup</li>
-                        <li><i class="fas fa-check"></i> Ad Spend Management (Up to <span class="ad-spend">₦1,000,000</span>/month)</li>
-                        <li><i class="fas fa-check"></i> Conversion Tracking (Pixel Setup)</li>
-                        <li><i class="fas fa-check"></i> Basic Funnel Guidance</li>
-                        <li><i class="fas fa-check"></i> Monthly Performance Report</li>
-                        <li><i class="fas fa-check"></i> Dedicated Account Support</li>
-                    </ul>
-                    <a href="about/contact.html" class="pricing-btn secondary">Get Started</a>
-                </div>
-
-                <!-- Growth Plan -->
-                <div class="pricing-card popular">
-                    <span class="popular-badge">Most Popular</span>
-                    <h3>Growth</h3>
-                    <div class="price"><span class="currency">₦</span><span class="amount">700,000</span><span>/month</span></div>
-                    <p class="description">For businesses ready to scale and optimize performance</p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> Everything in Starter</li>
-                        <li><i class="fas fa-check"></i> Google Ads + Meta Ads</li>
-                        <li><i class="fas fa-check"></i> Ad Spend Management (Up to <span class="ad-spend">₦3,000,000</span>/month)</li>
-                        <li><i class="fas fa-check"></i> A/B Testing (Creatives & Copy)</li>
-                        <li><i class="fas fa-check"></i> Retargeting Campaigns</li>
-                        <li><i class="fas fa-check"></i> Funnel Optimization</li>
-                        <li><i class="fas fa-check"></i> Bi-weekly Reporting</li>
-                        <li><i class="fas fa-check"></i> Priority Support</li>
-                    </ul>
-                    <a href="about/contact.html" class="pricing-btn primary">Get Started</a>
-                </div>
-
-                <!-- Enterprise Plan -->
-                <div class="pricing-card">
-                    <h3>Enterprise</h3>
-                    <div class="price"><span class="currency">₦</span><span class="amount">1,500,000</span><span>/month</span></div>
-                    <p class="description">For aggressive growth, scaling, and market dominance</p>
-                    <ul>
-                        <li><i class="fas fa-check"></i> Everything in Growth</li>
-                        <li><i class="fas fa-check"></i> Multi-Platform Ads (Google, Meta, YouTube, TikTok)</li>
-                        <li><i class="fas fa-check"></i> Ad Spend Management (<span class="ad-spend">₦5,000,000+</span>/month)</li>
-                        <li><i class="fas fa-check"></i> Advanced Funnel Strategy</li>
-                        <li><i class="fas fa-check"></i> Landing Page System (High-Converting Pages)</li>
-                        <li><i class="fas fa-check"></i> Conversion Rate Optimization (CRO)</li>
-                        <li><i class="fas fa-check"></i> Weekly Reporting & Insights</li>
-                        <li><i class="fas fa-check"></i> Dedicated Growth Manager</li>
-                    </ul>
-                    <a href="about/contact.html" class="pricing-btn secondary">Get Started</a>
-                </div>
+                <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-gray)"><i class="fas fa-spinner fa-spin"></i> Loading plans&hellip;</div>
             </div>
         </div>
     </section>
@@ -458,7 +407,7 @@
                     <div class="setup-fee">
                         <h4><i class="fas fa-tools"></i> Setup Fee</h4>
                         <div class="fee-grid">
-                            <div class="fee-item"><i class="fas fa-globe-africa"></i><div><span>₦350,000</span></div></div>
+                            <div class="fee-item"><i class="fas fa-globe-africa"></i><div><span>&#8358;350,000</span></div></div>
                             </div>
                         <p style="margin-top: 1rem; color: var(--text-gray); font-size: 0.9rem;"><strong>Covers:</strong></p>
                         <ul class="covers-list">
@@ -579,6 +528,35 @@
     </footer>
 
     <script>
+        // Load pricing plans from CMS
+        (async function loadPricingPlans() {
+            const grid = document.getElementById('pricingGrid');
+            try {
+                const res = await fetch('/api/cms/pricing-plans');
+                const { plans } = await res.json();
+                if (!plans || !plans.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">No plans available.</div>'; return; }
+                grid.innerHTML = plans.map(p => {
+                    let features = [];
+                    try { features = JSON.parse(p.features || '[]'); } catch(e) {}
+                    const hasBadge = p.badge_text;
+                    const isPopular = p.is_popular;
+                    const badgeStyle = p.badge_color ? `style="background:${p.badge_color}"` : '';
+                    const cardStyle = hasBadge && !isPopular ? `style="border:2px solid ${p.badge_color || 'var(--primary-blue)'}"` : '';
+                    let btnClass = 'pricing-btn ' + (p.button_style === 'primary' ? 'primary' : p.button_style === 'custom' ? '' : 'secondary');
+                    let btnStyle = p.button_style === 'custom' && p.button_color ? `style="${p.button_color.includes('gradient') ? 'background:' + p.button_color : 'background:' + p.button_color};color:white;border:none;"` : '';
+                    const registerPlan = p.register_plan || p.name;
+                    return `<div class="pricing-card${isPopular ? ' popular' : ''}" ${cardStyle}>
+                        ${hasBadge ? `<span class="popular-badge" ${badgeStyle}>${p.badge_text}</span>` : ''}
+                        <h3>${p.name}</h3>
+                        <div class="price"><span class="currency">&#8358;</span><span class="amount">${p.price || ''}</span><span>${p.billing || ''}</span></div>
+                        <p class="description">${p.description || ''}</p>
+                        <ul>${features.map(f => `<li><i class="fas fa-check"></i> ${f}</li>`).join('')}</ul>
+                        <a href="user/register.html?plan=${encodeURIComponent(registerPlan)}" class="${btnClass}" ${btnStyle}>${p.button_text || 'Get Started'}</a>
+                    </div>`;
+                }).join('');
+            } catch(e) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">Failed to load plans.</div>'; }
+        })();
+
         // Navbar scroll effect
         window.addEventListener('scroll', () => {
             const navbar = document.getElementById('navbar');
@@ -629,32 +607,6 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 900 && isMenuOpen) { closeMenu(); }
         });
-
-        );
-
-            // Update prices
-            const data = pricingData[region];
-            const cards = document.querySelectorAll('.pricing-card');
-            
-            cards.forEach((card, index) => {
-                const priceEl = card.querySelector('.price');
-                const currencyEl = priceEl.querySelector('.currency');
-                const amountEl = priceEl.querySelector('.amount');
-                
-                let amount;
-                if (index === 0) amount = data.starter;
-                else if (index === 1) amount = data.growth;
-                else amount = data.enterprise;
-                
-                currencyEl.textContent = data.currency;
-                amountEl.textContent = amount;
-            });
-
-            // Update ad spend amounts
-            document.querySelectorAll('.ad-spend').forEach(el => {
-                el.textContent = el.dataset[region];
-            });
-        }
     </script>
 </body>
 </html>

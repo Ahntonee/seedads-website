@@ -1,0 +1,234 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Client Login | SeedsAds</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --primary-dark: #0A2540; --primary-blue: #0066FF; --accent-blue: #4D9FFF;
+      --light-blue: #E6F0FF; --soft-white: #FAFBFC; --text-dark: #1A1A2E;
+      --text-gray: #6B7280; --success: #00D4AA; --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; min-height: 100vh; display: flex; background: var(--soft-white); }
+    .left-panel {
+      width: 420px; flex-shrink: 0;
+      background: var(--gradient-blue);
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 3rem 2.5rem; position: relative; overflow: hidden;
+    }
+    .left-panel::before {
+      content: ''; position: absolute; top: -40%; left: -40%;
+      width: 180%; height: 180%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 55%);
+      animation: rotate 20s linear infinite;
+    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+    .panel-logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.6rem; font-weight: 700; color: white; display: flex; align-items: center; gap: .5rem; position: relative; z-index: 1; text-decoration: none; }
+    .panel-logo span { color: var(--accent-blue); }
+    .panel-content { position: relative; z-index: 1; }
+    .panel-content h2 { font-size: 2rem; font-weight: 800; color: white; margin-bottom: 1rem; line-height: 1.2; }
+    .panel-content p { color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 2rem; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: .75rem; }
+    .feature-list li { display: flex; align-items: center; gap: .75rem; color: rgba(255,255,255,0.85); font-size: .9rem; }
+    .feature-list li i { width: 28px; height: 28px; background: rgba(255,255,255,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .75rem; flex-shrink: 0; }
+    .panel-footer { position: relative; z-index: 1; color: rgba(255,255,255,0.4); font-size: .8rem; }
+
+    .right-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .form-card { width: 100%; max-width: 420px; }
+    .form-card h1 { font-size: 1.7rem; font-weight: 800; color: var(--primary-dark); margin-bottom: .35rem; }
+    .form-card > p { color: var(--text-gray); font-size: .92rem; margin-bottom: 2rem; }
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: .82rem; font-weight: 600; color: var(--primary-dark); margin-bottom: .4rem; }
+    .input-wrap { position: relative; }
+    .input-wrap i.prefix { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); color: var(--text-gray); font-size: .85rem; pointer-events: none; }
+    .form-group input {
+      width: 100%; padding: .8rem .9rem .8rem 2.5rem;
+      border: 1.5px solid rgba(0,102,255,0.15); border-radius: 10px;
+      font-size: .9rem; font-family: 'Inter', sans-serif; outline: none;
+      background: var(--soft-white); transition: all .2s; color: var(--text-dark);
+    }
+    .form-group input:focus { border-color: var(--primary-blue); background: white; box-shadow: 0 0 0 3px rgba(0,102,255,0.08); }
+    .toggle-pw { position: absolute; right: .9rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-gray); cursor: pointer; font-size: .85rem; }
+    .submit-btn {
+      width: 100%; padding: .95rem; background: var(--gradient-blue); color: white;
+      border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: .5rem; margin-top: .5rem;
+    }
+    .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(0,102,255,0.35); }
+    .submit-btn:disabled { opacity: .7; cursor: not-allowed; transform: none; }
+    .error-box { background: #FEE2E2; color: #DC2626; padding: .75rem 1rem; border-radius: 8px; font-size: .83rem; margin-bottom: 1rem; display: none; align-items: center; gap: .5rem; }
+    .error-box.show { display: flex; }
+    .register-link { text-align: center; margin-top: 1.5rem; font-size: .88rem; color: var(--text-gray); }
+    .register-link a { color: var(--primary-blue); font-weight: 600; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
+    .admin-link { text-align: center; margin-top: .75rem; }
+    .admin-link a { font-size: .78rem; color: var(--text-gray); text-decoration: none; }
+    .admin-link a:hover { color: var(--primary-blue); }
+    @media (max-width: 768px) { .left-panel { display: none; } }
+    .google-btn {
+      width: 100%; padding: .85rem; background: white; color: #3c4043;
+      border: 1.5px solid #dadce0; border-radius: 10px; font-size: .92rem;
+      font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: .6rem;
+      transition: all .2s; margin-top: .75rem;
+    }
+    .google-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .divider { display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0; color: var(--text-gray); font-size: .8rem; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: rgba(0,102,255,0.1); }
+  </style>
+</head>
+<body>
+  <div class="left-panel">
+    <a href="../index.html" class="panel-logo"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></a>
+    <div class="panel-content">
+      <h2>Welcome Back to Your Portal</h2>
+      <p>Log in to manage your campaigns, track performance, upload payment receipts and access your DMI courses.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-upload"></i> Upload payment receipt for verification</li>
+        <li><i class="fas fa-graduation-cap"></i> Access DMI courses after approval</li>
+        <li><i class="fas fa-chart-bar"></i> View campaign reports</li>
+        <li><i class="fas fa-headset"></i> Reach your account manager</li>
+      </ul>
+    </div>
+    <div class="panel-footer">&copy; 2025 SeedsAds Digital Marketing</div>
+  </div>
+
+  <div class="right-panel">
+    <div class="form-card">
+      <h1>Sign In</h1>
+      <p>Enter your credentials to access your client portal.</p>
+
+      <div class="error-box" id="errorBox"><i class="fas fa-exclamation-circle"></i><span id="errorText"></span></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <div class="input-wrap">
+            <i class="fas fa-envelope prefix"></i>
+            <input type="email" id="email" placeholder="john@example.com" required autocomplete="email">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <div class="input-wrap">
+            <i class="fas fa-lock prefix"></i>
+            <input type="password" id="password" placeholder="Your password" required autocomplete="current-password">
+            <button type="button" class="toggle-pw" onclick="togglePw()"><i class="fas fa-eye" id="eyeIcon"></i></button>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <i class="fas fa-sign-in-alt"></i> Sign In
+        </button>
+      </form>
+
+      <div class="divider">or continue with</div>
+      <button class="google-btn" onclick="triggerGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <div style="text-align:right;margin-top:.25rem;margin-bottom:.5rem;font-size:.8rem;"><a href="forgot-password.html" style="color:#0066FF;text-decoration:none;">Forgot password?</a></div>
+      <div class="register-link" style="margin-top:1.25rem;">Don't have an account? <a href="register.html">Create one free</a></div>
+      <div class="admin-link"><a href="../admin/login.html"><i class="fas fa-shield-alt"></i> Admin login</a></div>
+    </div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('seedads_user_token')) window.location.href = 'dashboard.html';
+
+    const GOOGLE_CLIENT_ID = '402537891647-gqcuajjh06cmc7nughtqinbpk8oj76su.apps.googleusercontent.com';
+    let _gReady = false;
+
+    window.addEventListener('load', function () {
+      if (typeof google === 'undefined') return;
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredential,
+        ux_mode: 'popup',
+        cancel_on_tap_outside: true,
+      });
+      _gReady = true;
+    });
+
+    function triggerGoogle() {
+      if (!_gReady) { setTimeout(triggerGoogle, 300); return; }
+      google.accounts.id.prompt(function (n) {
+        if (n.isNotDisplayed() || n.isSkippedMoment()) {
+          var c = document.getElementById('_gFallback');
+          if (!c) {
+            c = document.createElement('div');
+            c.id = '_gFallback';
+            c.style.cssText = 'position:fixed;opacity:0;pointer-events:none;top:0;left:0;';
+            document.body.appendChild(c);
+            google.accounts.id.renderButton(c, { type: 'standard', size: 'large' });
+          }
+          var btn = c.querySelector('div[role="button"]');
+          if (btn) btn.click();
+        }
+      });
+    }
+
+    async function handleGoogleCredential(response) {
+      const errEl = document.getElementById('errorBox');
+      try {
+        const res = await fetch('/api/users/google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: response.credential }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Google sign-in failed');
+        localStorage.setItem('seedads_user_token', data.token);
+        localStorage.setItem('seedads_user', JSON.stringify(data.user));
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirect || 'dashboard.html';
+      } catch (ex) {
+        document.getElementById('errorText').textContent = ex.message;
+        errEl.classList.add('show');
+      }
+    }
+
+    function togglePw() {
+      const el = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      el.type = el.type === 'password' ? 'text' : 'password';
+      icon.className = el.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('errorBox');
+      const btn = document.getElementById('submitBtn');
+      err.classList.remove('show');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+      try {
+        const res = await fetch('/api/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        localStorage.setItem('seedads_user_token', data.token);
+        localStorage.setItem('seedads_user', JSON.stringify(data.user));
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        window.location.href = redirect || 'dashboard.html';
+      } catch (ex) {
+        document.getElementById('errorText').textContent = ex.message;
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

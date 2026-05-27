@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -209,6 +209,7 @@
         .forgot-password a { font-size: 0.85rem; color: var(--primary-blue); text-decoration: none; font-weight: 500; }
         .forgot-password a:hover { text-decoration: underline; }
 </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -406,7 +407,12 @@
             </div>
 
             <div class="contact-form">
-                <form>
+                <div id="formSuccess" style="display:none;background:rgba(0,212,170,0.1);border:1.5px solid #00D4AA;border-radius:16px;padding:2rem;text-align:center;">
+                    <i class="fas fa-check-circle" style="font-size:2.5rem;color:#00D4AA;margin-bottom:1rem;display:block;"></i>
+                    <h3 style="color:var(--primary-dark);margin-bottom:.5rem;">Message Sent!</h3>
+                    <p style="color:var(--text-gray);">Thanks for reaching out. We'll get back to you within 24 hours.</p>
+                </div>
+                <form id="contactForm">
                     <div class="form-group">
                         <label for="name">Full Name</label>
                         <input type="text" id="name" name="name" placeholder="John Doe" required>
@@ -416,27 +422,73 @@
                         <input type="email" id="email" name="email" placeholder="john@example.com" required>
                     </div>
                     <div class="form-group">
-                        <label for="company">Company Name</label>
-                        <input type="text" id="company" name="company" placeholder="Your Company">
+                        <label for="phone">Phone Number</label>
+                        <input type="text" id="phone" name="phone" placeholder="+234 800 000 0000">
                     </div>
                     <div class="form-group">
                         <label for="service">Service Interested In</label>
                         <select id="service" name="service">
                             <option value="">Select a service</option>
-                            <option value="seo">SEO Optimization</option>
-                            <option value="ppc">PPC Advertising</option>
-                            <option value="social">Social Media Marketing</option>
-                            <option value="content">Content Marketing</option>
-                            <option value="email">Email Marketing</option>
-                            <option value="other">Other</option>
+                            <option value="SEO Optimization">SEO Optimization</option>
+                            <option value="PPC Advertising">PPC Advertising</option>
+                            <option value="Social Media Marketing">Social Media Marketing</option>
+                            <option value="Content Marketing">Content Marketing</option>
+                            <option value="Email Marketing">Email Marketing</option>
+                            <option value="Lead Generation">Lead Generation</option>
+                            <option value="Analytics & CRO">Analytics & CRO</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="budget">Monthly Budget</label>
+                        <select id="budget" name="budget">
+                            <option value="">Select budget range</option>
+                            <option value="Under &#8358;250,000">Under &#8358;250,000</option>
+                            <option value="&#8358;250,000 &ndash; &#8358;700,000">&#8358;250,000 &ndash; &#8358;700,000</option>
+                            <option value="&#8358;700,000 &ndash; &#8358;1,500,000">&#8358;700,000 &ndash; &#8358;1,500,000</option>
+                            <option value="&#8358;1,500,000+">&#8358;1,500,000+</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="message">Message</label>
                         <textarea id="message" name="message" placeholder="Tell us about your project..."></textarea>
                     </div>
-                    <button type="submit" class="submit-btn"><i class="fas fa-paper-plane"></i> Send Message</button>
+                    <div id="formError" style="display:none;color:#DC2626;font-size:.85rem;margin-bottom:.75rem;padding:.75rem;background:#FEE2E2;border-radius:10px;"></div>
+                    <button type="submit" class="submit-btn" id="submitBtn"><i class="fas fa-paper-plane"></i> Send Message</button>
                 </form>
+                <script>
+                    document.getElementById('contactForm').addEventListener('submit', async function(e) {
+                        e.preventDefault();
+                        const btn = document.getElementById('submitBtn');
+                        const errEl = document.getElementById('formError');
+                        errEl.style.display = 'none';
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+                        try {
+                            const res = await fetch('/api/contacts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name: document.getElementById('name').value,
+                                    email: document.getElementById('email').value,
+                                    phone: document.getElementById('phone').value,
+                                    service: document.getElementById('service').value,
+                                    budget: document.getElementById('budget').value,
+                                    message: document.getElementById('message').value,
+                                })
+                            });
+                            const data = await res.json();
+                            if (!res.ok) throw new Error(data.error || 'Submission failed');
+                            document.getElementById('contactForm').style.display = 'none';
+                            document.getElementById('formSuccess').style.display = 'block';
+                        } catch(err) {
+                            errEl.textContent = err.message;
+                            errEl.style.display = 'block';
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+                        }
+                    });
+                </script>
             </div>
         </div>
     </section>
@@ -610,26 +662,23 @@
                 <h2>Welcome Back</h2>
                 <p>Sign in to access your dashboard</p>
             </div>
-            <form onsubmit="event.preventDefault(); alert('Login functionality coming soon!');">
+            <div id="loginError" style="display:none;background:#FEE2E2;color:#DC2626;padding:.75rem 1rem;border-radius:10px;font-size:.85rem;margin-bottom:1rem;display:none;align-items:center;gap:.5rem;"></div>
+            <form id="loginModalForm">
                 <div class="form-group-modal">
                     <label>Email Address</label>
-                    <input type="email" placeholder="Enter your email" required>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
                 </div>
                 <div class="form-group-modal">
                     <label>Password</label>
-                    <input type="password" placeholder="Enter your password" required>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
                 </div>
                 <div class="forgot-password">
                     <a href="#">Forgot password?</a>
                 </div>
-                <button type="submit" class="submit-btn-modal">Sign In</button>
+                <button type="submit" class="submit-btn-modal" id="loginSubmitBtn">Sign In</button>
             </form>
-            <div class="divider">or continue with</div>
-            <button class="social-btn" onclick="alert('Google sign-in coming soon!')">
-                <i class="fab fa-google" style="color:#DB4437"></i> Sign in with Google
-            </button>
             <div class="modal-footer">
-                <p>Don't have an account? <a onclick="switchModal('loginModal', 'signupModal')">Sign up</a></p>
+                <p>Don't have an account? <a onclick="switchModal('loginModal', 'signupModal')" style="cursor:pointer;">Sign up</a></p>
             </div>
         </div>
     </div>
@@ -643,43 +692,115 @@
                 <h2>Create Account</h2>
                 <p>Join thousands of marketers growing with SeedsAds</p>
             </div>
-            <form onsubmit="event.preventDefault(); alert('Sign up functionality coming soon!');">
+            <div id="signupError" style="display:none;background:#FEE2E2;color:#DC2626;padding:.75rem 1rem;border-radius:10px;font-size:.85rem;margin-bottom:1rem;align-items:center;gap:.5rem;"></div>
+            <form id="signupModalForm">
                 <div class="form-row">
                     <div class="form-group-modal">
                         <label>First Name</label>
-                        <input type="text" placeholder="John" required>
+                        <input type="text" id="signupFirstName" placeholder="John" required>
                     </div>
                     <div class="form-group-modal">
                         <label>Last Name</label>
-                        <input type="text" placeholder="Doe" required>
+                        <input type="text" id="signupLastName" placeholder="Doe" required>
                     </div>
                 </div>
                 <div class="form-group-modal">
                     <label>Email Address</label>
-                    <input type="email" placeholder="john@example.com" required>
+                    <input type="email" id="signupEmail" placeholder="john@example.com" required>
                 </div>
                 <div class="form-group-modal">
                     <label>Password</label>
-                    <input type="password" placeholder="Create a strong password" required>
+                    <input type="password" id="signupPassword" placeholder="Create a strong password" required>
                 </div>
                 <div class="form-group-modal">
                     <label>Confirm Password</label>
-                    <input type="password" placeholder="Confirm your password" required>
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required>
                 </div>
                 <div class="checkbox-group">
                     <input type="checkbox" id="terms" required>
                     <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
                 </div>
-                <button type="submit" class="submit-btn-modal">Create Account</button>
+                <button type="submit" class="submit-btn-modal" id="signupSubmitBtn">Create Account</button>
             </form>
-            <div class="divider">or sign up with</div>
-            <button class="social-btn" onclick="alert('Google sign-up coming soon!')">
-                <i class="fab fa-google" style="color:#DB4437"></i> Sign up with Google
-            </button>
             <div class="modal-footer">
-                <p>Already have an account? <a onclick="switchModal('signupModal', 'loginModal')">Sign in</a></p>
+                <p>Already have an account? <a onclick="switchModal('signupModal', 'loginModal')" style="cursor:pointer;">Sign in</a></p>
             </div>
         </div>
     </div>
+
+    <script>
+        const API_BASE = '/api';
+
+        function showModalError(elId, msg) {
+            const el = document.getElementById(elId);
+            el.textContent = msg;
+            el.style.display = 'flex';
+        }
+        function hideModalError(elId) {
+            document.getElementById(elId).style.display = 'none';
+        }
+
+        // Login
+        document.getElementById('loginModalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideModalError('loginError');
+            const btn = document.getElementById('loginSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in&hellip;';
+            try {
+                const res = await fetch(API_BASE + '/users/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+                localStorage.setItem('seedads_user_token', data.token);
+                localStorage.setItem('seedads_user', JSON.stringify(data.user));
+                window.location.href = '../user/dashboard.html';
+            } catch (err) {
+                showModalError('loginError', err.message);
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+
+        // Sign Up
+        document.getElementById('signupModalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideModalError('signupError');
+            const password = document.getElementById('signupPassword').value;
+            if (password !== document.getElementById('signupConfirmPassword').value) {
+                showModalError('signupError', 'Passwords do not match'); return;
+            }
+            const btn = document.getElementById('signupSubmitBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account&hellip;';
+            try {
+                const res = await fetch(API_BASE + '/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        first_name: document.getElementById('signupFirstName').value,
+                        last_name: document.getElementById('signupLastName').value,
+                        email: document.getElementById('signupEmail').value,
+                        password,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Registration failed');
+                localStorage.setItem('seedads_user_token', data.token);
+                localStorage.setItem('seedads_user', JSON.stringify(data.user));
+                window.location.href = '../user/dashboard.html';
+            } catch (err) {
+                showModalError('signupError', err.message);
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
 </body>
 </html>

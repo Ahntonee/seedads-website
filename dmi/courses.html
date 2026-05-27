@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,6 +7,7 @@
     <meta name="description" content="Comprehensive digital marketing courses designed to take you from beginner to expert with SeedsAds.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="dmi-guard.js"></script>
     <style>
         :root {
             --primary-dark: #0A2540;
@@ -128,6 +129,7 @@
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -313,85 +315,8 @@
             <h2>Featured Courses</h2>
             <p>Choose from our wide range of expert-led courses</p>
         </div>
-        <div class="courses-grid">
-            <div class="course-card">
-                <div class="course-image"><i class="fas fa-search"></i></div>
-                <div class="course-content">
-                    <span class="course-level">Beginner</span>
-                    <h3>SEO Fundamentals</h3>
-                    <p>Learn the basics of search engine optimization and start improving your website's visibility.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 20 hours</span>
-                        <span><i class="fas fa-user"></i> 5,200 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn">Enroll Now</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-image" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"><i class="fas fa-ad"></i></div>
-                <div class="course-content">
-                    <span class="course-level" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">Intermediate</span>
-                    <h3>Google Ads Mastery</h3>
-                    <p>Master Google Ads and create profitable campaigns that drive qualified traffic and conversions.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 25 hours</span>
-                        <span><i class="fas fa-user"></i> 3,800 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">Enroll Now</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-image" style="background: linear-gradient(135deg, #10b981, #34d399);"><i class="fas fa-share-alt"></i></div>
-                <div class="course-content">
-                    <span class="course-level" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">All Levels</span>
-                    <h3>Social Media Marketing</h3>
-                    <p>Build a strong social media presence and engage your audience across all major platforms.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 30 hours</span>
-                        <span><i class="fas fa-user"></i> 8,500 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn" style="background: linear-gradient(135deg, #10b981, #34d399);">Enroll Now</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-image" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);"><i class="fas fa-envelope"></i></div>
-                <div class="course-content">
-                    <span class="course-level" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Intermediate</span>
-                    <h3>Email Marketing Pro</h3>
-                    <p>Create high-converting email campaigns and build automated sequences that nurture leads.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 18 hours</span>
-                        <span><i class="fas fa-user"></i> 4,200 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">Enroll Now</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-image" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);"><i class="fas fa-chart-line"></i></div>
-                <div class="course-content">
-                    <span class="course-level">Advanced</span>
-                    <h3>Marketing Analytics</h3>
-                    <p>Master data analysis and learn to make data-driven marketing decisions that drive growth.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 35 hours</span>
-                        <span><i class="fas fa-user"></i> 2,900 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn">Enroll Now</a>
-                </div>
-            </div>
-            <div class="course-card">
-                <div class="course-image" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);"><i class="fas fa-pen-fancy"></i></div>
-                <div class="course-content">
-                    <span class="course-level" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">Beginner</span>
-                    <h3>Content Marketing 101</h3>
-                    <p>Learn to create compelling content that attracts, engages, and converts your target audience.</p>
-                    <div class="course-meta">
-                        <span><i class="fas fa-clock"></i> 22 hours</span>
-                        <span><i class="fas fa-user"></i> 6,100 students</span>
-                    </div>
-                    <a href="#" class="enroll-btn" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);">Enroll Now</a>
-                </div>
-            </div>
+        <div class="courses-grid" id="coursesGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-gray)"><i class="fas fa-spinner fa-spin"></i> Loading courses&hellip;</div>
         </div>
     </section>
 
@@ -496,6 +421,50 @@
         window.addEventListener('resize', () => {
             if (window.innerWidth > 900 && isMenuOpen) { closeMenu(); }
         });
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Load courses from CMS
+        (async function loadCourses() {
+            const grid = document.getElementById('coursesGrid');
+            try {
+                const res = await fetch('/api/cms/courses');
+                const data = await res.json();
+                const items = data.courses || [];
+                if (!items.length) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-gray)">No courses available yet.</div>';
+                    return;
+                }
+                grid.innerHTML = items.map(c => {
+                    const gradient = c.gradient || 'linear-gradient(135deg, #0A2540 0%, #0066FF 100%)';
+                    const levelColor = c.level_color || '';
+                    const levelStyle = levelColor ? `background:${escHtml(levelColor)}22;color:${escHtml(levelColor)};` : '';
+                    const btnStyle = c.gradient ? `background:${escHtml(gradient)};` : '';
+                    const students = c.students ? Number(c.students).toLocaleString() : '0';
+                    return `
+                        <div class="course-card">
+                            <div class="course-image" style="background:${escHtml(gradient)};"><i class="${escHtml(c.icon) || 'fas fa-graduation-cap'}"></i></div>
+                            <div class="course-content">
+                                <span class="course-level" style="${levelStyle}">${escHtml(c.level)}</span>
+                                <h3>${escHtml(c.title)}</h3>
+                                <p>${escHtml(c.description)}</p>
+                                <div class="course-meta">
+                                    <span><i class="fas fa-clock"></i> ${escHtml(String(c.duration_hours))} hours</span>
+                                    <span><i class="fas fa-user"></i> ${students} students</span>
+                                </div>
+                                <a href="#" class="enroll-btn" style="${btnStyle}">Enroll Now</a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error('Failed to load courses:', err);
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-gray)">Failed to load courses.</div>';
+            }
+        })();
     </script>
 </body>
 </html>

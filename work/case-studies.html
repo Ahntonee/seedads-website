@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -172,6 +172,7 @@
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -344,8 +345,9 @@
             <button class="filter-tab" onclick="filterCases('saas', this)">SaaS</button>
         </div>
 
-        <div class="case-grid">
-            <div class="case-card" data-category="ecommerce">
+        <div class="case-grid" id="caseGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-gray)"><i class="fas fa-spinner fa-spin"></i> Loading case studies&hellip;</div>
+        <!--
                 <div class="case-image">
                     <i class="fas fa-shopping-bag"></i>
                 </div>
@@ -500,6 +502,7 @@
                     <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
                 </div>
             </div>
+        -->
         </div>
     </section>
 
@@ -614,23 +617,64 @@
             if (window.innerWidth > 900 && isMenuOpen) { closeMenu(); }
         });
 
-        // Filter Cases
+        // Filter Cases (works on dynamically rendered cards)
         function filterCases(category, btn) {
-            const cards = document.querySelectorAll('.case-card');
-            const tabs = document.querySelectorAll('.filter-tab');
-
-            tabs.forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
             btn.classList.add('active');
-
-            cards.forEach(card => {
-                if (category === 'all' || card.dataset.category === category) {
-                    card.style.display = 'block';
-                    card.style.animation = 'fadeIn 0.5s ease';
-                } else {
-                    card.style.display = 'none';
-                }
+            document.querySelectorAll('.case-card').forEach(card => {
+                const show = category === 'all' || card.dataset.category === category;
+                card.style.display = show ? 'block' : 'none';
+                if (show) card.style.animation = 'fadeIn 0.5s ease';
             });
         }
+
+        function escHtml(s) {
+            if (!s) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Load case studies from CMS
+        (async function loadCaseStudies() {
+            const grid = document.getElementById('caseGrid');
+            try {
+                const res = await fetch('/api/cms/case-studies');
+                const data = await res.json();
+                const items = data.studies || [];
+                if (!items.length) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-gray)">No case studies found.</div>';
+                    return;
+                }
+                grid.innerHTML = items.map(c => `
+                    <div class="case-card" data-category="${escHtml(c.category)}">
+                        <div class="case-image">
+                            <i class="${escHtml(c.icon) || 'fas fa-chart-line'}"></i>
+                        </div>
+                        <div class="case-content">
+                            <span class="case-tag">${escHtml(c.category.toUpperCase())}</span>
+                            <h3>${escHtml(c.title)}</h3>
+                            <p>${escHtml(c.description)}</p>
+                            <div class="case-stats">
+                                ${c.stat1_value ? `<div class="case-stat"><div class="case-stat-value">${escHtml(c.stat1_value)}</div><div class="case-stat-label">${escHtml(c.stat1_label)}</div></div>` : ''}
+                                ${c.stat2_value ? `<div class="case-stat"><div class="case-stat-value">${escHtml(c.stat2_value)}</div><div class="case-stat-label">${escHtml(c.stat2_label)}</div></div>` : ''}
+                                ${c.stat3_value ? `<div class="case-stat"><div class="case-stat-value">${escHtml(c.stat3_value)}</div><div class="case-stat-label">${escHtml(c.stat3_label)}</div></div>` : ''}
+                            </div>
+                            <a href="#" class="read-more">Read Full Case Study <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Re-wire filter tabs after cards are rendered
+                document.querySelectorAll('.filter-tab').forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const cat = this.getAttribute('onclick').match(/'([^']+)'/)?.[1] || 'all';
+                        filterCases(cat, this);
+                    });
+                });
+            } catch (err) {
+                console.error('Failed to load case studies:', err);
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-gray)">Failed to load case studies.</div>';
+            }
+        })();
     </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -128,6 +128,7 @@
             .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
         }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <!-- Mobile Menu Backdrop -->
@@ -320,94 +321,46 @@
             <p>Everything you need to know about working with us</p>
         </div>
 
-        <div class="faq-category">
-            <h3><i class="fas fa-info-circle"></i> General Questions</h3>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>What services does SeedsAds offer?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>We offer a comprehensive range of digital marketing services including SEO, PPC advertising, social media marketing, content marketing, email marketing, analytics & CRO, lead generation, mobile marketing, and digital consultancy. Our team can help with everything from strategy development to execution and ongoing optimization.</p>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>How long does it take to see results?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>Results vary depending on the service and your starting point. PPC campaigns can generate traffic immediately, while SEO typically takes 3-6 months to show significant improvements. Social media growth is gradual, and content marketing builds momentum over time. We provide regular reports so you can track progress.</p>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>Do you work with businesses of all sizes?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>Yes! We work with startups, small businesses, mid-sized companies, and enterprise organizations. Our services are scalable and customizable to fit your specific needs, goals, and budget. We tailor our approach based on your business size and industry.</p>
-                </div>
-            </div>
-        </div>
+        <div id=”faqContainer”><div style=”text-align:center;padding:2rem;color:var(--text-gray)”><i class=”fas fa-spinner fa-spin”></i> Loading FAQs&hellip;</div></div>
 
-        <div class="faq-category">
-            <h3><i class="fas fa-credit-card"></i> Pricing & Contracts</h3>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>How is your pricing structured?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>Our pricing varies by service and scope. We offer project-based pricing for one-time work and monthly retainers for ongoing services. Visit our pricing page for detailed information, or contact us for a custom quote tailored to your specific needs.</p>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>Do you require long-term contracts?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>We offer flexible contract terms. While some services benefit from longer commitments (like SEO), we also offer month-to-month options for many services. We're confident in our results and believe our performance should earn your continued business.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="faq-category">
-            <h3><i class="fas fa-handshake"></i> Working With Us</h3>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>How do you communicate with clients?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>We believe in transparent communication. You'll have a dedicated account manager, regular check-in calls, detailed monthly reports, and access to our project management system. We're also available via email and phone for any questions or concerns.</p>
-                </div>
-            </div>
-            <div class="faq-item">
-                <div class="faq-question" onclick="toggleFaq(this)">
-                    <span>What makes SeedsAds different from other agencies?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </div>
-                <div class="faq-answer">
-                    <p>We combine data-driven strategies with creative excellence. Our team stays ahead of industry trends, we provide transparent reporting, and we focus on measurable ROI. We're not just service providers – we're partners invested in your long-term success.</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="contact-cta">
+        <div class=”contact-cta”>
             <h3>Still have questions?</h3>
             <p>We're here to help. Reach out and we'll get back to you within 24 hours.</p>
-            <a href="../about/contact.html" class="contact-btn">Contact Us</a>
+            <a href=”../about/contact.html” class=”contact-btn”>Contact Us</a>
         </div>
     </section>
 
     <script>
         function toggleFaq(element) {
             element.classList.toggle('active');
-            const answer = element.nextElementSibling;
-            answer.classList.toggle('active');
+            element.nextElementSibling.classList.toggle('active');
         }
+
+        // Category icons map
+        const catIcons = { 'General Questions':'fas fa-info-circle', 'Pricing & Contracts':'fas fa-credit-card', 'Working With Us':'fas fa-handshake' };
+
+        (async function loadFaqs() {
+            const container = document.getElementById('faqContainer');
+            try {
+                const res = await fetch('/api/cms/faqs');
+                const { faqs } = await res.json();
+                if (!faqs || !faqs.length) { container.innerHTML = '<p style=”text-align:center;color:var(--text-gray)”>No FAQs available.</p>'; return; }
+                // Group by category
+                const groups = {};
+                faqs.forEach(f => { const cat = f.category || 'General'; if (!groups[cat]) groups[cat] = []; groups[cat].push(f); });
+                container.innerHTML = Object.entries(groups).map(([cat, items]) => `
+                    <div class=”faq-category”>
+                        <h3><i class=”${catIcons[cat] || 'fas fa-question-circle'}”></i> ${cat}</h3>
+                        ${items.map(f => `
+                            <div class=”faq-item”>
+                                <div class=”faq-question” onclick=”toggleFaq(this)”>
+                                    <span>${f.question}</span><i class=”fas fa-chevron-down”></i>
+                                </div>
+                                <div class=”faq-answer”><p>${f.answer}</p></div>
+                            </div>`).join('')}
+                    </div>`).join('');
+            } catch(e) { container.innerHTML = '<p style=”text-align:center;color:var(--text-gray)”>Failed to load FAQs.</p>'; }
+        })();
     </script>
 
     <!-- WhatsApp Float Button -->

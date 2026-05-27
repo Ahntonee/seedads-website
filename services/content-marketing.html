@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -111,6 +111,7 @@
         @media (max-width: 900px) { .nav-links { display: none; } .nav-buttons { display: none; } .mobile-menu-btn { display: block; } }
         @media (max-width: 768px) { .page-hero { padding: 6rem 4% 3rem; min-height: auto; } .page-hero h1 { font-size: 1.8rem; } .page-hero p { font-size: 1rem; } .breadcrumb { font-size: 0.8rem; } .content-section { padding: 3rem 4%; } .section-title { font-size: 1.6rem; } .features-grid { grid-template-columns: 1fr; gap: 1.5rem; } .feature-card { padding: 1.5rem; } .process-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; } .stat-item h3 { font-size: 2rem; } .footer-container { grid-template-columns: 1fr; gap: 2rem; text-align: center; } .social-links { justify-content: center; } .footer-bottom { flex-direction: column; text-align: center; } .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; } }
     </style>
+<script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
     <div class="menu-backdrop" id="menuBackdrop"></div>
@@ -352,6 +353,57 @@
         </div>
     </section>
 
+    <!-- Quick Inquiry Form -->
+    <section style="padding:4rem 5%;background:white;">
+        <div style="max-width:680px;margin:0 auto;text-align:center;">
+            <h2 style="font-size:1.8rem;font-weight:700;color:#0A2540;margin-bottom:.75rem;">Send Us a Quick Message</h2>
+            <p style="color:#6B7280;margin-bottom:2rem;">Tell us about your project and we&#39;ll get back to you within 24 hours.</p>
+            <form id="svcForm" style="display:grid;gap:1rem;text-align:left;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+                    <input type="text" id="iqName" placeholder="Your Name *" required style="padding:.85rem 1rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#FAFBFC;">
+                    <input type="email" id="iqEmail" placeholder="Email Address *" required style="padding:.85rem 1rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#FAFBFC;">
+                </div>
+                <input type="tel" id="iqPhone" placeholder="Phone Number" style="padding:.85rem 1rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#FAFBFC;">
+                <textarea id="iqMsg" placeholder="Tell us about your project&#x2026;" rows="4" style="padding:.85rem 1rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;font-size:.9rem;font-family:inherit;outline:none;background:#FAFBFC;resize:vertical;"></textarea>
+                <div id="iqStatus" style="display:none;padding:.75rem 1rem;border-radius:8px;font-size:.85rem;"></div>
+                <button type="submit" id="iqBtn" style="padding:1rem;background:linear-gradient(135deg,#0A2540,#0066FF);color:white;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;">
+                    <i class="fas fa-paper-plane"></i> Send Message
+                </button>
+            </form>
+        </div>
+    </section>
+    <script>
+        document.getElementById('svcForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('iqBtn');
+            const st = document.getElementById('iqStatus');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending…';
+            st.style.display = 'none';
+            try {
+                const res = await fetch('/api/contacts', {
+                    method: 'POST',
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({
+                        name: document.getElementById('iqName').value,
+                        email: document.getElementById('iqEmail').value,
+                        phone: document.getElementById('iqPhone').value,
+                        service: document.title.split('|')[0].trim(),
+                        message: document.getElementById('iqMsg').value,
+                    }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                st.style.cssText = 'display:block;padding:.75rem 1rem;border-radius:8px;font-size:.85rem;background:#D1FAE5;color:#065F46;';
+                st.innerHTML = '<i class="fas fa-check-circle"></i> Message sent! We\'ll get back to you within 24 hours.';
+                e.target.reset();
+            } catch(err) {
+                st.style.cssText = 'display:block;padding:.75rem 1rem;border-radius:8px;font-size:.85rem;background:#FEE2E2;color:#DC2626;';
+                st.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + err.message;
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Message';
+            }
+        });
+    </script>
     <a href="https://wa.me/2347061112102" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
     <footer>

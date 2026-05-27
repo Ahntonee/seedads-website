@@ -1,0 +1,247 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | SeedsAds</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-dark: #0A2540;
+      --primary-blue: #0066FF;
+      --accent-blue: #4D9FFF;
+      --light-blue: #E6F0FF;
+      --soft-white: #FAFBFC;
+      --text-dark: #1A1A2E;
+      --text-gray: #6B7280;
+      --success: #00D4AA;
+      --warning: #F59E0B;
+      --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gradient-blue);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 50%);
+      animation: rotate 25s linear infinite;
+    }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+
+    .login-card {
+      background: white;
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 40px 80px rgba(10,37,64,0.4);
+      position: relative;
+      z-index: 1;
+    }
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-align: center;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .logo span { color: var(--primary-blue); }
+    .subtitle {
+      text-align: center;
+      color: var(--text-gray);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    .admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: var(--light-blue);
+      color: var(--primary-blue);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      margin-bottom: 1.5rem;
+    }
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 0.5rem;
+    }
+    .input-wrap { position: relative; }
+    .input-wrap i {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-gray);
+      font-size: 0.9rem;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 2.75rem;
+      border: 2px solid rgba(0,102,255,0.15);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s;
+      outline: none;
+      background: var(--soft-white);
+    }
+    .form-group input:focus {
+      border-color: var(--primary-blue);
+      background: white;
+      box-shadow: 0 0 0 4px rgba(0,102,255,0.1);
+    }
+    .toggle-pw {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-gray);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--gradient-blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+    .login-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,102,255,0.4); }
+    .login-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .error-msg {
+      background: #FEE2E2;
+      color: #DC2626;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .error-msg.show { display: flex; }
+    .back-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-gray);
+    }
+    .back-link a { color: var(--primary-blue); text-decoration: none; font-weight: 600; }
+    .back-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></div>
+    <p class="subtitle">Digital Marketing Platform</p>
+    <div style="text-align:center;margin-bottom:1.5rem;">
+      <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Portal</span>
+    </div>
+
+    <div class="error-msg" id="errorMsg"><i class="fas fa-exclamation-circle"></i><span id="errorText"></span></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrap">
+          <i class="fas fa-user"></i>
+          <input type="text" id="username" placeholder="Enter your username" required autocomplete="username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+          <button type="button" class="toggle-pw" onclick="togglePw()"><i class="fas fa-eye" id="eyeIcon"></i></button>
+        </div>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">
+        <i class="fas fa-sign-in-alt"></i> Sign In to Dashboard
+      </button>
+    </form>
+
+    <div class="back-link"><a href="../index.html"><i class="fas fa-arrow-left"></i> Back to Website</a></div>
+  </div>
+
+  <script>
+    if (localStorage.getItem('seedads_token')) {
+      window.location.href = 'dashboard.html';
+    }
+
+    function togglePw() {
+      const pw = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      pw.type = pw.type === 'password' ? 'text' : 'password';
+      icon.className = pw.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const err = document.getElementById('errorMsg');
+      err.classList.remove('show');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        localStorage.setItem('seedads_token', data.token);
+        localStorage.setItem('seedads_admin_name', data.name);
+        window.location.href = 'dashboard.html';
+      } catch (err2) {
+        document.getElementById('errorText').textContent = err2.message;
+        document.getElementById('errorMsg').classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In to Dashboard';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1584 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | SeedsAds</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-dark:#0A2540;--primary-blue:#0066FF;--accent-blue:#4D9FFF;
+      --light-blue:#E6F0FF;--soft-white:#FAFBFC;--text-dark:#1A1A2E;
+      --text-gray:#6B7280;--success:#00D4AA;--warning:#F59E0B;--danger:#EF4444;
+      --gradient-blue:linear-gradient(135deg,#0A2540 0%,#0066FF 100%);--sidebar-w:260px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Inter',sans-serif;background:var(--soft-white);color:var(--text-dark);display:flex;min-height:100vh;}
+
+    .sidebar{width:var(--sidebar-w);background:var(--primary-dark);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;transition:transform .3s;}
+    .sidebar-logo{padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.08);}
+    .sidebar-logo a{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;color:white;text-decoration:none;display:flex;align-items:center;gap:.5rem;}
+    .sidebar-logo span{color:var(--accent-blue);}
+    .sidebar-logo .badge{font-family:'Inter',sans-serif;font-size:.65rem;font-weight:600;background:rgba(0,102,255,0.3);color:var(--accent-blue);padding:.2rem .5rem;border-radius:4px;margin-left:auto;}
+    .sidebar-nav{flex:1;padding:1rem 0;overflow-y:auto;}
+    .nav-section-label{font-size:.65rem;font-weight:700;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:.1em;padding:1rem 1.5rem .5rem;}
+    .nav-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1.5rem;color:rgba(255,255,255,0.65);cursor:pointer;transition:all .2s;border-left:3px solid transparent;font-size:.9rem;font-weight:500;user-select:none;}
+    .nav-item:hover{color:white;background:rgba(255,255,255,0.06);}
+    .nav-item.active{color:white;background:rgba(0,102,255,0.2);border-left-color:var(--primary-blue);}
+    .nav-item i{width:20px;text-align:center;font-size:.95rem;}
+    .nav-item .badge-count{margin-left:auto;background:var(--danger);color:white;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:50px;min-width:20px;text-align:center;}
+    .sidebar-footer{padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.08);}
+    .admin-info{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;}
+    .admin-avatar{width:36px;height:36px;background:var(--primary-blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:.9rem;font-weight:700;flex-shrink:0;}
+    .admin-name{font-size:.85rem;font-weight:600;color:white;}
+    .admin-role{font-size:.72rem;color:rgba(255,255,255,0.4);}
+    .logout-btn{width:100%;padding:.6rem;background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+    .logout-btn:hover{background:rgba(239,68,68,0.25);}
+
+    .main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+    .topbar{background:white;border-bottom:1px solid rgba(0,102,255,0.08);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+    .topbar h1{font-size:1.2rem;font-weight:700;color:var(--primary-dark);}
+    .server-status{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--text-gray);}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);}
+    .status-dot.offline{background:var(--danger);}
+    .hamburger{display:none;background:none;border:none;font-size:1.3rem;color:var(--primary-dark);cursor:pointer;}
+    .page-content{padding:2rem;flex:1;}
+
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1.25rem;margin-bottom:2rem;}
+    .stat-card{background:white;border-radius:16px;padding:1.25rem;border:1px solid rgba(0,102,255,0.08);box-shadow:0 2px 12px rgba(10,37,64,0.05);transition:all .2s;}
+    .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(10,37,64,0.1);}
+    .stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.75rem;}
+    .stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+    .stat-icon.blue{background:var(--light-blue);color:var(--primary-blue);}
+    .stat-icon.green{background:rgba(0,212,170,0.12);color:var(--success);}
+    .stat-icon.orange{background:rgba(245,158,11,0.12);color:var(--warning);}
+    .stat-icon.purple{background:rgba(139,92,246,0.12);color:#8B5CF6;}
+    .stat-icon.red{background:rgba(239,68,68,0.1);color:var(--danger);}
+    .stat-value{font-size:1.6rem;font-weight:800;color:var(--primary-dark);}
+    .stat-label{font-size:.78rem;color:var(--text-gray);font-weight:500;}
+    .stat-sub{font-size:.72rem;color:var(--success);font-weight:600;margin-top:.2rem;}
+
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+    .section-header h2{font-size:1.05rem;font-weight:700;color:var(--primary-dark);}
+    .btn{padding:.55rem 1.1rem;border-radius:8px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem;border:none;text-decoration:none;}
+    .btn-primary{background:var(--primary-blue);color:white;}
+    .btn-primary:hover{background:#0052CC;}
+    .btn-outline{background:white;color:var(--primary-blue);border:1.5px solid var(--primary-blue);}
+    .btn-outline:hover{background:var(--light-blue);}
+    .btn-danger{background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.2);}
+    .btn-danger:hover{background:rgba(239,68,68,0.2);}
+    .btn-success{background:rgba(0,212,170,0.12);color:var(--success);border:1px solid rgba(0,212,170,0.2);}
+    .btn-success:hover{background:rgba(0,212,170,0.25);}
+    .btn-warning{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.2);}
+    .btn-warning:hover{background:rgba(245,158,11,0.25);}
+    .btn-sm{padding:.35rem .7rem;font-size:.75rem;}
+
+    .table-card{background:white;border-radius:16px;border:1px solid rgba(0,102,255,0.08);box-shadow:0 2px 12px rgba(10,37,64,0.05);overflow:hidden;}
+    .table-toolbar{padding:1rem 1.25rem;border-bottom:1px solid rgba(0,102,255,0.06);display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+    .search-wrap{position:relative;flex:1;min-width:180px;}
+    .search-wrap i{position:absolute;left:.7rem;top:50%;transform:translateY(-50%);color:var(--text-gray);font-size:.8rem;}
+    .search-input{width:100%;padding:.55rem .9rem .55rem 2.2rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;font-size:.85rem;font-family:'Inter',sans-serif;outline:none;background:var(--soft-white);}
+    .search-input:focus{border-color:var(--primary-blue);background:white;}
+    select.filter-select{padding:.55rem .9rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;font-size:.82rem;font-family:'Inter',sans-serif;outline:none;background:var(--soft-white);color:var(--text-dark);cursor:pointer;}
+    table{width:100%;border-collapse:collapse;}
+    thead{background:var(--soft-white);}
+    th{padding:.75rem 1rem;text-align:left;font-size:.75rem;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid rgba(0,102,255,0.06);white-space:nowrap;}
+    td{padding:.85rem 1rem;font-size:.85rem;border-bottom:1px solid rgba(0,102,255,0.04);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(0,102,255,0.02);}
+    .table-actions{display:flex;gap:.4rem;}
+    .empty-state{text-align:center;padding:3rem;color:var(--text-gray);}
+    .empty-state i{font-size:2.5rem;margin-bottom:.75rem;opacity:.3;display:block;}
+
+    .badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:50px;font-size:.72rem;font-weight:600;white-space:nowrap;}
+    .badge-new{background:rgba(0,102,255,0.12);color:var(--primary-blue);}
+    .badge-read{background:rgba(107,114,128,0.12);color:var(--text-gray);}
+    .badge-replied{background:rgba(0,212,170,0.12);color:var(--success);}
+    .badge-archived{background:rgba(245,158,11,0.12);color:var(--warning);}
+    .badge-prospect{background:rgba(139,92,246,0.12);color:#8B5CF6;}
+    .badge-qualified{background:rgba(0,102,255,0.12);color:var(--primary-blue);}
+    .badge-proposal{background:rgba(245,158,11,0.12);color:var(--warning);}
+    .badge-client{background:rgba(0,212,170,0.12);color:var(--success);}
+    .badge-lost{background:rgba(239,68,68,0.12);color:var(--danger);}
+    .badge-published{background:rgba(0,212,170,0.12);color:var(--success);}
+    .badge-draft{background:rgba(107,114,128,0.12);color:var(--text-gray);}
+    .badge-pending{background:rgba(245,158,11,0.12);color:var(--warning);}
+    .badge-approved{background:rgba(0,212,170,0.12);color:var(--success);}
+    .badge-rejected{background:rgba(239,68,68,0.12);color:var(--danger);}
+    .badge-unpaid{background:rgba(107,114,128,0.12);color:var(--text-gray);}
+    .badge-paid{background:rgba(0,212,170,0.12);color:var(--success);}
+
+    .page{display:none;}
+    .page.active{display:block;}
+
+    .overview-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.5rem;}
+    .chart-card{background:white;border-radius:16px;padding:1.25rem;border:1px solid rgba(0,102,255,0.08);box-shadow:0 2px 12px rgba(10,37,64,0.05);}
+    .chart-card h3{font-size:.9rem;font-weight:700;color:var(--primary-dark);margin-bottom:1rem;}
+    .bar-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.65rem;}
+    .bar-label{font-size:.78rem;color:var(--text-gray);width:80px;flex-shrink:0;}
+    .bar-track{flex:1;height:8px;background:var(--soft-white);border-radius:50px;overflow:hidden;}
+    .bar-fill{height:100%;border-radius:50px;background:var(--primary-blue);transition:width .6s ease;}
+    .bar-val{font-size:.78rem;font-weight:600;color:var(--primary-dark);width:30px;text-align:right;}
+    .recent-list{display:flex;flex-direction:column;gap:.75rem;}
+    .recent-item{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--soft-white);border-radius:10px;}
+    .recent-avatar{width:34px;height:34px;background:var(--light-blue);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--primary-blue);font-size:.85rem;font-weight:700;flex-shrink:0;}
+    .recent-name{font-size:.85rem;font-weight:600;color:var(--primary-dark);}
+    .recent-meta{font-size:.75rem;color:var(--text-gray);}
+    .recent-time{font-size:.72rem;color:var(--text-gray);margin-left:auto;white-space:nowrap;}
+
+    /* Receipt preview */
+    .receipt-thumb{width:50px;height:50px;border-radius:8px;object-fit:cover;border:1px solid rgba(0,102,255,0.1);cursor:pointer;}
+    .receipt-link{color:var(--primary-blue);font-size:.8rem;text-decoration:none;}
+    .receipt-link:hover{text-decoration:underline;}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(10,37,64,0.55);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;visibility:hidden;transition:all .3s;}
+    .modal-overlay.active{opacity:1;visibility:visible;}
+    .modal{background:white;border-radius:20px;padding:2rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;transform:translateY(20px) scale(.97);transition:all .3s;box-shadow:0 30px 60px rgba(10,37,64,0.25);}
+    .modal-overlay.active .modal{transform:none;}
+    .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;}
+    .modal-header h3{font-size:1.1rem;font-weight:700;color:var(--primary-dark);}
+    .modal-close{width:32px;height:32px;border-radius:50%;background:var(--soft-white);border:none;color:var(--text-gray);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .modal-close:hover{background:var(--light-blue);color:var(--primary-blue);}
+    .form-group{margin-bottom:1.1rem;}
+    .form-group label{display:block;font-size:.82rem;font-weight:600;color:var(--primary-dark);margin-bottom:.4rem;}
+    .form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem .9rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;font-size:.88rem;font-family:'Inter',sans-serif;outline:none;background:var(--soft-white);transition:all .2s;color:var(--text-dark);}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--primary-blue);background:white;box-shadow:0 0 0 3px rgba(0,102,255,0.08);}
+    .form-group textarea{min-height:90px;resize:vertical;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+    .modal-footer{display:flex;gap:.75rem;justify-content:flex-end;margin-top:1.5rem;}
+
+    .receipt-modal-img{width:100%;border-radius:12px;margin-bottom:1rem;border:1px solid rgba(0,102,255,0.1);}
+
+    .toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.5rem;z-index:300;}
+    .toast{background:var(--primary-dark);color:white;padding:.8rem 1.2rem;border-radius:10px;font-size:.85rem;font-weight:500;display:flex;align-items:center;gap:.6rem;box-shadow:0 8px 24px rgba(10,37,64,0.25);animation:slideIn .3s ease;}
+    .toast.success{border-left:3px solid var(--success);}
+    .toast.error{border-left:3px solid var(--danger);}
+    @keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:none;opacity:1;}}
+
+    .editor-area{border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;overflow:hidden;}
+    .editor-toolbar{background:var(--soft-white);border-bottom:1px solid rgba(0,102,255,0.1);padding:.5rem .75rem;display:flex;gap:.25rem;flex-wrap:wrap;}
+    .editor-toolbar button{width:28px;height:28px;border-radius:6px;border:none;background:none;color:var(--text-gray);cursor:pointer;font-size:.8rem;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+    .editor-toolbar button:hover{background:white;color:var(--primary-blue);}
+    #postContent{border:none;border-radius:0;min-height:200px;background:white;}
+
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+    @media(max-width:1200px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:900px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:none;}.main{margin-left:0;}.hamburger{display:block;}.overview-grid{grid-template-columns:1fr;}.settings-grid{grid-template-columns:1fr;}.table-card{overflow-x:auto;}}
+    @media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr;}.page-content{padding:1rem;}.form-row{grid-template-columns:1fr;}.topbar{padding:.75rem 1rem;}.table-toolbar{flex-direction:column;}.bar-label{width:120px !important;}}
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <a href="../index.html"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></a>
+    <span class="badge">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" onclick="showPage('overview')"><i class="fas fa-th-large"></i> Overview</div>
+    <div class="nav-item" onclick="showPage('payments')"><i class="fas fa-receipt"></i> Payments <span class="badge-count" id="pendingPayBadge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('contacts')"><i class="fas fa-inbox"></i> Contact Submissions <span class="badge-count" id="newContactBadge">0</span></div>
+    <div class="nav-item" onclick="showPage('leads')"><i class="fas fa-users"></i> Leads & Clients</div>
+    <div class="nav-section-label">Content</div>
+    <div class="nav-item" onclick="showPage('blog')"><i class="fas fa-pen-nib"></i> Blog Posts</div>
+    <div class="nav-item" onclick="showPage('dmi')"><i class="fas fa-graduation-cap"></i> DMI Content</div>
+    <div class="nav-section-label">CMS</div>
+    <div class="nav-item" onclick="showPage('pricing')"><i class="fas fa-tags"></i> Pricing Plans</div>
+    <div class="nav-item" onclick="showPage('faqs')"><i class="fas fa-question-circle"></i> FAQs</div>
+    <div class="nav-item" onclick="showPage('team')"><i class="fas fa-id-card"></i> Team Members</div>
+    <div class="nav-item" onclick="showPage('portfolio')"><i class="fas fa-project-diagram"></i> Portfolio</div>
+    <div class="nav-item" onclick="showPage('casestudies')"><i class="fas fa-briefcase"></i> Case Studies</div>
+    <div class="nav-item" onclick="showPage('courses')"><i class="fas fa-book-open"></i> Courses</div>
+    <div class="nav-section-label">Users</div>
+    <div class="nav-item" onclick="showPage('users')"><i class="fas fa-user-circle"></i> Registered Users</div>
+    <div class="nav-section-label">System</div>
+    <div class="nav-item" onclick="showPage('settings')"><i class="fas fa-cog"></i> Settings</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-info">
+      <div class="admin-avatar" id="sidebarAvatar">A</div>
+      <div><div class="admin-name" id="sidebarName">Admin</div><div class="admin-role">Super Admin</div></div>
+    </div>
+    <button class="logout-btn" onclick="confirmLogout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')"><i class="fas fa-bars"></i></button>
+      <h1 id="pageTitle">Overview</h1>
+    </div>
+    <div class="topbar-right" style="display:flex;align-items:center;gap:1rem;">
+      <div class="server-status"><span class="status-dot" id="statusDot"></span><span id="statusText">Connecting&hellip;</span></div>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statContacts">&mdash;</div><div class="stat-label">Total Contacts</div><div class="stat-sub" id="statNew">&mdash; new</div></div><div class="stat-icon blue"><i class="fas fa-inbox"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statLeads">&mdash;</div><div class="stat-label">Total Leads</div><div class="stat-sub" id="statActive">&mdash; active</div></div><div class="stat-icon purple"><i class="fas fa-users"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statUsers">&mdash;</div><div class="stat-label">Registered Users</div><div class="stat-sub" id="statApproved">&mdash; approved</div></div><div class="stat-icon green"><i class="fas fa-user-check"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statPending">&mdash;</div><div class="stat-label">Pending Payments</div><div class="stat-sub">awaiting review</div></div><div class="stat-icon orange"><i class="fas fa-receipt"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statPosts">&mdash;</div><div class="stat-label">Blog Posts</div><div class="stat-sub">total</div></div><div class="stat-icon blue"><i class="fas fa-pen-nib"></i></div></div></div>
+        <div class="stat-card"><div class="stat-top"><div><div class="stat-value" id="statPageViews">&mdash;</div><div class="stat-label">Page Views</div><div class="stat-sub" id="statTodayViews">&mdash; today</div></div><div class="stat-icon purple"><i class="fas fa-eye"></i></div></div></div>
+      </div>
+      <div class="overview-grid">
+        <div class="chart-card"><h3><i class="fas fa-receipt" style="color:var(--warning);margin-right:.4rem"></i>Payments by Status</h3><div id="payChart"></div></div>
+        <div class="chart-card"><h3><i class="fas fa-inbox" style="color:var(--primary-blue);margin-right:.4rem"></i>Contacts by Status</h3><div id="contactChart"></div></div>
+        <div class="chart-card" style="grid-column:1/-1"><h3><i class="fas fa-chart-line" style="color:#8B5CF6;margin-right:.4rem"></i>Top Pages &mdash; Last 30 Days</h3><div id="pageViewChart"><p style="color:var(--text-gray);font-size:.85rem">Loading&hellip;</p></div></div>
+        <div class="chart-card" style="grid-column:1/-1"><h3><i class="fas fa-clock" style="color:var(--warning);margin-right:.4rem"></i>Recent Contact Submissions</h3><div class="recent-list" id="recentList"></div></div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="page" id="page-payments">
+      <div class="section-header">
+        <h2>Payment Receipts</h2>
+        <button class="btn btn-outline" onclick="loadPayments()"><i class="fas fa-sync-alt"></i> Refresh</button>
+      </div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search name or email&hellip;" id="paySearch" oninput="loadPayments()"></div>
+          <select class="filter-select" id="payStatus" onchange="loadPayments()">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Amount</th><th>Receipt</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="paymentsBody"></tbody>
+          </table>
+        </div>
+        <div id="paymentsEmpty" class="empty-state" style="display:none"><i class="fas fa-receipt"></i>No payment submissions yet.</div>
+      </div>
+    </div>
+
+    <!-- CONTACTS -->
+    <div class="page" id="page-contacts">
+      <div class="section-header"><h2>Contact Submissions</h2><button class="btn btn-outline" onclick="loadContacts()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search name or email&hellip;" id="contactSearch" oninput="loadContacts()"></div>
+          <select class="filter-select" id="contactStatus" onchange="loadContacts()">
+            <option value="">All Status</option><option value="new">New</option><option value="read">Read</option><option value="replied">Replied</option><option value="archived">Archived</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Service</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="contactsBody"></tbody></table>
+        </div>
+        <div id="contactsEmpty" class="empty-state" style="display:none"><i class="fas fa-inbox"></i>No contacts found.</div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="page" id="page-leads">
+      <div class="section-header"><h2>Leads & Clients</h2><button class="btn btn-primary" onclick="openLeadModal()"><i class="fas fa-plus"></i> Add Lead</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search&hellip;" id="leadSearch" oninput="loadLeads()"></div>
+          <select class="filter-select" id="leadStatus" onchange="loadLeads()">
+            <option value="">All Pipeline</option><option value="prospect">Prospect</option><option value="qualified">Qualified</option><option value="proposal">Proposal Sent</option><option value="client">Active Client</option><option value="lost">Lost</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Plan</th><th>Value</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="leadsBody"></tbody></table>
+        </div>
+        <div id="leadsEmpty" class="empty-state" style="display:none"><i class="fas fa-users"></i>No leads yet.</div>
+      </div>
+    </div>
+
+    <!-- BLOG -->
+    <div class="page" id="page-blog">
+      <div class="section-header"><h2>Blog Posts</h2><button class="btn btn-primary" onclick="openPostModal()"><i class="fas fa-plus"></i> New Post</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search posts&hellip;" id="blogSearch" oninput="loadBlog()"></div>
+          <select class="filter-select" id="blogStatus" onchange="loadBlog()">
+            <option value="">All</option><option value="published">Published</option><option value="draft">Draft</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Title</th><th>Category</th><th>Author</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="blogBody"></tbody></table>
+        </div>
+        <div id="blogEmpty" class="empty-state" style="display:none"><i class="fas fa-pen-nib"></i>No posts yet.</div>
+      </div>
+    </div>
+
+    <!-- DMI CONTENT -->
+    <div class="page" id="page-dmi">
+      <div class="section-header"><h2>DMI Content Library</h2><button class="btn btn-primary" onclick="openDmiModal()"><i class="fas fa-plus"></i> Upload Resource</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search resources..." id="dmiSearch" oninput="loadDmi()"></div>
+          <select class="filter-select" id="dmiPlanFilter" onchange="loadDmi()">
+            <option value="">All Plans</option>
+            <option value="all">Free (All)</option>
+            <option value="Starter">Starter</option>
+            <option value="DMI Course">DMI Course</option>
+            <option value="Growth">Growth</option>
+            <option value="Enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Title</th><th>Type</th><th>Category</th><th>Plan Access</th><th>Status</th><th>Actions</th></tr></thead><tbody id="dmiBody"></tbody></table>
+        </div>
+        <div id="dmiEmpty" class="empty-state" style="display:none"><i class="fas fa-graduation-cap"></i>No DMI resources yet. Upload the first one!</div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="section-header"><h2>Registered Users</h2><button class="btn btn-outline" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search name or email&hellip;" id="userSearch" oninput="loadUsers()"></div>
+          <select class="filter-select" id="userPayStatus" onchange="loadUsers()">
+            <option value="">All Payment Status</option><option value="unpaid">Unpaid</option><option value="pending">Pending</option><option value="paid">Paid</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Plan</th><th>Payment</th><th>Approved</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="usersBody"></tbody></table>
+        </div>
+        <div id="usersEmpty" class="empty-state" style="display:none"><i class="fas fa-user-circle"></i>No registered users yet.</div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div class="section-header"><h2>Settings</h2></div>
+      <div class="settings-grid">
+        <div class="chart-card">
+          <h3 style="margin-bottom:1.25rem;"><i class="fas fa-key" style="color:var(--primary-blue);margin-right:.4rem"></i>Change Password</h3>
+          <form id="pwForm">
+            <div class="form-group"><label>Current Password</label><input type="password" id="currentPw" required></div>
+            <div class="form-group"><label>New Password</label><input type="password" id="newPw" required></div>
+            <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmPw" required></div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Password</button>
+          </form>
+        </div>
+        <div class="chart-card">
+          <h3 style="margin-bottom:1.25rem;"><i class="fas fa-sliders-h" style="color:var(--success);margin-right:.4rem"></i>Site Settings</h3>
+          <form id="siteSettingsForm">
+            <div class="form-group"><label>Site Name</label><input type="text" id="settingSiteName" placeholder="SeedsAds Digital Marketing"></div>
+            <div class="form-group"><label>Contact Email</label><input type="email" id="settingEmail" placeholder="hello@seedsads.com"></div>
+            <div class="form-group"><label>Phone Number</label><input type="text" id="settingPhone" placeholder="+234 706 111 2102"></div>
+            <div class="form-group"><label>WhatsApp Number (digits only)</label><input type="text" id="settingWhatsapp" placeholder="2347061112102"></div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Settings</button>
+          </form>
+          <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:.5rem;">
+            <div style="background:var(--soft-white);padding:.65rem .9rem;border-radius:8px;font-size:.78rem;"><span style="color:var(--text-gray);font-weight:600;">API:</span> <code id="apiUrlLabel" style="color:var(--primary-blue);"></code></div>
+            <div style="background:var(--soft-white);padding:.65rem .9rem;border-radius:8px;font-size:.78rem;"><span style="color:var(--text-gray);font-weight:600;">Client Portal:</span> <code style="color:var(--primary-blue);">/user/login.html</code></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRICING PLANS -->
+    <div class="page" id="page-pricing">
+      <div class="section-header"><h2>Pricing Plans</h2><button class="btn btn-primary" onclick="openCmsPlanModal()"><i class="fas fa-plus"></i> Add Plan</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Price</th><th>Billing</th><th>Popular</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="pricingBody"></tbody></table></div>
+      <div id="pricingEmpty" class="empty-state" style="display:none"><i class="fas fa-tags"></i>No pricing plans yet.</div>
+    </div>
+
+    <!-- FAQs -->
+    <div class="page" id="page-faqs">
+      <div class="section-header"><h2>FAQs</h2><button class="btn btn-primary" onclick="openCmsFaqModal()"><i class="fas fa-plus"></i> Add FAQ</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Question</th><th>Category</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="faqsBody"></tbody></table></div>
+      <div id="faqsEmpty" class="empty-state" style="display:none"><i class="fas fa-question-circle"></i>No FAQs yet.</div>
+    </div>
+
+    <!-- TEAM MEMBERS -->
+    <div class="page" id="page-team">
+      <div class="section-header"><h2>Team Members</h2><button class="btn btn-primary" onclick="openCmsTeamModal()"><i class="fas fa-plus"></i> Add Member</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Name</th><th>Role</th><th>Type</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="teamBody"></tbody></table></div>
+      <div id="teamEmpty" class="empty-state" style="display:none"><i class="fas fa-id-card"></i>No team members yet.</div>
+    </div>
+
+    <!-- PORTFOLIO -->
+    <div class="page" id="page-portfolio">
+      <div class="section-header"><h2>Portfolio</h2><button class="btn btn-primary" onclick="openCmsPortfolioModal()"><i class="fas fa-plus"></i> Add Project</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Title</th><th>Category</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="portfolioBody"></tbody></table></div>
+      <div id="portfolioEmpty" class="empty-state" style="display:none"><i class="fas fa-project-diagram"></i>No portfolio items yet.</div>
+    </div>
+
+    <!-- CASE STUDIES -->
+    <div class="page" id="page-casestudies">
+      <div class="section-header"><h2>Case Studies</h2><button class="btn btn-primary" onclick="openCmsCaseModal()"><i class="fas fa-plus"></i> Add Case Study</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Title</th><th>Category</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="casestudiesBody"></tbody></table></div>
+      <div id="casestudiesEmpty" class="empty-state" style="display:none"><i class="fas fa-briefcase"></i>No case studies yet.</div>
+    </div>
+
+    <!-- COURSES -->
+    <div class="page" id="page-courses">
+      <div class="section-header"><h2>DMI Courses</h2><button class="btn btn-primary" onclick="openCmsCourseModal()"><i class="fas fa-plus"></i> Add Course</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Title</th><th>Level</th><th>Duration</th><th>Students</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="coursesBody"></tbody></table></div>
+      <div id="coursesEmpty" class="empty-state" style="display:none"><i class="fas fa-book-open"></i>No courses yet.</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Payment review modal -->
+<div class="modal-overlay" id="payModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Review Payment Receipt</h3><button class="modal-close" onclick="closeModal('payModal')"><i class="fas fa-times"></i></button></div>
+    <div id="payDetail"></div>
+    <div class="form-group" style="margin-top:1rem;"><label>Admin Note (optional)</label><textarea id="payNote" placeholder="Add a note to the user&hellip;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="reviewPayment('rejected')"><i class="fas fa-times"></i> Reject</button>
+      <button class="btn btn-success" onclick="reviewPayment('approved')"><i class="fas fa-check"></i> Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- Contact detail modal -->
+<div class="modal-overlay" id="contactModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Contact Details</h3><button class="modal-close" onclick="closeModal('contactModal')"><i class="fas fa-times"></i></button></div>
+    <div id="contactDetail"></div>
+    <div class="form-group" style="margin-top:1rem;"><label>Status</label><select id="contactStatusSel"><option value="new">New</option><option value="read">Read</option><option value="replied">Replied</option><option value="archived">Archived</option></select></div>
+    <div class="form-group"><label>Notes</label><textarea id="contactNotes" placeholder="Add internal notes&hellip;"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" onclick="deleteContact()"><i class="fas fa-trash"></i> Delete</button>
+      <button class="btn btn-primary" onclick="saveContact()"><i class="fas fa-save"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lead modal -->
+<div class="modal-overlay" id="leadModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="leadModalTitle">Add Lead</h3><button class="modal-close" onclick="closeModal('leadModal')"><i class="fas fa-times"></i></button></div>
+    <div class="form-row"><div class="form-group"><label>Full Name *</label><input type="text" id="leadName"></div><div class="form-group"><label>Email *</label><input type="email" id="leadEmail"></div></div>
+    <div class="form-row"><div class="form-group"><label>Phone</label><input type="text" id="leadPhone"></div><div class="form-group"><label>Company</label><input type="text" id="leadCompany"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Plan</label><select id="leadPlan"><option value="">Select Plan</option><option value="Starter">Starter (&#8358;250k/mo)</option><option value="Growth">Growth (&#8358;700k/mo)</option><option value="Enterprise">Enterprise (&#8358;1.5M/mo)</option><option value="Custom">Custom</option></select></div>
+      <div class="form-group"><label>Pipeline Status</label><select id="leadStatusSel"><option value="prospect">Prospect</option><option value="qualified">Qualified</option><option value="proposal">Proposal Sent</option><option value="client">Active Client</option><option value="lost">Lost</option></select></div>
+    </div>
+    <div class="form-group"><label>Monthly Value (&#8358;)</label><input type="number" id="leadValue" placeholder="e.g. 700000"></div>
+    <div class="form-group"><label>Notes</label><textarea id="leadNotes" placeholder="Add notes&hellip;"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('leadModal')">Cancel</button><button class="btn btn-primary" onclick="saveLead()"><i class="fas fa-save"></i> Save</button></div>
+  </div>
+</div>
+
+<!-- Blog post modal -->
+<div class="modal-overlay" id="postModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><h3 id="postModalTitle">New Blog Post</h3><button class="modal-close" onclick="closeModal('postModal')"><i class="fas fa-times"></i></button></div>
+    <div class="form-group"><label>Title *</label><input type="text" id="postTitle" placeholder="Post title&hellip;"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category <small style="font-weight:400;color:var(--text-gray);">— controls which blog section this appears in</small></label>
+        <select id="postCategory">
+          <option value="">Select category</option>
+          <optgroup label="── Blog Sections ──">
+            <option value="Latest Articles">Latest Articles</option>
+            <option value="Marketing Tips">Marketing Tips</option>
+            <option value="Industry Insights">Industry Insights</option>
+            <option value="Free Guides">Free Guides</option>
+          </optgroup>
+          <optgroup label="── Topics ──">
+            <option value="SEO">SEO</option>
+            <option value="PPC">PPC</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Content Marketing">Content Marketing</option>
+            <option value="Email Marketing">Email Marketing</option>
+            <option value="Analytics">Analytics</option>
+            <option value="News">News</option>
+            <option value="Update">Update</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-group"><label>Status</label><select id="postStatus"><option value="draft">Draft</option><option value="published">Published</option></select></div>
+    </div>
+    <div class="form-group"><label>Excerpt</label><textarea id="postExcerpt" placeholder="Short description&hellip;" style="min-height:60px;"></textarea></div>
+    <div class="form-group">
+      <label>Content</label>
+      <div class="editor-area">
+        <div class="editor-toolbar">
+          <button type="button" onclick="fmt('bold')" title="Bold"><i class="fas fa-bold"></i></button>
+          <button type="button" onclick="fmt('italic')" title="Italic"><i class="fas fa-italic"></i></button>
+          <button type="button" onclick="fmt('underline')" title="Underline"><i class="fas fa-underline"></i></button>
+          <button type="button" onclick="fmt('formatBlock','h2')" title="H2"><b style="font-size:.7rem">H2</b></button>
+          <button type="button" onclick="fmt('formatBlock','h3')" title="H3"><b style="font-size:.7rem">H3</b></button>
+          <button type="button" onclick="fmt('insertUnorderedList')" title="Bullet list"><i class="fas fa-list-ul"></i></button>
+          <button type="button" onclick="fmt('insertOrderedList')" title="Numbered list"><i class="fas fa-list-ol"></i></button>
+          <button type="button" onclick="insertLink()" title="Link"><i class="fas fa-link"></i></button>
+        </div>
+        <div id="postContent" contenteditable="true" style="padding:1rem;min-height:200px;outline:none;font-size:.9rem;line-height:1.7;"></div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Author</label><input type="text" id="postAuthor" value="SeedsAds Team"></div>
+      <div class="form-group"><label>Cover Image URL <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label><input type="url" id="postCoverImage" placeholder="https://...image.jpg"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('postModal')">Cancel</button><button class="btn btn-primary" onclick="savePost()"><i class="fas fa-save"></i> Save Post</button></div>
+  </div>
+</div>
+
+<!-- DMI Upload Modal -->
+<div class="modal-overlay" id="dmiModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><h3 id="dmiModalTitle">Upload DMI Resource</h3><button class="modal-close" onclick="closeModal('dmiModal')"><i class="fas fa-times"></i></button></div>
+    <form id="dmiForm" enctype="multipart/form-data">
+      <div class="form-group"><label>Title *</label><input type="text" id="dmiTitle" name="title" placeholder="e.g. SEO Fundamentals Guide" required></div>
+      <div class="form-group"><label>Description</label><textarea id="dmiDescription" name="description" placeholder="Brief description of this resource..." style="min-height:60px;"></textarea></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Resource Type</label>
+          <select id="dmiType" name="type">
+            <option value="pdf">PDF Document</option>
+            <option value="video">Video</option>
+            <option value="zip">ZIP / Files</option>
+            <option value="link">External Link</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Plan Access</label>
+          <select id="dmiPlanAccess" name="plan_access">
+            <option value="all">Free (All Users)</option>
+            <option value="Starter">Starter +</option>
+            <option value="DMI Course">DMI Course +</option>
+            <option value="Growth">Growth +</option>
+            <option value="Enterprise">Enterprise Only</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Category</label><input type="text" id="dmiCategory" name="category" placeholder="e.g. SEO, PPC, Social Media"></div>
+        <div class="form-group"><label>Sort Order</label><input type="number" id="dmiSortOrder" name="sort_order" value="0" min="0"></div>
+      </div>
+      <div class="form-group">
+        <label>Upload File (PDF / Video / ZIP)</label>
+        <input type="file" id="dmiFile" name="file" accept=".pdf,.mp4,.webm,.ogg,.mov,.zip" style="padding:.5rem;border:1.5px dashed rgba(0,102,255,0.3);border-radius:8px;width:100%;cursor:pointer;">
+        <small id="dmiFileHint" style="color:var(--text-gray);font-size:.78rem;margin-top:.3rem;display:block;"></small>
+      </div>
+      <div class="form-group"><label>Or External URL (YouTube, Drive link, etc.)</label><input type="url" id="dmiExternalUrl" name="external_url" placeholder="https://..."></div>
+      <div class="form-group">
+        <label>Visibility</label>
+        <select id="dmiPublished" name="published"><option value="1">Visible</option><option value="0">Hidden</option></select>
+      </div>
+    </form>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('dmiModal')">Cancel</button><button class="btn btn-primary" onclick="saveDmi()"><i class="fas fa-upload"></i> Save Resource</button></div>
+  </div>
+</div>
+
+<!-- CMS: Pricing Plan Modal -->
+<div class="modal-overlay" id="cmsPlanModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><h3 id="cmsPlanModalTitle">Add Pricing Plan</h3><button class="modal-close" onclick="closeModal('cmsPlanModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsPlanId">
+    <div class="form-row">
+      <div class="form-group"><label>Plan Name *</label><input type="text" id="cmsPlanName" placeholder="e.g. Starter"></div>
+      <div class="form-group"><label>Price (digits only)</label><input type="text" id="cmsPlanPrice" placeholder="e.g. 250,000"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Billing Period</label><input type="text" id="cmsPlanBilling" placeholder="/month or /once"></div>
+      <div class="form-group"><label>Register Plan Key</label><input type="text" id="cmsPlanRegPlan" placeholder="matches register URL param"></div>
+    </div>
+    <div class="form-group"><label>Description</label><input type="text" id="cmsPlanDesc" placeholder="Short description shown under price"></div>
+    <div class="form-group"><label>Features (one per line)</label><textarea id="cmsPlanFeatures" rows="6" placeholder="Meta Ads&#10;Campaign Strategy&#10;..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Badge Text</label><input type="text" id="cmsPlanBadgeText" placeholder="e.g. Most Popular"></div>
+      <div class="form-group"><label>Badge Color (CSS)</label><input type="text" id="cmsPlanBadgeColor" placeholder="e.g. linear-gradient(...)"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Button Text</label><input type="text" id="cmsPlanBtnText" placeholder="Get Started"></div>
+      <div class="form-group"><label>Button Style</label>
+        <select id="cmsPlanBtnStyle"><option value="secondary">Outline (secondary)</option><option value="primary">Solid Blue (primary)</option><option value="custom">Custom Color</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Custom Button Color (CSS)</label><input type="text" id="cmsPlanBtnColor" placeholder="Only for Custom style"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsPlanSort" value="0" min="0"></div>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:.5rem;">
+      <input type="checkbox" id="cmsPlanPopular" style="width:auto;margin:0;">
+      <label for="cmsPlanPopular" style="margin:0;">Mark as Most Popular</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsPlanModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsPlan()"><i class="fas fa-save"></i> Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMS: FAQ Modal -->
+<div class="modal-overlay" id="cmsFaqModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header"><h3 id="cmsFaqModalTitle">Add FAQ</h3><button class="modal-close" onclick="closeModal('cmsFaqModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsFaqId">
+    <div class="form-group"><label>Question *</label><input type="text" id="cmsFaqQuestion" placeholder="Enter the question"></div>
+    <div class="form-group"><label>Answer *</label><textarea id="cmsFaqAnswer" rows="5" placeholder="Enter the answer"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Category</label><input type="text" id="cmsFaqCategory" placeholder="e.g. General Questions"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsFaqSort" value="0" min="0"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsFaqModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsFaq()"><i class="fas fa-save"></i> Save FAQ</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMS: Team Member Modal -->
+<div class="modal-overlay" id="cmsTeamModal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-header"><h3 id="cmsTeamModalTitle">Add Team Member</h3><button class="modal-close" onclick="closeModal('cmsTeamModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsTeamId">
+    <div class="form-row">
+      <div class="form-group"><label>Full Name *</label><input type="text" id="cmsTeamName" placeholder="e.g. Sarah Johnson"></div>
+      <div class="form-group"><label>Role / Title</label><input type="text" id="cmsTeamRole" placeholder="e.g. CEO & Founder"></div>
+    </div>
+    <div class="form-group"><label>Bio</label><textarea id="cmsTeamBio" rows="3" placeholder="Short bio paragraph"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Team Type</label>
+        <select id="cmsTeamType"><option value="leadership">Leadership</option><option value="department">Department Head</option></select>
+      </div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsTeamSort" value="0" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>LinkedIn URL</label><input type="text" id="cmsTeamLinkedin" placeholder="https://..."></div>
+      <div class="form-group"><label>Twitter URL</label><input type="text" id="cmsTeamTwitter" placeholder="https://..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsTeamModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsTeam()"><i class="fas fa-save"></i> Save Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMS: Portfolio Modal -->
+<div class="modal-overlay" id="cmsPortfolioModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><h3 id="cmsPortfolioModalTitle">Add Portfolio Item</h3><button class="modal-close" onclick="closeModal('cmsPortfolioModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsPortfolioId">
+    <div class="form-row">
+      <div class="form-group"><label>Title *</label><input type="text" id="cmsPortfolioTitle" placeholder="e.g. Harvesters"></div>
+      <div class="form-group"><label>Category</label>
+        <select id="cmsPortfolioCategory"><option value="ecommerce">E-Commerce</option><option value="saas">SaaS</option><option value="healthcare">Healthcare</option><option value="realestate">Real Estate</option><option value="b2b">B2B</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="cmsPortfolioDesc" rows="3" placeholder="Brief project description"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" id="cmsPortfolioIcon" placeholder="e.g. fas fa-seedling"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsPortfolioSort" value="0" min="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;">
+      <div class="form-group"><label>Stat 1 Value</label><input type="text" id="cmsPortfolioS1v" placeholder="350%"></div>
+      <div class="form-group"><label>Stat 2 Value</label><input type="text" id="cmsPortfolioS2v" placeholder="10x"></div>
+      <div class="form-group"><label>Stat 3 Value</label><input type="text" id="cmsPortfolioS3v" placeholder="-40%"></div>
+      <div class="form-group"><label>Stat 1 Label</label><input type="text" id="cmsPortfolioS1l" placeholder="Sales Growth"></div>
+      <div class="form-group"><label>Stat 2 Label</label><input type="text" id="cmsPortfolioS2l" placeholder="ROAS"></div>
+      <div class="form-group"><label>Stat 3 Label</label><input type="text" id="cmsPortfolioS3l" placeholder="CPA"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsPortfolioModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsPortfolio()"><i class="fas fa-save"></i> Save Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMS: Case Study Modal -->
+<div class="modal-overlay" id="cmsCaseModal">
+  <div class="modal" style="max-width:600px;">
+    <div class="modal-header"><h3 id="cmsCaseModalTitle">Add Case Study</h3><button class="modal-close" onclick="closeModal('cmsCaseModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsCaseId">
+    <div class="form-row">
+      <div class="form-group"><label>Title *</label><input type="text" id="cmsCaseTitle" placeholder="e.g. Fashion Retailer Transformation"></div>
+      <div class="form-group"><label>Category</label>
+        <select id="cmsCaseCategory"><option value="ecommerce">E-Commerce</option><option value="b2b">B2B</option><option value="healthcare">Healthcare</option><option value="saas">SaaS</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="cmsCaseDesc" rows="3" placeholder="What was the challenge and result?"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" id="cmsCaseIcon" placeholder="e.g. fas fa-shopping-bag"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsCaseSort" value="0" min="0"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;">
+      <div class="form-group"><label>Stat 1 Value</label><input type="text" id="cmsCaseS1v" placeholder="340%"></div>
+      <div class="form-group"><label>Stat 2 Value</label><input type="text" id="cmsCaseS2v" placeholder="5.2x"></div>
+      <div class="form-group"><label>Stat 3 Value</label><input type="text" id="cmsCaseS3v" placeholder="180K"></div>
+      <div class="form-group"><label>Stat 1 Label</label><input type="text" id="cmsCaseS1l" placeholder="Sales Growth"></div>
+      <div class="form-group"><label>Stat 2 Label</label><input type="text" id="cmsCaseS2l" placeholder="ROAS"></div>
+      <div class="form-group"><label>Stat 3 Label</label><input type="text" id="cmsCaseS3l" placeholder="New Customers"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsCaseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsCase()"><i class="fas fa-save"></i> Save Case Study</button>
+    </div>
+  </div>
+</div>
+
+<!-- CMS: Course Modal -->
+<div class="modal-overlay" id="cmsCourseModal">
+  <div class="modal" style="max-width:580px;">
+    <div class="modal-header"><h3 id="cmsCourseModalTitle">Add Course</h3><button class="modal-close" onclick="closeModal('cmsCourseModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="cmsCourseId">
+    <div class="form-row">
+      <div class="form-group"><label>Title *</label><input type="text" id="cmsCourseTitle" placeholder="e.g. SEO Fundamentals"></div>
+      <div class="form-group"><label>Level</label>
+        <select id="cmsCourseLevel"><option value="Beginner">Beginner</option><option value="Intermediate">Intermediate</option><option value="Advanced">Advanced</option><option value="All Levels">All Levels</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="cmsCourseDesc" rows="3" placeholder="Brief course overview"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Duration (hours)</label><input type="number" id="cmsCourseDuration" placeholder="20" min="1"></div>
+      <div class="form-group"><label>Students (display text)</label><input type="text" id="cmsCourseStudents" placeholder="e.g. 5,200"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" id="cmsCourseIcon" placeholder="e.g. fas fa-search"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="cmsCourseSort" value="0" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Gradient (CSS)</label><input type="text" id="cmsCourseGradient" placeholder="linear-gradient(135deg, #0A2540, #0066FF)"></div>
+      <div class="form-group"><label>Level Badge Color</label><input type="text" id="cmsCourseLevelColor" placeholder="e.g. #0066FF (blank = default blue)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('cmsCourseModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCmsCourse()"><i class="fas fa-save"></i> Save Course</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User confirmation modal -->
+<div class="modal-overlay" id="deleteUserModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Delete User Account</h3><button class="modal-close" onclick="closeModal('deleteUserModal')"><i class="fas fa-times"></i></button></div>
+    <div style="padding:1rem 0;">
+      <p>Are you sure you want to permanently delete <strong id="deleteUserName"></strong>&rsquo;s account?</p>
+      <p style="color:var(--danger);margin-top:.75rem;font-size:.85rem;"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone. All associated data will be removed.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('deleteUserModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteUser()"><i class="fas fa-trash"></i> Delete Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logout confirmation modal -->
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal">
+    <div class="modal-header"><h3>Sign Out</h3><button class="modal-close" onclick="closeModal('logoutModal')"><i class="fas fa-times"></i></button></div>
+    <div style="padding:1rem 0;">
+      <p>Are you sure you want to sign out of the admin dashboard?</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('logoutModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const API = window.location.origin + '/api';
+  document.addEventListener('DOMContentLoaded', () => {
+    const lbl = document.getElementById('apiUrlLabel');
+    if (lbl) lbl.textContent = API;
+  });
+  const UPLOADS = window.location.origin + '/uploads/';
+  let token = localStorage.getItem('seedads_token');
+  let currentContactId = null, currentLeadId = null, currentPostId = null, currentPayId = null;
+
+  if (!token) window.location.href = 'login.html';
+
+  const name = localStorage.getItem('seedads_admin_name') || 'Admin';
+  document.getElementById('sidebarName').textContent = name;
+  document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+
+  async function api(method, path, body) {
+    const res = await fetch(API + path, {
+      method, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 401) { logout(); return; }
+    return res.json();
+  }
+
+  async function checkServer() {
+    try {
+      await fetch(API + '/health');
+      document.getElementById('statusDot').classList.remove('offline');
+      document.getElementById('statusText').textContent = 'Server online';
+    } catch {
+      document.getElementById('statusDot').classList.add('offline');
+      document.getElementById('statusText').textContent = 'Server offline';
+    }
+  }
+  checkServer(); setInterval(checkServer, 30000);
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses' };
+    document.getElementById('pageTitle').textContent = titles[page] || page;
+    if (page === 'overview') loadOverview();
+    if (page === 'payments') loadPayments();
+    if (page === 'contacts') loadContacts();
+    if (page === 'leads') loadLeads();
+    if (page === 'blog') loadBlog();
+    if (page === 'dmi') loadDmi();
+    if (page === 'users') loadUsers();
+    if (page === 'settings') loadSettings();
+    if (page === 'pricing') loadCmsPricing();
+    if (page === 'faqs') loadCmsFaqs();
+    if (page === 'team') loadCmsTeam();
+    if (page === 'portfolio') loadCmsPortfolio();
+    if (page === 'casestudies') loadCmsCasestudies();
+    if (page === 'courses') loadCmsCourses();
+    if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
+  }
+
+  function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${msg}`;
+    document.getElementById('toastWrap').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  function escHtml(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  window.addEventListener('click', e => { if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('active'); });
+  function confirmLogout() { document.getElementById('logoutModal').classList.add('active'); }
+  function logout() { localStorage.removeItem('seedads_token'); localStorage.removeItem('seedads_admin_name'); window.location.href = 'login.html'; }
+
+  let _deleteUserId = null;
+  function deleteUser(btn) {
+    _deleteUserId = btn.dataset.uid;
+    document.getElementById('deleteUserName').textContent = btn.dataset.uname;
+    document.getElementById('deleteUserModal').classList.add('active');
+  }
+  async function confirmDeleteUser() {
+    if (!_deleteUserId) return;
+    closeModal('deleteUserModal');
+    const ok = await api('DELETE', '/users/' + _deleteUserId);
+    if (ok) { toast('User account deleted.', 'success'); loadUsers(); }
+    _deleteUserId = null;
+  }
+
+  // ── CMS: PRICING PLANS ──────────────────────────────────────────────────────
+  async function loadCmsPricing() {
+    const data = await api('GET', '/cms/pricing-plans');
+    if (!data) return;
+    const tbody = document.getElementById('pricingBody');
+    const empty = document.getElementById('pricingEmpty');
+    if (!data.plans.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.plans.map(p => `<tr>
+      <td><strong>${escHtml(p.name)}</strong></td>
+      <td>&#8358;${escHtml(p.price||'')}</td>
+      <td>${escHtml(p.billing||'')}</td>
+      <td>${p.is_popular ? '<span style="color:var(--success)"><i class="fas fa-check"></i> Yes</span>' : '&mdash;'}</td>
+      <td>${p.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsPlanModal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsPlan(${p.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsPlanModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsPlanId').value = e ? item.id : '';
+    document.getElementById('cmsPlanName').value = e ? item.name : '';
+    document.getElementById('cmsPlanPrice').value = e ? (item.price||'') : '';
+    document.getElementById('cmsPlanBilling').value = e ? (item.billing||'') : '';
+    document.getElementById('cmsPlanDesc').value = e ? (item.description||'') : '';
+    let feats = []; try { feats = e ? JSON.parse(item.features||'[]') : []; } catch(_) {}
+    document.getElementById('cmsPlanFeatures').value = feats.join('\n');
+    document.getElementById('cmsPlanPopular').checked = e ? !!item.is_popular : false;
+    document.getElementById('cmsPlanBadgeText').value = e ? (item.badge_text||'') : '';
+    document.getElementById('cmsPlanBadgeColor').value = e ? (item.badge_color||'') : '';
+    document.getElementById('cmsPlanBtnText').value = e ? (item.button_text||'Get Started') : 'Get Started';
+    document.getElementById('cmsPlanBtnStyle').value = e ? (item.button_style||'secondary') : 'secondary';
+    document.getElementById('cmsPlanBtnColor').value = e ? (item.button_color||'') : '';
+    document.getElementById('cmsPlanRegPlan').value = e ? (item.register_plan||'') : '';
+    document.getElementById('cmsPlanSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsPlanModalTitle').textContent = e ? 'Edit Pricing Plan' : 'Add Pricing Plan';
+    document.getElementById('cmsPlanModal').classList.add('active');
+  }
+  async function saveCmsPlan() {
+    const id = document.getElementById('cmsPlanId').value;
+    const features = JSON.stringify(document.getElementById('cmsPlanFeatures').value.split('\n').map(s=>s.trim()).filter(Boolean));
+    const body = { name:document.getElementById('cmsPlanName').value, price:document.getElementById('cmsPlanPrice').value, billing:document.getElementById('cmsPlanBilling').value, description:document.getElementById('cmsPlanDesc').value, features, is_popular:document.getElementById('cmsPlanPopular').checked, badge_text:document.getElementById('cmsPlanBadgeText').value, badge_color:document.getElementById('cmsPlanBadgeColor').value, button_text:document.getElementById('cmsPlanBtnText').value, button_style:document.getElementById('cmsPlanBtnStyle').value, button_color:document.getElementById('cmsPlanBtnColor').value, register_plan:document.getElementById('cmsPlanRegPlan').value, sort_order:document.getElementById('cmsPlanSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/pricing-plans/'+id,body) : await api('POST','/cms/pricing-plans',body);
+    if (ok) { closeModal('cmsPlanModal'); toast(id?'Plan updated.':'Plan added.','success'); loadCmsPricing(); }
+  }
+  async function deleteCmsPlan(id) {
+    if (!confirm('Delete this pricing plan?')) return;
+    const ok = await api('DELETE','/cms/pricing-plans/'+id);
+    if (ok) { toast('Plan deleted.','success'); loadCmsPricing(); }
+  }
+
+  // ── CMS: FAQs ───────────────────────────────────────────────────────────────
+  async function loadCmsFaqs() {
+    const data = await api('GET','/cms/faqs');
+    if (!data) return;
+    const tbody = document.getElementById('faqsBody');
+    const empty = document.getElementById('faqsEmpty');
+    if (!data.faqs.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.faqs.map(f => `<tr>
+      <td>${escHtml(f.question)}</td>
+      <td>${escHtml(f.category||'&mdash;')}</td>
+      <td>${f.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsFaqModal(${JSON.stringify(f).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsFaq(${f.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsFaqModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsFaqId').value = e ? item.id : '';
+    document.getElementById('cmsFaqQuestion').value = e ? item.question : '';
+    document.getElementById('cmsFaqAnswer').value = e ? item.answer : '';
+    document.getElementById('cmsFaqCategory').value = e ? (item.category||'') : '';
+    document.getElementById('cmsFaqSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsFaqModalTitle').textContent = e ? 'Edit FAQ' : 'Add FAQ';
+    document.getElementById('cmsFaqModal').classList.add('active');
+  }
+  async function saveCmsFaq() {
+    const id = document.getElementById('cmsFaqId').value;
+    const body = { question:document.getElementById('cmsFaqQuestion').value, answer:document.getElementById('cmsFaqAnswer').value, category:document.getElementById('cmsFaqCategory').value, sort_order:document.getElementById('cmsFaqSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/faqs/'+id,body) : await api('POST','/cms/faqs',body);
+    if (ok) { closeModal('cmsFaqModal'); toast(id?'FAQ updated.':'FAQ added.','success'); loadCmsFaqs(); }
+  }
+  async function deleteCmsFaq(id) {
+    if (!confirm('Delete this FAQ?')) return;
+    const ok = await api('DELETE','/cms/faqs/'+id);
+    if (ok) { toast('FAQ deleted.','success'); loadCmsFaqs(); }
+  }
+
+  // ── CMS: TEAM ───────────────────────────────────────────────────────────────
+  async function loadCmsTeam() {
+    const data = await api('GET','/cms/team');
+    if (!data) return;
+    const tbody = document.getElementById('teamBody');
+    const empty = document.getElementById('teamEmpty');
+    if (!data.members.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.members.map(m => `<tr>
+      <td><strong>${escHtml(m.name)}</strong></td>
+      <td>${escHtml(m.role||'&mdash;')}</td>
+      <td><span class="badge badge-${m.team_type==='leadership'?'paid':'pending'}">${m.team_type}</span></td>
+      <td>${m.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsTeamModal(${JSON.stringify(m).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsTeam(${m.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsTeamModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsTeamId').value = e ? item.id : '';
+    document.getElementById('cmsTeamName').value = e ? item.name : '';
+    document.getElementById('cmsTeamRole').value = e ? (item.role||'') : '';
+    document.getElementById('cmsTeamBio').value = e ? (item.bio||'') : '';
+    document.getElementById('cmsTeamType').value = e ? (item.team_type||'leadership') : 'leadership';
+    document.getElementById('cmsTeamLinkedin').value = e ? (item.linkedin_url||'') : '';
+    document.getElementById('cmsTeamTwitter').value = e ? (item.twitter_url||'') : '';
+    document.getElementById('cmsTeamSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsTeamModalTitle').textContent = e ? 'Edit Team Member' : 'Add Team Member';
+    document.getElementById('cmsTeamModal').classList.add('active');
+  }
+  async function saveCmsTeam() {
+    const id = document.getElementById('cmsTeamId').value;
+    const body = { name:document.getElementById('cmsTeamName').value, role:document.getElementById('cmsTeamRole').value, bio:document.getElementById('cmsTeamBio').value, team_type:document.getElementById('cmsTeamType').value, linkedin_url:document.getElementById('cmsTeamLinkedin').value, twitter_url:document.getElementById('cmsTeamTwitter').value, sort_order:document.getElementById('cmsTeamSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/team/'+id,body) : await api('POST','/cms/team',body);
+    if (ok) { closeModal('cmsTeamModal'); toast(id?'Member updated.':'Member added.','success'); loadCmsTeam(); }
+  }
+  async function deleteCmsTeam(id) {
+    if (!confirm('Delete this team member?')) return;
+    const ok = await api('DELETE','/cms/team/'+id);
+    if (ok) { toast('Member deleted.','success'); loadCmsTeam(); }
+  }
+
+  // ── CMS: PORTFOLIO ──────────────────────────────────────────────────────────
+  async function loadCmsPortfolio() {
+    const data = await api('GET','/cms/portfolio');
+    if (!data) return;
+    const tbody = document.getElementById('portfolioBody');
+    const empty = document.getElementById('portfolioEmpty');
+    if (!data.items.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.items.map(p => `<tr>
+      <td><strong>${escHtml(p.title)}</strong></td>
+      <td>${escHtml(p.category||'&mdash;')}</td>
+      <td>${p.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsPortfolioModal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsPortfolio(${p.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsPortfolioModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsPortfolioId').value = e ? item.id : '';
+    document.getElementById('cmsPortfolioTitle').value = e ? item.title : '';
+    document.getElementById('cmsPortfolioCategory').value = e ? (item.category||'ecommerce') : 'ecommerce';
+    document.getElementById('cmsPortfolioDesc').value = e ? (item.description||'') : '';
+    document.getElementById('cmsPortfolioIcon').value = e ? (item.icon||'') : '';
+    document.getElementById('cmsPortfolioS1v').value = e ? (item.stat1_value||'') : '';
+    document.getElementById('cmsPortfolioS1l').value = e ? (item.stat1_label||'') : '';
+    document.getElementById('cmsPortfolioS2v').value = e ? (item.stat2_value||'') : '';
+    document.getElementById('cmsPortfolioS2l').value = e ? (item.stat2_label||'') : '';
+    document.getElementById('cmsPortfolioS3v').value = e ? (item.stat3_value||'') : '';
+    document.getElementById('cmsPortfolioS3l').value = e ? (item.stat3_label||'') : '';
+    document.getElementById('cmsPortfolioSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsPortfolioModalTitle').textContent = e ? 'Edit Portfolio Item' : 'Add Portfolio Item';
+    document.getElementById('cmsPortfolioModal').classList.add('active');
+  }
+  async function saveCmsPortfolio() {
+    const id = document.getElementById('cmsPortfolioId').value;
+    const body = { title:document.getElementById('cmsPortfolioTitle').value, category:document.getElementById('cmsPortfolioCategory').value, description:document.getElementById('cmsPortfolioDesc').value, icon:document.getElementById('cmsPortfolioIcon').value, stat1_value:document.getElementById('cmsPortfolioS1v').value, stat1_label:document.getElementById('cmsPortfolioS1l').value, stat2_value:document.getElementById('cmsPortfolioS2v').value, stat2_label:document.getElementById('cmsPortfolioS2l').value, stat3_value:document.getElementById('cmsPortfolioS3v').value, stat3_label:document.getElementById('cmsPortfolioS3l').value, sort_order:document.getElementById('cmsPortfolioSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/portfolio/'+id,body) : await api('POST','/cms/portfolio',body);
+    if (ok) { closeModal('cmsPortfolioModal'); toast(id?'Project updated.':'Project added.','success'); loadCmsPortfolio(); }
+  }
+  async function deleteCmsPortfolio(id) {
+    if (!confirm('Delete this portfolio item?')) return;
+    const ok = await api('DELETE','/cms/portfolio/'+id);
+    if (ok) { toast('Item deleted.','success'); loadCmsPortfolio(); }
+  }
+
+  // ── CMS: CASE STUDIES ───────────────────────────────────────────────────────
+  async function loadCmsCasestudies() {
+    const data = await api('GET','/cms/case-studies');
+    if (!data) return;
+    const tbody = document.getElementById('casestudiesBody');
+    const empty = document.getElementById('casestudiesEmpty');
+    if (!data.studies.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.studies.map(s => `<tr>
+      <td><strong>${escHtml(s.title)}</strong></td>
+      <td>${escHtml(s.category||'&mdash;')}</td>
+      <td>${s.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsCaseModal(${JSON.stringify(s).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsCase(${s.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsCaseModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsCaseId').value = e ? item.id : '';
+    document.getElementById('cmsCaseTitle').value = e ? item.title : '';
+    document.getElementById('cmsCaseCategory').value = e ? (item.category||'ecommerce') : 'ecommerce';
+    document.getElementById('cmsCaseDesc').value = e ? (item.description||'') : '';
+    document.getElementById('cmsCaseIcon').value = e ? (item.icon||'') : '';
+    document.getElementById('cmsCaseS1v').value = e ? (item.stat1_value||'') : '';
+    document.getElementById('cmsCaseS1l').value = e ? (item.stat1_label||'') : '';
+    document.getElementById('cmsCaseS2v').value = e ? (item.stat2_value||'') : '';
+    document.getElementById('cmsCaseS2l').value = e ? (item.stat2_label||'') : '';
+    document.getElementById('cmsCaseS3v').value = e ? (item.stat3_value||'') : '';
+    document.getElementById('cmsCaseS3l').value = e ? (item.stat3_label||'') : '';
+    document.getElementById('cmsCaseSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsCaseModalTitle').textContent = e ? 'Edit Case Study' : 'Add Case Study';
+    document.getElementById('cmsCaseModal').classList.add('active');
+  }
+  async function saveCmsCase() {
+    const id = document.getElementById('cmsCaseId').value;
+    const body = { title:document.getElementById('cmsCaseTitle').value, category:document.getElementById('cmsCaseCategory').value, description:document.getElementById('cmsCaseDesc').value, icon:document.getElementById('cmsCaseIcon').value, stat1_value:document.getElementById('cmsCaseS1v').value, stat1_label:document.getElementById('cmsCaseS1l').value, stat2_value:document.getElementById('cmsCaseS2v').value, stat2_label:document.getElementById('cmsCaseS2l').value, stat3_value:document.getElementById('cmsCaseS3v').value, stat3_label:document.getElementById('cmsCaseS3l').value, sort_order:document.getElementById('cmsCaseSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/case-studies/'+id,body) : await api('POST','/cms/case-studies',body);
+    if (ok) { closeModal('cmsCaseModal'); toast(id?'Case study updated.':'Case study added.','success'); loadCmsCasestudies(); }
+  }
+  async function deleteCmsCase(id) {
+    if (!confirm('Delete this case study?')) return;
+    const ok = await api('DELETE','/cms/case-studies/'+id);
+    if (ok) { toast('Case study deleted.','success'); loadCmsCasestudies(); }
+  }
+
+  // ── CMS: COURSES ────────────────────────────────────────────────────────────
+  async function loadCmsCourses() {
+    const data = await api('GET','/cms/courses');
+    if (!data) return;
+    const tbody = document.getElementById('coursesBody');
+    const empty = document.getElementById('coursesEmpty');
+    if (!data.courses.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.courses.map(c => `<tr>
+      <td><strong>${escHtml(c.title)}</strong></td>
+      <td>${escHtml(c.level||'&mdash;')}</td>
+      <td>${c.duration_hours}h</td>
+      <td>${escHtml(c.students||'&mdash;')}</td>
+      <td>${c.sort_order}</td>
+      <td><div class="table-actions">
+        <button class="btn btn-outline btn-sm" onclick="openCmsCourseModal(${JSON.stringify(c).replace(/"/g,'&quot;')})"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCmsCourse(${c.id})"><i class="fas fa-trash"></i></button>
+      </div></td></tr>`).join('');
+  }
+  function openCmsCourseModal(item = null) {
+    const e = !!item;
+    document.getElementById('cmsCourseId').value = e ? item.id : '';
+    document.getElementById('cmsCourseTitle').value = e ? item.title : '';
+    document.getElementById('cmsCourseLevel').value = e ? (item.level||'Beginner') : 'Beginner';
+    document.getElementById('cmsCourseDesc').value = e ? (item.description||'') : '';
+    document.getElementById('cmsCourseDuration').value = e ? (item.duration_hours||0) : '';
+    document.getElementById('cmsCourseStudents').value = e ? (item.students||'') : '';
+    document.getElementById('cmsCourseIcon').value = e ? (item.icon||'') : '';
+    document.getElementById('cmsCourseGradient').value = e ? (item.gradient||'') : '';
+    document.getElementById('cmsCourseLevelColor').value = e ? (item.level_color||'') : '';
+    document.getElementById('cmsCourseSort').value = e ? item.sort_order : 0;
+    document.getElementById('cmsCourseModalTitle').textContent = e ? 'Edit Course' : 'Add Course';
+    document.getElementById('cmsCourseModal').classList.add('active');
+  }
+  async function saveCmsCourse() {
+    const id = document.getElementById('cmsCourseId').value;
+    const body = { title:document.getElementById('cmsCourseTitle').value, level:document.getElementById('cmsCourseLevel').value, description:document.getElementById('cmsCourseDesc').value, duration_hours:document.getElementById('cmsCourseDuration').value, students:document.getElementById('cmsCourseStudents').value, icon:document.getElementById('cmsCourseIcon').value, gradient:document.getElementById('cmsCourseGradient').value, level_color:document.getElementById('cmsCourseLevelColor').value, sort_order:document.getElementById('cmsCourseSort').value, published:1 };
+    const ok = id ? await api('PATCH','/cms/courses/'+id,body) : await api('POST','/cms/courses',body);
+    if (ok) { closeModal('cmsCourseModal'); toast(id?'Course updated.':'Course added.','success'); loadCmsCourses(); }
+  }
+  async function deleteCmsCourse(id) {
+    if (!confirm('Delete this course?')) return;
+    const ok = await api('DELETE','/cms/courses/'+id);
+    if (ok) { toast('Course deleted.','success'); loadCmsCourses(); }
+  }
+  function fmtDate(d) { if (!d) return '&mdash;'; return new Date(d).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }); }
+  function fmtMoney(v) { return '&#8358;' + Number(v || 0).toLocaleString('en-NG'); }
+  function badgeHtml(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+
+  // â”€â”€ OVERVIEW â”€â”€
+  async function loadOverview() {
+    const data = await api('GET', '/analytics/overview');
+    if (!data) return;
+    const s = data.stats;
+    document.getElementById('statContacts').textContent = s.totalContacts;
+    document.getElementById('statNew').textContent = s.newContacts + ' new';
+    document.getElementById('statLeads').textContent = s.totalLeads;
+    document.getElementById('statActive').textContent = s.activeLeads + ' active';
+    document.getElementById('statPosts').textContent = s.totalPosts;
+    document.getElementById('newContactBadge').textContent = s.newContacts;
+
+    // Users + pending payments stats
+    const usersRes = await api('GET', '/users');
+    const payRes = await api('GET', '/payments?status=pending');
+    if (usersRes) {
+      const approved = usersRes.users.filter(u => u.approved).length;
+      document.getElementById('statUsers').textContent = usersRes.users.length;
+      document.getElementById('statApproved').textContent = approved + ' approved';
+    }
+    if (payRes) {
+      document.getElementById('statPending').textContent = payRes.payments.length;
+      const badge = document.getElementById('pendingPayBadge');
+      if (payRes.payments.length > 0) { badge.textContent = payRes.payments.length; badge.style.display = 'inline-flex'; }
+    }
+
+    const maxC = Math.max(...data.contactsByStatus.map(x => x.count), 1);
+    document.getElementById('contactChart').innerHTML = data.contactsByStatus.map(r =>
+      `<div class="bar-row"><div class="bar-label">${r.status}</div><div class="bar-track"><div class="bar-fill" style="width:${(r.count/maxC*100).toFixed(1)}%"></div></div><div class="bar-val">${r.count}</div></div>`
+    ).join('') || '<p style="color:var(--text-gray);font-size:.85rem">No data yet</p>';
+
+    if (payRes && payRes.payments) {
+      const byStatus = {};
+      payRes.payments.forEach(p => { byStatus[p.status] = (byStatus[p.status]||0)+1; });
+      const allPay = await api('GET', '/payments');
+      if (allPay) {
+        const ps = {}; allPay.payments.forEach(p => ps[p.status] = (ps[p.status]||0)+1);
+        const maxP = Math.max(...Object.values(ps), 1);
+        const colors = { pending:'var(--warning)', approved:'var(--success)', rejected:'var(--danger)' };
+        document.getElementById('payChart').innerHTML = Object.entries(ps).map(([s,c]) =>
+          `<div class="bar-row"><div class="bar-label">${s}</div><div class="bar-track"><div class="bar-fill" style="width:${(c/maxP*100).toFixed(1)}%;background:${colors[s]||'var(--primary-blue)'}"></div></div><div class="bar-val">${c}</div></div>`
+        ).join('') || '<p style="color:var(--text-gray);font-size:.85rem">No payments yet</p>';
+      }
+    } else {
+      document.getElementById('payChart').innerHTML = '<p style="color:var(--text-gray);font-size:.85rem">No payments yet</p>';
+    }
+
+    document.getElementById('recentList').innerHTML = data.recentContacts.length
+      ? data.recentContacts.map(c => `<div class="recent-item"><div class="recent-avatar">${c.name.charAt(0).toUpperCase()}</div><div><div class="recent-name">${c.name}</div><div class="recent-meta">${c.email}${c.service?' Â· '+c.service:''}</div></div><div class="recent-time">${fmtDate(c.created_at)}</div></div>`).join('')
+      : '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem">No submissions yet.</p>';
+
+    // Page views
+    const pvData = await api('GET', '/analytics/pageviews');
+    if (pvData) {
+      document.getElementById('statPageViews').textContent = pvData.total.toLocaleString();
+      document.getElementById('statTodayViews').textContent = pvData.todayViews + ' today';
+      const maxV = Math.max(...pvData.topPages.map(p => p.views), 1);
+      document.getElementById('pageViewChart').innerHTML = pvData.topPages.length
+        ? pvData.topPages.map(p => `<div class="bar-row"><div class="bar-label" style="width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${p.path}">${p.path}</div><div class="bar-track"><div class="bar-fill" style="width:${(p.views/maxV*100).toFixed(1)}%;background:#8B5CF6"></div></div><div class="bar-val">${p.views}</div></div>`).join('')
+        : '<p style="color:var(--text-gray);font-size:.85rem">No page views recorded yet.</p>';
+    }
+  }
+
+  // â”€â”€ PAYMENTS â”€â”€
+  async function loadPayments() {
+    const search = document.getElementById('paySearch').value.toLowerCase();
+    const status = document.getElementById('payStatus').value;
+    const data = await api('GET', '/payments' + (status ? '?status=' + status : ''));
+    if (!data) return;
+    let payments = data.payments;
+    if (search) payments = payments.filter(p => (p.first_name+' '+p.last_name).toLowerCase().includes(search) || p.email.toLowerCase().includes(search));
+    const tbody = document.getElementById('paymentsBody');
+    const empty = document.getElementById('paymentsEmpty');
+    if (!payments.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = payments.map(p => `
+      <tr>
+        <td><strong>${p.first_name} ${p.last_name}</strong></td>
+        <td>${p.email}</td>
+        <td>${p.plan || '&mdash;'}</td>
+        <td>${p.amount ? '&#8358;'+Number(p.amount).toLocaleString() : '&mdash;'}</td>
+        <td>
+          ${p.receipt_path
+            ? `<a href="${UPLOADS}${p.receipt_path}" target="_blank" class="receipt-link"><i class="fas fa-file-image"></i> View Receipt</a>`
+            : '<span style="color:var(--text-gray);font-size:.8rem;">No file</span>'}
+        </td>
+        <td>${badgeHtml(p.status)}</td>
+        <td>${fmtDate(p.created_at)}</td>
+        <td>
+          <div class="table-actions">
+            <button class="btn btn-outline btn-sm" onclick="openPayModal(${JSON.stringify(p).replace(/"/g,'&quot;')})"><i class="fas fa-eye"></i> Review</button>
+            ${p.status==='pending' ? `
+              <button class="btn btn-success btn-sm" onclick="quickApprove(${p.id})"><i class="fas fa-check"></i></button>
+              <button class="btn btn-danger btn-sm" onclick="quickReject(${p.id})"><i class="fas fa-times"></i></button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>`).join('');
+
+    // Update badge
+    const pending = payments.filter(p => p.status === 'pending').length;
+    const badge = document.getElementById('pendingPayBadge');
+    if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-flex'; } else badge.style.display = 'none';
+  }
+
+  function openPayModal(p) {
+    currentPayId = p.id;
+    document.getElementById('payNote').value = p.admin_note || '';
+    document.getElementById('payDetail').innerHTML = `
+      <div style="background:var(--soft-white);border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem;">
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">User</div><div style="font-size:.9rem;font-weight:600;color:var(--primary-dark)">${p.first_name} ${p.last_name}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Email</div><div style="font-size:.9rem;color:var(--primary-dark)">${p.email}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Plan</div><div style="font-size:.9rem;color:var(--primary-dark)">${p.plan||'&mdash;'}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Amount</div><div style="font-size:.9rem;color:var(--primary-dark)">${p.amount?'&#8358;'+Number(p.amount).toLocaleString():'&mdash;'}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Submitted</div><div style="font-size:.9rem;color:var(--primary-dark)">${fmtDate(p.created_at)}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Current Status</div>${badgeHtml(p.status)}</div>
+        </div>
+        ${p.receipt_path ? `
+          <div style="margin-top:.75rem;"><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem">Receipt</div>
+          <a href="${UPLOADS}${p.receipt_path}" target="_blank">
+            <img src="${UPLOADS}${p.receipt_path}" class="receipt-modal-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <div style="display:none;padding:.75rem;background:var(--light-blue);border-radius:8px;color:var(--primary-blue);font-size:.85rem;"><i class="fas fa-file-pdf"></i> Click to open receipt file</div>
+          </a></div>` : '<div style="color:var(--text-gray);font-size:.85rem;">No receipt file uploaded.</div>'}
+      </div>`;
+    document.getElementById('payModal').classList.add('active');
+  }
+
+  async function reviewPayment(action) {
+    if (!currentPayId) return;
+    const note = document.getElementById('payNote').value;
+    await api('PATCH', `/payments/${currentPayId}/${action}`, { admin_note: note });
+    closeModal('payModal');
+    toast(`Payment ${action} successfully`);
+    loadPayments(); loadOverview();
+  }
+
+  async function quickApprove(id) { currentPayId = id; await api('PATCH', `/payments/${id}/approve`, {}); toast('Payment approved'); loadPayments(); loadOverview(); }
+  async function quickReject(id) {
+    const note = prompt('Reason for rejection (optional):') || '';
+    await api('PATCH', `/payments/${id}/reject`, { admin_note: note });
+    toast('Payment rejected'); loadPayments(); loadOverview();
+  }
+
+  // â”€â”€ CONTACTS â”€â”€
+  async function loadContacts() {
+    const search = document.getElementById('contactSearch').value;
+    const status = document.getElementById('contactStatus').value;
+    const data = await api('GET', `/contacts?search=${encodeURIComponent(search)}&status=${status}`);
+    if (!data) return;
+    const tbody = document.getElementById('contactsBody');
+    const empty = document.getElementById('contactsEmpty');
+    if (!data.contacts.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.contacts.map(c => `
+      <tr><td><strong>${c.name}</strong></td><td>${c.email}</td><td>${c.phone||'&mdash;'}</td><td>${c.service||'&mdash;'}</td><td>${badgeHtml(c.status)}</td><td>${fmtDate(c.created_at)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="openContactDetail(${c.id})"><i class="fas fa-eye"></i></button></td></tr>`).join('');
+  }
+
+  let _allContacts = [];
+  async function openContactDetail(id) {
+    const data = await api('GET', '/contacts?search=&status=');
+    const c = data.contacts.find(x => x.id === id);
+    if (!c) return;
+    currentContactId = id;
+    document.getElementById('contactStatusSel').value = c.status || 'new';
+    document.getElementById('contactNotes').value = c.notes || '';
+    document.getElementById('contactDetail').innerHTML = `
+      <div style="background:var(--soft-white);border-radius:12px;padding:1.25rem;margin-bottom:1rem;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Name</div><div style="font-size:.9rem;font-weight:600;color:var(--primary-dark)">${c.name}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Email</div><div style="font-size:.9rem;color:var(--primary-dark)">${c.email}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Phone</div><div style="font-size:.9rem;color:var(--primary-dark)">${c.phone||'&mdash;'}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Service</div><div style="font-size:.9rem;color:var(--primary-dark)">${c.service||'&mdash;'}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Budget</div><div style="font-size:.9rem;color:var(--primary-dark)">${c.budget||'&mdash;'}</div></div>
+          <div><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em">Date</div><div style="font-size:.9rem;color:var(--primary-dark)">${fmtDate(c.created_at)}</div></div>
+        </div>
+        ${c.message?`<div style="margin-top:.75rem;"><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem">Message</div><div style="font-size:.88rem;color:var(--text-dark);line-height:1.6">${c.message}</div></div>`:''}
+      </div>`;
+    document.getElementById('contactModal').classList.add('active');
+  }
+
+  async function saveContact() {
+    if (!currentContactId) return;
+    await api('PATCH', `/contacts/${currentContactId}`, { status: document.getElementById('contactStatusSel').value, notes: document.getElementById('contactNotes').value });
+    closeModal('contactModal'); toast('Contact updated'); loadContacts(); loadOverview();
+  }
+  async function deleteContact() {
+    if (!currentContactId || !confirm('Delete this contact?')) return;
+    await api('DELETE', `/contacts/${currentContactId}`);
+    closeModal('contactModal'); toast('Contact deleted'); loadContacts(); loadOverview();
+  }
+
+  // â”€â”€ LEADS â”€â”€
+  async function loadLeads() {
+    const data = await api('GET', `/leads?search=${encodeURIComponent(document.getElementById('leadSearch').value)}&status=${document.getElementById('leadStatus').value}`);
+    if (!data) return;
+    const tbody = document.getElementById('leadsBody');
+    const empty = document.getElementById('leadsEmpty');
+    if (!data.leads.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = data.leads.map(l => `
+      <tr><td><strong>${l.name}</strong></td><td>${l.company||'&mdash;'}</td><td>${l.email}</td><td>${l.plan||'&mdash;'}</td><td>${fmtMoney(l.value)}</td><td>${badgeHtml(l.status)}</td><td>${fmtDate(l.created_at)}</td>
+      <td><div class="table-actions"><button class="btn btn-outline btn-sm" onclick="openLeadModal(${l.id})"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deleteLead(${l.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
+  }
+
+  async function openLeadModal(id) {
+    currentLeadId = id || null;
+    document.getElementById('leadModalTitle').textContent = id ? 'Edit Lead' : 'Add Lead';
+    if (id) {
+      const data = await api('GET', '/leads');
+      const l = data.leads.find(x => x.id === id);
+      if (!l) return;
+      document.getElementById('leadName').value = l.name;
+      document.getElementById('leadEmail').value = l.email;
+      document.getElementById('leadPhone').value = l.phone || '';
+      document.getElementById('leadCompany').value = l.company || '';
+      document.getElementById('leadPlan').value = l.plan || '';
+      document.getElementById('leadStatusSel').value = l.status;
+      document.getElementById('leadValue').value = l.value || '';
+      document.getElementById('leadNotes').value = l.notes || '';
+    } else {
+      ['leadName','leadEmail','leadPhone','leadCompany','leadNotes','leadValue'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('leadPlan').value = ''; document.getElementById('leadStatusSel').value = 'prospect';
+    }
+    document.getElementById('leadModal').classList.add('active');
+  }
+
+  async function saveLead() {
+    const body = { name:document.getElementById('leadName').value, email:document.getElementById('leadEmail').value, phone:document.getElementById('leadPhone').value, company:document.getElementById('leadCompany').value, plan:document.getElementById('leadPlan').value, status:document.getElementById('leadStatusSel').value, value:document.getElementById('leadValue').value, notes:document.getElementById('leadNotes').value };
+    if (!body.name||!body.email) { toast('Name and email are required','error'); return; }
+    if (currentLeadId) { await api('PATCH',`/leads/${currentLeadId}`,body); toast('Lead updated'); }
+    else { await api('POST','/leads',body); toast('Lead added'); }
+    closeModal('leadModal'); loadLeads(); loadOverview();
+  }
+
+  async function deleteLead(id) {
+    if (!confirm('Delete this lead?')) return;
+    await api('DELETE',`/leads/${id}`); toast('Lead deleted'); loadLeads(); loadOverview();
+  }
+
+  // â”€â”€ BLOG â”€â”€
+  async function loadBlog() {
+    const search = document.getElementById('blogSearch').value;
+    const status = document.getElementById('blogStatus').value;
+    const data = await api('GET', `/blog?status=${status}`);
+    if (!data) return;
+    const filtered = search ? data.posts.filter(p => p.title.toLowerCase().includes(search.toLowerCase())) : data.posts;
+    const tbody = document.getElementById('blogBody');
+    const empty = document.getElementById('blogEmpty');
+    if (!filtered.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = filtered.map(p => `
+      <tr><td><strong>${p.title}</strong></td><td>${p.category||'&mdash;'}</td><td>${p.author}</td><td>${badgeHtml(p.status)}</td><td>${fmtDate(p.created_at)}</td>
+      <td><div class="table-actions"><button class="btn btn-outline btn-sm" onclick="openPostModal(${p.id})"><i class="fas fa-edit"></i></button><button class="btn btn-danger btn-sm" onclick="deletePost(${p.id})"><i class="fas fa-trash"></i></button></div></td></tr>`).join('');
+  }
+
+  async function openPostModal(id) {
+    currentPostId = id || null;
+    document.getElementById('postModalTitle').textContent = id ? 'Edit Post' : 'New Post';
+    if (id) {
+      const p = await api('GET', `/blog/${id}`);
+      if (!p) return;
+      document.getElementById('postTitle').value = p.title;
+      document.getElementById('postCategory').value = p.category || '';
+      document.getElementById('postStatus').value = p.status;
+      document.getElementById('postExcerpt').value = p.excerpt || '';
+      document.getElementById('postContent').innerHTML = p.content || '';
+      document.getElementById('postAuthor').value = p.author;
+      document.getElementById('postCoverImage').value = p.cover_image || '';
+    } else {
+      ['postTitle','postExcerpt','postCoverImage'].forEach(i => document.getElementById(i).value = '');
+      document.getElementById('postContent').innerHTML = '';
+      document.getElementById('postCategory').value = '';
+      document.getElementById('postStatus').value = 'draft';
+      document.getElementById('postAuthor').value = 'SeedsAds Team';
+    }
+    document.getElementById('postModal').classList.add('active');
+  }
+
+  async function savePost() {
+    const body = { title:document.getElementById('postTitle').value, category:document.getElementById('postCategory').value, status:document.getElementById('postStatus').value, excerpt:document.getElementById('postExcerpt').value, content:document.getElementById('postContent').innerHTML, author:document.getElementById('postAuthor').value, cover_image:document.getElementById('postCoverImage').value||null };
+    if (!body.title) { toast('Title is required','error'); return; }
+    if (currentPostId) { await api('PATCH',`/blog/${currentPostId}`,body); toast('Post updated'); }
+    else { await api('POST','/blog',body); toast('Post created'); }
+    closeModal('postModal'); loadBlog(); loadOverview();
+  }
+
+  async function deletePost(id) {
+    if (!confirm('Delete this post?')) return;
+    await api('DELETE',`/blog/${id}`); toast('Post deleted'); loadBlog();
+  }
+
+  function fmt(cmd,val) { document.execCommand(cmd,false,val||null); document.getElementById('postContent').focus(); }
+  function insertLink() { const url=prompt('Enter URL:'); if(url) document.execCommand('createLink',false,url); document.getElementById('postContent').focus(); }
+
+  // -- DMI CONTENT --
+  let currentDmiId = null;
+
+  async function loadDmi() {
+    const search = document.getElementById('dmiSearch').value.toLowerCase();
+    const planFilter = document.getElementById('dmiPlanFilter').value;
+    const data = await api('GET', '/dmi/admin');
+    if (!data) return;
+    let items = data.items;
+    if (search) items = items.filter(i => i.title.toLowerCase().includes(search) || (i.description||'').toLowerCase().includes(search));
+    if (planFilter) items = items.filter(i => i.plan_access === planFilter);
+    const tbody = document.getElementById('dmiBody');
+    const empty = document.getElementById('dmiEmpty');
+    if (!items.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    const typeIcon = { pdf:'fa-file-pdf', video:'fa-play-circle', zip:'fa-file-archive', link:'fa-external-link-alt' };
+    tbody.innerHTML = items.map(i => `
+      <tr>
+        <td><strong>${i.title}</strong>${i.description ? '<br><small style=”color:var(--text-gray);”>'+i.description.slice(0,60)+'...</small>' : ''}</td>
+        <td><i class=”fas ${typeIcon[i.type]||'fa-file'}”></i> ${i.type.toUpperCase()}</td>
+        <td>${i.category||'&#8212;'}</td>
+        <td><span style=”background:#e0e7ff;color:#4f46e5;padding:.2rem .6rem;border-radius:50px;font-size:.75rem;font-weight:700;”>${i.plan_access === 'all' ? 'Free' : i.plan_access}</span></td>
+        <td>${i.published ? '<span style=”color:var(--success);”><i class=”fas fa-eye”></i> Visible</span>' : '<span style=”color:var(--text-gray);”><i class=”fas fa-eye-slash”></i> Hidden</span>'}</td>
+        <td><div class=”table-actions”>
+          <button class=”btn btn-outline btn-sm” onclick=”openDmiModal(${i.id})”><i class=”fas fa-edit”></i></button>
+          <button class=”btn btn-danger btn-sm” onclick=”deleteDmi(${i.id})”><i class=”fas fa-trash”></i></button>
+        </div></td>
+      </tr>`).join('');
+  }
+
+  function openDmiModal(id) {
+    currentDmiId = id || null;
+    document.getElementById('dmiModalTitle').textContent = id ? 'Edit Resource' : 'Upload DMI Resource';
+    document.getElementById('dmiForm').reset();
+    document.getElementById('dmiFileHint').textContent = '';
+    if (id) {
+      api('GET', '/dmi/admin').then(data => {
+        const item = data && data.items.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('dmiTitle').value = item.title;
+        document.getElementById('dmiDescription').value = item.description || '';
+        document.getElementById('dmiType').value = item.type;
+        document.getElementById('dmiPlanAccess').value = item.plan_access;
+        document.getElementById('dmiCategory').value = item.category || '';
+        document.getElementById('dmiSortOrder').value = item.sort_order || 0;
+        document.getElementById('dmiPublished').value = item.published ? '1' : '0';
+        document.getElementById('dmiExternalUrl').value = item.external_url || '';
+        if (item.file_name) document.getElementById('dmiFileHint').textContent = 'Current file: ' + item.file_name;
+      });
+    }
+    document.getElementById('dmiModal').classList.add('active');
+  }
+
+  async function saveDmi() {
+    const title = document.getElementById('dmiTitle').value.trim();
+    if (!title) { toast('Title is required', 'error'); return; }
+    const formData = new FormData(document.getElementById('dmiForm'));
+    formData.set('title', title);
+    const method = currentDmiId ? 'PATCH' : 'POST';
+    const url = API + '/dmi' + (currentDmiId ? '/' + currentDmiId : '');
+    try {
+      const res = await fetch(url, { method, headers: { Authorization: 'Bearer ' + token }, body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      toast(currentDmiId ? 'Resource updated' : 'Resource uploaded');
+      closeModal('dmiModal');
+      loadDmi();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function deleteDmi(id) {
+    if (!confirm('Delete this resource? The file will also be removed.')) return;
+    await api('DELETE', '/dmi/' + id);
+    toast('Resource deleted');
+    loadDmi();
+  }
+
+  // â”€â”€ USERS â”€â”€
+  async function loadUsers() {
+    const search = document.getElementById('userSearch').value.toLowerCase();
+    const payStatus = document.getElementById('userPayStatus').value;
+    const data = await api('GET', '/users');
+    if (!data) return;
+    let users = data.users;
+    if (search) users = users.filter(u => (u.first_name+' '+u.last_name).toLowerCase().includes(search) || u.email.toLowerCase().includes(search));
+    if (payStatus) users = users.filter(u => u.payment_status === payStatus);
+    const tbody = document.getElementById('usersBody');
+    const empty = document.getElementById('usersEmpty');
+    if (!users.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td><strong>${u.first_name} ${u.last_name}</strong></td>
+        <td>${u.email}</td>
+        <td>${u.phone||'&mdash;'}</td>
+        <td>${u.plan||'&mdash;'}</td>
+        <td>${badgeHtml(u.payment_status||'unpaid')}</td>
+        <td>${u.approved ? '<span style="color:var(--success);font-weight:600;"><i class="fas fa-check-circle"></i> Yes</span>' : '<span style="color:var(--text-gray);">No</span>'}</td>
+        <td>${fmtDate(u.created_at)}</td>
+        <td><button class="btn btn-danger btn-sm" data-uid="${u.id}" data-uname="${(u.first_name+' '+u.last_name).replace(/"/g,'&quot;')}" onclick="deleteUser(this)"><i class="fas fa-trash"></i> Delete</button></td>
+      </tr>`).join('');
+  }
+
+  // â”€â”€ SETTINGS â”€â”€
+  async function loadSettings() {
+    try {
+      const res = await fetch(`${API}/settings`);
+      const s = await res.json();
+      document.getElementById('settingSiteName').value = s.site_name || '';
+      document.getElementById('settingEmail').value = s.contact_email || '';
+      document.getElementById('settingPhone').value = s.phone || '';
+      document.getElementById('settingWhatsapp').value = s.whatsapp || '';
+    } catch (_) {}
+  }
+
+  document.getElementById('siteSettingsForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const body = {
+      site_name: document.getElementById('settingSiteName').value,
+      contact_email: document.getElementById('settingEmail').value,
+      phone: document.getElementById('settingPhone').value,
+      whatsapp: document.getElementById('settingWhatsapp').value,
+    };
+    const res = await api('PUT', '/settings', body);
+    if (res && res.success) toast('Settings saved');
+    else toast(res?.error || 'Failed to save', 'error');
+  });
+
+  document.getElementById('pwForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (document.getElementById('newPw').value !== document.getElementById('confirmPw').value) { toast('Passwords do not match','error'); return; }
+    const res = await api('POST','/auth/change-password',{ currentPassword:document.getElementById('currentPw').value, newPassword:document.getElementById('newPw').value });
+    if (res&&res.success) { toast('Password updated'); e.target.reset(); }
+    else toast(res?.error||'Failed','error');
+  });
+
+  loadOverview();
+</script>
+</body>
+</html>
