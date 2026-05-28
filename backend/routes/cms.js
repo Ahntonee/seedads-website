@@ -1,9 +1,63 @@
 'use strict';
 const express  = require('express');
+const path     = require('path');
+const fs       = require('fs');
+const multer   = require('multer');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
 const { sanitizeText } = require('../security');
 const router   = express.Router();
+
+// ── Image upload (CMS media) ──────────────────────────────────────────────────
+const cmsStorage = multer.diskStorage({
+  destination(req, file, cb) {
+    const dir = path.join(__dirname, '../uploads/cms');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename(req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2, 8) + ext);
+  },
+});
+const cmsUpload = multer({
+  storage: cmsStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter(req, file, cb) {
+    if (/^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype)) cb(null, true);
+    else cb(Object.assign(new Error('Only image files are allowed'), { status: 400 }));
+  },
+});
+
+// POST /api/cms/upload
+router.post('/upload', requireAuth, cmsUpload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ url: '/uploads/cms/' + req.file.filename, filename: req.file.filename });
+});
+
+// GET /api/cms/media
+router.get('/media', requireAuth, (req, res) => {
+  const dir = path.join(__dirname, '../uploads/cms');
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const files = fs.readdirSync(dir)
+      .filter(f => /\.(jpe?g|png|gif|webp|svg)$/i.test(f))
+      .map(f => {
+        const stat = fs.statSync(path.join(dir, f));
+        return { url: '/uploads/cms/' + f, filename: f, size: stat.size, mtime: stat.mtime };
+      })
+      .sort((a, b) => new Date(b.mtime) - new Date(a.mtime));
+    res.json({ files });
+  } catch { res.json({ files: [] }); }
+});
+
+// DELETE /api/cms/media/:filename
+router.delete('/media/:filename', requireAuth, (req, res) => {
+  const safe = path.basename(req.params.filename);
+  const fp   = path.join(__dirname, '../uploads/cms', safe);
+  try { fs.unlinkSync(fp); res.json({ success: true }); }
+  catch { res.status(404).json({ error: 'File not found' }); }
+});
 
 // Helper: build dynamic SET clause for UPDATE using ? placeholders
 function buildUpdate(body, fields, maxLens) {
@@ -139,6 +193,7 @@ router.post('/team', requireAuth, async (req, res) => {
     const name              = sanitizeText(req.body.name, 200);
     const role              = sanitizeText(req.body.role, 200);
     const bio               = sanitizeText(req.body.bio, 1000);
+    const photo_url         = sanitizeText(req.body.photo_url, 500);
     const team_type         = sanitizeText(req.body.team_type, 50) || 'leadership';
     const linkedin_url      = sanitizeText(req.body.linkedin_url, 500);
     const twitter_url       = sanitizeText(req.body.twitter_url, 500);
@@ -149,9 +204,9 @@ router.post('/team', requireAuth, async (req, res) => {
     if (!name) return res.status(400).json({ error: 'Name is required' });
     const [result] = await pool.query(
       `INSERT INTO team_members
-         (name,role,bio,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order,published)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`,
-      [name,role,bio,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order,published]
+         (name,role,bio,photo_url,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order,published)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?)`,
+      [name,role,bio,photo_url||null,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order,published]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) { console.error('[cms/team POST]', err.message); res.status(500).json({ error: 'Internal server error' }); }
@@ -160,8 +215,8 @@ router.post('/team', requireAuth, async (req, res) => {
 router.patch('/team/:id', requireAuth, async (req, res) => {
   try {
     const { sets, vals } = buildUpdate(req.body,
-      ['name','role','bio','team_type','linkedin_url','twitter_url','other_social_icon','other_social_url'],
-      { bio: 1000, name: 200, role: 200, linkedin_url: 500, twitter_url: 500, other_social_url: 500 });
+      ['name','role','bio','photo_url','team_type','linkedin_url','twitter_url','other_social_icon','other_social_url'],
+      { bio: 1000, name: 200, role: 200, photo_url: 500, linkedin_url: 500, twitter_url: 500, other_social_url: 500 });
     if (req.body.published  !== undefined) { sets.push('published = ?');  vals.push(req.body.published  ? 1 : 0); }
     if (req.body.sort_order !== undefined) { sets.push('sort_order = ?'); vals.push(parseInt(req.body.sort_order) || 0); }
     if (!sets.length) return res.json({ success: true });
@@ -192,6 +247,7 @@ router.post('/portfolio', requireAuth, async (req, res) => {
     const category    = sanitizeText(req.body.category, 100);
     const description = sanitizeText(req.body.description, 1000);
     const icon        = sanitizeText(req.body.icon, 100);
+    const image_url   = sanitizeText(req.body.image_url, 500);
     const s1v = sanitizeText(req.body.stat1_value, 50), s1l = sanitizeText(req.body.stat1_label, 100);
     const s2v = sanitizeText(req.body.stat2_value, 50), s2l = sanitizeText(req.body.stat2_label, 100);
     const s3v = sanitizeText(req.body.stat3_value, 50), s3l = sanitizeText(req.body.stat3_label, 100);
@@ -200,9 +256,9 @@ router.post('/portfolio', requireAuth, async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Title is required' });
     const [result] = await pool.query(
       `INSERT INTO portfolio_items
-         (title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order,published)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [title,category,description,icon,s1v,s1l,s2v,s2l,s3v,s3l,sort_order,published]
+         (title,category,description,icon,image_url,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order,published)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [title,category,description,icon,image_url||null,s1v,s1l,s2v,s2l,s3v,s3l,sort_order,published]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) { console.error('[cms/portfolio POST]', err.message); res.status(500).json({ error: 'Internal server error' }); }
@@ -211,8 +267,8 @@ router.post('/portfolio', requireAuth, async (req, res) => {
 router.patch('/portfolio/:id', requireAuth, async (req, res) => {
   try {
     const { sets, vals } = buildUpdate(req.body,
-      ['title','category','description','icon','stat1_value','stat1_label','stat2_value','stat2_label','stat3_value','stat3_label'],
-      { description: 1000 });
+      ['title','category','description','icon','image_url','stat1_value','stat1_label','stat2_value','stat2_label','stat3_value','stat3_label'],
+      { description: 1000, image_url: 500 });
     if (req.body.published  !== undefined) { sets.push('published = ?');  vals.push(req.body.published  ? 1 : 0); }
     if (req.body.sort_order !== undefined) { sets.push('sort_order = ?'); vals.push(parseInt(req.body.sort_order) || 0); }
     if (!sets.length) return res.json({ success: true });
@@ -243,6 +299,7 @@ router.post('/case-studies', requireAuth, async (req, res) => {
     const category    = sanitizeText(req.body.category, 100);
     const description = sanitizeText(req.body.description, 1000);
     const icon        = sanitizeText(req.body.icon, 100);
+    const image_url   = sanitizeText(req.body.image_url, 500);
     const s1v = sanitizeText(req.body.stat1_value, 50), s1l = sanitizeText(req.body.stat1_label, 100);
     const s2v = sanitizeText(req.body.stat2_value, 50), s2l = sanitizeText(req.body.stat2_label, 100);
     const s3v = sanitizeText(req.body.stat3_value, 50), s3l = sanitizeText(req.body.stat3_label, 100);
@@ -251,9 +308,9 @@ router.post('/case-studies', requireAuth, async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Title is required' });
     const [result] = await pool.query(
       `INSERT INTO case_studies
-         (title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order,published)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [title,category,description,icon,s1v,s1l,s2v,s2l,s3v,s3l,sort_order,published]
+         (title,category,description,icon,image_url,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order,published)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [title,category,description,icon,image_url||null,s1v,s1l,s2v,s2l,s3v,s3l,sort_order,published]
     );
     res.json({ success: true, id: result.insertId });
   } catch (err) { console.error('[cms/case-studies POST]', err.message); res.status(500).json({ error: 'Internal server error' }); }
@@ -262,8 +319,8 @@ router.post('/case-studies', requireAuth, async (req, res) => {
 router.patch('/case-studies/:id', requireAuth, async (req, res) => {
   try {
     const { sets, vals } = buildUpdate(req.body,
-      ['title','category','description','icon','stat1_value','stat1_label','stat2_value','stat2_label','stat3_value','stat3_label'],
-      { description: 1000 });
+      ['title','category','description','icon','image_url','stat1_value','stat1_label','stat2_value','stat2_label','stat3_value','stat3_label'],
+      { description: 1000, image_url: 500 });
     if (req.body.published  !== undefined) { sets.push('published = ?');  vals.push(req.body.published  ? 1 : 0); }
     if (req.body.sort_order !== undefined) { sets.push('sort_order = ?'); vals.push(parseInt(req.body.sort_order) || 0); }
     if (!sets.length) return res.json({ success: true });

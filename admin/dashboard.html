@@ -164,6 +164,54 @@
     #postContent{border:none;border-radius:0;min-height:200px;background:white;}
 
     .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+    /* ── Media Library ─────────────────────────────────────── */
+    .media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.85rem;margin-top:1.25rem;}
+    .media-item{position:relative;border-radius:10px;overflow:hidden;background:var(--soft-white);border:1px solid rgba(0,102,255,0.1);aspect-ratio:1;transition:all .2s;}
+    .media-item:hover{transform:scale(1.03);box-shadow:0 4px 16px rgba(10,37,64,0.15);}
+    .media-item img{width:100%;height:100%;object-fit:cover;display:block;}
+    .media-item .mi-actions{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(10,37,64,0.85));padding:.5rem;display:flex;gap:.3rem;justify-content:center;opacity:0;transition:opacity .2s;}
+    .media-item:hover .mi-actions{opacity:1;}
+    .mi-actions button{padding:.2rem .5rem;border-radius:5px;border:none;font-size:.68rem;cursor:pointer;font-weight:600;}
+    .mi-copy{background:rgba(255,255,255,0.92);color:var(--primary-dark);}
+    .mi-del{background:rgba(239,68,68,0.92);color:white;}
+    .mi-name{position:absolute;top:0;left:0;right:0;background:rgba(10,37,64,0.6);color:white;font-size:.62rem;padding:.2rem .4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s;}
+    .media-item:hover .mi-name{opacity:1;}
+    .drop-zone{border:2px dashed rgba(0,102,255,0.3);border-radius:12px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--soft-white);}
+    .drop-zone:hover,.drop-zone.drag-over{border-color:var(--primary-blue);background:var(--light-blue);}
+    .drop-zone i{font-size:2.2rem;color:var(--primary-blue);margin-bottom:.5rem;display:block;}
+    .drop-zone p{color:var(--text-gray);font-size:.9rem;margin:.25rem 0 0;}
+    .drop-zone small{color:var(--text-gray);font-size:.75rem;}
+    /* ── Image upload widget (inline in modals & PC editor) ─ */
+    .img-upload-widget{display:flex;align-items:center;gap:.8rem;padding:.75rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;background:var(--soft-white);}
+    .iuw-preview{width:68px;height:68px;border-radius:8px;object-fit:cover;border:1px solid rgba(0,102,255,0.1);flex-shrink:0;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:var(--text-gray);font-size:1.3rem;overflow:hidden;}
+    .iuw-preview img{width:100%;height:100%;object-fit:cover;border-radius:7px;}
+    .iuw-info{flex:1;min-width:0;}
+    .iuw-url{font-size:.72rem;color:var(--text-gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.4rem;}
+    .iuw-btns{display:flex;gap:.35rem;flex-wrap:wrap;}
+    /* ── Smart Page Content editor ─────────────────────────── */
+    .smart-field{margin-bottom:.85rem;}
+    .smart-field>label{display:block;font-size:.8rem;font-weight:600;color:var(--primary-dark);margin-bottom:.3rem;text-transform:capitalize;}
+    .smart-field input[type=text],.smart-field input[type=url],.smart-field input[type=number],.smart-field textarea,.smart-field select{width:100%;padding:.6rem .8rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;font-size:.85rem;font-family:'Inter',sans-serif;outline:none;background:white;transition:all .2s;color:var(--text-dark);}
+    .smart-field input:focus,.smart-field textarea:focus,.smart-field select:focus{border-color:var(--primary-blue);box-shadow:0 0 0 3px rgba(0,102,255,0.08);}
+    .smart-field textarea{min-height:70px;resize:vertical;}
+    .pc-array-box{background:var(--soft-white);border-radius:8px;padding:.6rem;border:1px solid rgba(0,102,255,0.08);}
+    .pc-array-item{background:white;border:1px solid rgba(0,102,255,0.1);border-radius:8px;margin-bottom:.5rem;overflow:hidden;}
+    .pc-array-header{display:flex;align-items:center;justify-content:space-between;padding:.6rem .8rem;cursor:pointer;user-select:none;}
+    .pc-array-title{font-size:.82rem;font-weight:600;color:var(--primary-dark);}
+    .pc-array-body{padding:.75rem .8rem;border-top:1px solid rgba(0,102,255,0.06);display:none;}
+    .pc-array-body.open{display:block;}
+    .pc-section-tabs{display:flex;gap:.5rem;margin-bottom:1rem;border-bottom:1px solid rgba(0,102,255,0.08);padding-bottom:.5rem;}
+    .pc-tab{padding:.35rem .8rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--text-gray);}
+    .pc-tab.active{background:var(--light-blue);color:var(--primary-blue);}
+    .pc-json-editor{font-family:monospace;font-size:.78rem;line-height:1.5;width:100%;padding:.75rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;outline:none;resize:vertical;background:#FAFBFC;color:var(--text-dark);}
+    /* ── Media Picker modal ─────────────────────────────────── */
+    .mpicker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;max-height:380px;overflow-y:auto;padding:.25rem;}
+    .mpicker-item{aspect-ratio:1;border-radius:8px;overflow:hidden;cursor:pointer;border:2.5px solid transparent;transition:all .18s;position:relative;}
+    .mpicker-item:hover{border-color:rgba(0,102,255,0.4);}
+    .mpicker-item.selected{border-color:var(--primary-blue);box-shadow:0 0 0 2px rgba(0,102,255,0.25);}
+    .mpicker-item img{width:100%;height:100%;object-fit:cover;}
+    .mpicker-item .mpicker-check{position:absolute;top:3px;right:3px;width:18px;height:18px;background:var(--primary-blue);border-radius:50%;display:none;align-items:center;justify-content:center;color:white;font-size:.55rem;}
+    .mpicker-item.selected .mpicker-check{display:flex;}
     @media(max-width:1200px){.stats-grid{grid-template-columns:repeat(3,1fr);}}
     @media(max-width:900px){.sidebar{transform:translateX(-100%);}.sidebar.open{transform:none;}.main{margin-left:0;}.hamburger{display:block;}.overview-grid{grid-template-columns:1fr;}.settings-grid{grid-template-columns:1fr;}.table-card{overflow-x:auto;}}
     @media(max-width:600px){.stats-grid{grid-template-columns:1fr 1fr;}.page-content{padding:1rem;}.form-row{grid-template-columns:1fr;}.topbar{padding:.75rem 1rem;}.table-toolbar{flex-direction:column;}.bar-label{width:120px !important;}}
@@ -193,6 +241,7 @@
     <div class="nav-item" onclick="showPage('casestudies')"><i class="fas fa-briefcase"></i> Case Studies</div>
     <div class="nav-item" onclick="showPage('courses')"><i class="fas fa-book-open"></i> Courses</div>
     <div class="nav-item" onclick="showPage('pagecontent')"><i class="fas fa-file-edit"></i> Page Content</div>
+    <div class="nav-item" onclick="showPage('media')"><i class="fas fa-images"></i> Media Library</div>
     <div class="nav-section-label">Users</div>
     <div class="nav-item" onclick="showPage('users')"><i class="fas fa-user-circle"></i> Registered Users</div>
     <div class="nav-section-label">System</div>
@@ -458,8 +507,31 @@
       <div id="pcSectionsContainer" style="display:flex;flex-direction:column;gap:1.5rem;"></div>
     </div>
 
+    <!-- MEDIA LIBRARY -->
+    <div class="page" id="page-media">
+      <div class="section-header">
+        <h2>Media Library</h2>
+        <button class="btn btn-primary" onclick="document.getElementById('mediaFileInput').click()"><i class="fas fa-upload"></i> Upload Images</button>
+      </div>
+      <div class="drop-zone" id="mediaDropZone" onclick="document.getElementById('mediaFileInput').click()">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Drag &amp; drop images here, or click to browse</p>
+        <small>JPG, PNG, GIF, WebP, SVG &mdash; max 10 MB each</small>
+      </div>
+      <div id="mediaUploadProg" style="display:none;margin-top:.75rem;">
+        <div style="height:5px;background:var(--light-blue);border-radius:3px;overflow:hidden;"><div id="mediaProgBar" style="height:100%;background:var(--primary-blue);width:0%;transition:width .3s;"></div></div>
+        <p id="mediaProgTxt" style="font-size:.78rem;color:var(--text-gray);margin-top:.3rem;">Uploading…</p>
+      </div>
+      <div class="media-grid" id="mediaGrid"></div>
+      <div id="mediaEmpty" class="empty-state" style="display:none;"><i class="fas fa-images"></i>No images yet. Upload some above!</div>
+    </div>
+
   </div>
 </div>
+
+<!-- Hidden inputs for file uploads -->
+<input type="file" id="mediaFileInput" multiple accept="image/*" style="display:none" onchange="handleMediaFiles(this.files)">
+<input type="file" id="inlineImgInput" accept="image/*" style="display:none" onchange="handleInlineUpload(this)">
 
 <!-- Payment review modal -->
 <div class="modal-overlay" id="payModal">
@@ -551,9 +623,21 @@
         <div id="postContent" contenteditable="true" style="padding:1rem;min-height:200px;outline:none;font-size:.9rem;line-height:1.7;"></div>
       </div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Author</label><input type="text" id="postAuthor" value="SeedsAds Team"></div>
-      <div class="form-group"><label>Cover Image URL <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label><input type="url" id="postCoverImage" placeholder="https://...image.jpg"></div>
+    <div class="form-group"><label>Author</label><input type="text" id="postAuthor" value="SeedsAds Team"></div>
+    <div class="form-group">
+      <label>Cover Image</label>
+      <div class="img-upload-widget">
+        <div class="iuw-preview" id="postCoverPreview"><i class="fas fa-image"></i></div>
+        <div class="iuw-info">
+          <input type="hidden" id="postCoverImage">
+          <div class="iuw-url" id="postCoverUrl">No image set</div>
+          <div class="iuw-btns">
+            <button type="button" class="btn btn-sm btn-outline" onclick="triggerInlineUpload('postCoverImage','postCoverPreview','postCoverUrl')"><i class="fas fa-upload"></i> Upload</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="openMediaPicker('postCoverImage','postCoverPreview','postCoverUrl')"><i class="fas fa-images"></i> Browse</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="clearImgField('postCoverImage','postCoverPreview','postCoverUrl')"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('postModal')">Cancel</button><button class="btn btn-primary" onclick="savePost()"><i class="fas fa-save"></i> Save Post</button></div>
   </div>
@@ -603,6 +687,25 @@
       </div>
     </form>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('dmiModal')">Cancel</button><button class="btn btn-primary" onclick="saveDmi()"><i class="fas fa-upload"></i> Save Resource</button></div>
+  </div>
+</div>
+
+<!-- Media Picker Modal -->
+<div class="modal-overlay" id="mediaPickerModal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-header">
+      <h3><i class="fas fa-images" style="color:var(--primary-blue);margin-right:.4rem"></i>Select Image</h3>
+      <button class="modal-close" onclick="closeModal('mediaPickerModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div style="margin-bottom:.75rem;display:flex;align-items:center;gap:.75rem;">
+      <label class="btn btn-outline btn-sm" style="cursor:pointer;"><i class="fas fa-upload"></i> Upload New<input type="file" accept="image/*" style="display:none" onchange="uploadAndPickImg(this)"></label>
+      <span style="font-size:.8rem;color:var(--text-gray);">or pick from library below</span>
+    </div>
+    <div class="mpicker-grid" id="mpickerGrid"><p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</p></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('mediaPickerModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmPickerSelect()"><i class="fas fa-check"></i> Use Image</button>
+    </div>
   </div>
 </div>
 
@@ -674,6 +777,21 @@
       <div class="form-group"><label>Role / Title</label><input type="text" id="cmsTeamRole" placeholder="e.g. CEO & Founder"></div>
     </div>
     <div class="form-group"><label>Bio</label><textarea id="cmsTeamBio" rows="3" placeholder="Short bio paragraph"></textarea></div>
+    <div class="form-group">
+      <label>Profile Photo</label>
+      <div class="img-upload-widget">
+        <div class="iuw-preview" id="teamPhotoPreview"><i class="fas fa-user"></i></div>
+        <div class="iuw-info">
+          <input type="hidden" id="cmsTeamPhoto">
+          <div class="iuw-url" id="teamPhotoUrl">No photo set</div>
+          <div class="iuw-btns">
+            <button type="button" class="btn btn-sm btn-outline" onclick="triggerInlineUpload('cmsTeamPhoto','teamPhotoPreview','teamPhotoUrl')"><i class="fas fa-upload"></i> Upload</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="openMediaPicker('cmsTeamPhoto','teamPhotoPreview','teamPhotoUrl')"><i class="fas fa-images"></i> Browse</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="clearImgField('cmsTeamPhoto','teamPhotoPreview','teamPhotoUrl')"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label>Team Type</label>
         <select id="cmsTeamType"><option value="leadership">Leadership</option><option value="department">Department Head</option></select>
@@ -707,6 +825,21 @@
       <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" id="cmsPortfolioIcon" placeholder="e.g. fas fa-seedling"></div>
       <div class="form-group"><label>Sort Order</label><input type="number" id="cmsPortfolioSort" value="0" min="0"></div>
     </div>
+    <div class="form-group">
+      <label>Project Image <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label>
+      <div class="img-upload-widget">
+        <div class="iuw-preview" id="portfolioImgPreview"><i class="fas fa-image"></i></div>
+        <div class="iuw-info">
+          <input type="hidden" id="cmsPortfolioImage">
+          <div class="iuw-url" id="portfolioImgUrl">No image set</div>
+          <div class="iuw-btns">
+            <button type="button" class="btn btn-sm btn-outline" onclick="triggerInlineUpload('cmsPortfolioImage','portfolioImgPreview','portfolioImgUrl')"><i class="fas fa-upload"></i> Upload</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="openMediaPicker('cmsPortfolioImage','portfolioImgPreview','portfolioImgUrl')"><i class="fas fa-images"></i> Browse</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="clearImgField('cmsPortfolioImage','portfolioImgPreview','portfolioImgUrl')"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;">
       <div class="form-group"><label>Stat 1 Value</label><input type="text" id="cmsPortfolioS1v" placeholder="350%"></div>
       <div class="form-group"><label>Stat 2 Value</label><input type="text" id="cmsPortfolioS2v" placeholder="10x"></div>
@@ -737,6 +870,21 @@
     <div class="form-row">
       <div class="form-group"><label>Icon (FontAwesome class)</label><input type="text" id="cmsCaseIcon" placeholder="e.g. fas fa-shopping-bag"></div>
       <div class="form-group"><label>Sort Order</label><input type="number" id="cmsCaseSort" value="0" min="0"></div>
+    </div>
+    <div class="form-group">
+      <label>Case Study Image <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label>
+      <div class="img-upload-widget">
+        <div class="iuw-preview" id="caseImgPreview"><i class="fas fa-image"></i></div>
+        <div class="iuw-info">
+          <input type="hidden" id="cmsCaseImage">
+          <div class="iuw-url" id="caseImgUrl">No image set</div>
+          <div class="iuw-btns">
+            <button type="button" class="btn btn-sm btn-outline" onclick="triggerInlineUpload('cmsCaseImage','caseImgPreview','caseImgUrl')"><i class="fas fa-upload"></i> Upload</button>
+            <button type="button" class="btn btn-sm btn-outline" onclick="openMediaPicker('cmsCaseImage','caseImgPreview','caseImgUrl')"><i class="fas fa-images"></i> Browse</button>
+            <button type="button" class="btn btn-sm btn-danger" onclick="clearImgField('cmsCaseImage','caseImgPreview','caseImgUrl')"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;">
       <div class="form-group"><label>Stat 1 Value</label><input type="text" id="cmsCaseS1v" placeholder="340%"></div>
@@ -857,7 +1005,7 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
-    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content' };
+    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content', media:'Media Library' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     if (page === 'overview') loadOverview();
     if (page === 'payments') loadPayments();
@@ -874,6 +1022,7 @@
     if (page === 'casestudies') loadCmsCasestudies();
     if (page === 'courses') loadCmsCourses();
     if (page === 'pagecontent') loadPageContentSections();
+    if (page === 'media') loadMedia();
     if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
   }
 
@@ -1024,12 +1173,13 @@
     document.getElementById('cmsTeamLinkedin').value = e ? (item.linkedin_url||'') : '';
     document.getElementById('cmsTeamTwitter').value = e ? (item.twitter_url||'') : '';
     document.getElementById('cmsTeamSort').value = e ? item.sort_order : 0;
+    setImgField('cmsTeamPhoto','teamPhotoPreview','teamPhotoUrl', e ? (item.photo_url||'') : '');
     document.getElementById('cmsTeamModalTitle').textContent = e ? 'Edit Team Member' : 'Add Team Member';
     document.getElementById('cmsTeamModal').classList.add('active');
   }
   async function saveCmsTeam() {
     const id = document.getElementById('cmsTeamId').value;
-    const body = { name:document.getElementById('cmsTeamName').value, role:document.getElementById('cmsTeamRole').value, bio:document.getElementById('cmsTeamBio').value, team_type:document.getElementById('cmsTeamType').value, linkedin_url:document.getElementById('cmsTeamLinkedin').value, twitter_url:document.getElementById('cmsTeamTwitter').value, sort_order:document.getElementById('cmsTeamSort').value, published:1 };
+    const body = { name:document.getElementById('cmsTeamName').value, role:document.getElementById('cmsTeamRole').value, bio:document.getElementById('cmsTeamBio').value, photo_url:document.getElementById('cmsTeamPhoto').value||null, team_type:document.getElementById('cmsTeamType').value, linkedin_url:document.getElementById('cmsTeamLinkedin').value, twitter_url:document.getElementById('cmsTeamTwitter').value, sort_order:document.getElementById('cmsTeamSort').value, published:1 };
     const ok = id ? await api('PATCH','/cms/team/'+id,body) : await api('POST','/cms/team',body);
     if (ok) { closeModal('cmsTeamModal'); toast(id?'Member updated.':'Member added.','success'); loadCmsTeam(); }
   }
@@ -1070,12 +1220,13 @@
     document.getElementById('cmsPortfolioS3v').value = e ? (item.stat3_value||'') : '';
     document.getElementById('cmsPortfolioS3l').value = e ? (item.stat3_label||'') : '';
     document.getElementById('cmsPortfolioSort').value = e ? item.sort_order : 0;
+    setImgField('cmsPortfolioImage','portfolioImgPreview','portfolioImgUrl', e ? (item.image_url||'') : '');
     document.getElementById('cmsPortfolioModalTitle').textContent = e ? 'Edit Portfolio Item' : 'Add Portfolio Item';
     document.getElementById('cmsPortfolioModal').classList.add('active');
   }
   async function saveCmsPortfolio() {
     const id = document.getElementById('cmsPortfolioId').value;
-    const body = { title:document.getElementById('cmsPortfolioTitle').value, category:document.getElementById('cmsPortfolioCategory').value, description:document.getElementById('cmsPortfolioDesc').value, icon:document.getElementById('cmsPortfolioIcon').value, stat1_value:document.getElementById('cmsPortfolioS1v').value, stat1_label:document.getElementById('cmsPortfolioS1l').value, stat2_value:document.getElementById('cmsPortfolioS2v').value, stat2_label:document.getElementById('cmsPortfolioS2l').value, stat3_value:document.getElementById('cmsPortfolioS3v').value, stat3_label:document.getElementById('cmsPortfolioS3l').value, sort_order:document.getElementById('cmsPortfolioSort').value, published:1 };
+    const body = { title:document.getElementById('cmsPortfolioTitle').value, category:document.getElementById('cmsPortfolioCategory').value, description:document.getElementById('cmsPortfolioDesc').value, icon:document.getElementById('cmsPortfolioIcon').value, image_url:document.getElementById('cmsPortfolioImage').value||null, stat1_value:document.getElementById('cmsPortfolioS1v').value, stat1_label:document.getElementById('cmsPortfolioS1l').value, stat2_value:document.getElementById('cmsPortfolioS2v').value, stat2_label:document.getElementById('cmsPortfolioS2l').value, stat3_value:document.getElementById('cmsPortfolioS3v').value, stat3_label:document.getElementById('cmsPortfolioS3l').value, sort_order:document.getElementById('cmsPortfolioSort').value, published:1 };
     const ok = id ? await api('PATCH','/cms/portfolio/'+id,body) : await api('POST','/cms/portfolio',body);
     if (ok) { closeModal('cmsPortfolioModal'); toast(id?'Project updated.':'Project added.','success'); loadCmsPortfolio(); }
   }
@@ -1116,12 +1267,13 @@
     document.getElementById('cmsCaseS3v').value = e ? (item.stat3_value||'') : '';
     document.getElementById('cmsCaseS3l').value = e ? (item.stat3_label||'') : '';
     document.getElementById('cmsCaseSort').value = e ? item.sort_order : 0;
+    setImgField('cmsCaseImage','caseImgPreview','caseImgUrl', e ? (item.image_url||'') : '');
     document.getElementById('cmsCaseModalTitle').textContent = e ? 'Edit Case Study' : 'Add Case Study';
     document.getElementById('cmsCaseModal').classList.add('active');
   }
   async function saveCmsCase() {
     const id = document.getElementById('cmsCaseId').value;
-    const body = { title:document.getElementById('cmsCaseTitle').value, category:document.getElementById('cmsCaseCategory').value, description:document.getElementById('cmsCaseDesc').value, icon:document.getElementById('cmsCaseIcon').value, stat1_value:document.getElementById('cmsCaseS1v').value, stat1_label:document.getElementById('cmsCaseS1l').value, stat2_value:document.getElementById('cmsCaseS2v').value, stat2_label:document.getElementById('cmsCaseS2l').value, stat3_value:document.getElementById('cmsCaseS3v').value, stat3_label:document.getElementById('cmsCaseS3l').value, sort_order:document.getElementById('cmsCaseSort').value, published:1 };
+    const body = { title:document.getElementById('cmsCaseTitle').value, category:document.getElementById('cmsCaseCategory').value, description:document.getElementById('cmsCaseDesc').value, icon:document.getElementById('cmsCaseIcon').value, image_url:document.getElementById('cmsCaseImage').value||null, stat1_value:document.getElementById('cmsCaseS1v').value, stat1_label:document.getElementById('cmsCaseS1l').value, stat2_value:document.getElementById('cmsCaseS2v').value, stat2_label:document.getElementById('cmsCaseS2l').value, stat3_value:document.getElementById('cmsCaseS3v').value, stat3_label:document.getElementById('cmsCaseS3l').value, sort_order:document.getElementById('cmsCaseSort').value, published:1 };
     const ok = id ? await api('PATCH','/cms/case-studies/'+id,body) : await api('POST','/cms/case-studies',body);
     if (ok) { closeModal('cmsCaseModal'); toast(id?'Case study updated.':'Case study added.','success'); loadCmsCasestudies(); }
   }
@@ -1180,46 +1332,311 @@
   function fmtMoney(v) { return '&#8358;' + Number(v || 0).toLocaleString('en-NG'); }
 
   // ── PAGE CONTENT EDITOR ─────────────────────────────────────────────────────
+  const IMG_KEY_RE = /^(image|img|photo|avatar|logo|banner|thumbnail|cover|src|bg|background|picture|icon_url|photo_url|image_url|cover_image)$|(_image|_img|_photo|_avatar|_banner|_thumbnail|_logo|_cover|_src)$/i;
+  function isImgKey(k) { return IMG_KEY_RE.test(k); }
+  function isImgVal(v) { return typeof v === 'string' && /\.(jpe?g|png|gif|webp|svg)($|\?)|^\/uploads\//i.test(v); }
+
+  function buildSmartFields(obj, prefix) {
+    return Object.entries(obj).map(([k, v]) => {
+      const fid = (prefix + '_' + k).replace(/[^a-z0-9]/gi,'_');
+      const lbl = k.replace(/_/g,' ');
+      if (isImgKey(k) || isImgVal(v)) {
+        const cur = escHtml(v||'');
+        return `<div class="smart-field">
+          <label>${lbl}</label>
+          <div class="img-upload-widget">
+            <div class="iuw-preview" id="prev_${fid}">${v ? `<img src="${cur}" onerror="this.parentElement.innerHTML='<i class=&quot;fas fa-image&quot;></i>'">` : '<i class="fas fa-image"></i>'}</div>
+            <div class="iuw-info">
+              <input type="hidden" id="${fid}" value="${cur}">
+              <div class="iuw-url" id="url_${fid}">${v||'No image set'}</div>
+              <div class="iuw-btns">
+                <button type="button" class="btn btn-sm btn-outline" onclick="triggerInlineUpload('${fid}','prev_${fid}','url_${fid}')"><i class="fas fa-upload"></i> Upload</button>
+                <button type="button" class="btn btn-sm btn-outline" onclick="openMediaPicker('${fid}','prev_${fid}','url_${fid}')"><i class="fas fa-images"></i> Browse</button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="clearImgField('${fid}','prev_${fid}','url_${fid}')"><i class="fas fa-times"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }
+      if (Array.isArray(v)) {
+        const jv = escHtml(JSON.stringify(v, null, 2));
+        return `<div class="smart-field"><label>${lbl} <span style="font-weight:400;color:var(--text-gray);font-size:.72rem;">(JSON array — ${v.length} items)</span></label>
+          <textarea id="${fid}" rows="8" class="pc-json-editor">${jv}</textarea></div>`;
+      }
+      if (typeof v === 'object' && v !== null) {
+        const jv = escHtml(JSON.stringify(v, null, 2));
+        return `<div class="smart-field"><label>${lbl} <span style="font-weight:400;color:var(--text-gray);font-size:.72rem;">(JSON object)</span></label>
+          <textarea id="${fid}" rows="5" class="pc-json-editor">${jv}</textarea></div>`;
+      }
+      if (typeof v === 'boolean') {
+        return `<div class="smart-field"><label>${lbl}</label>
+          <select id="${fid}"><option value="true" ${v?'selected':''}>Yes</option><option value="false" ${!v?'selected':''}>No</option></select></div>`;
+      }
+      if (typeof v === 'number') {
+        return `<div class="smart-field"><label>${lbl}</label><input type="number" id="${fid}" value="${v}"></div>`;
+      }
+      const long = typeof v === 'string' && v.length > 80;
+      return `<div class="smart-field"><label>${lbl}</label>
+        ${long ? `<textarea id="${fid}" rows="3">${escHtml(v||'')}</textarea>` : `<input type="text" id="${fid}" value="${escHtml(v||'')}">`}</div>`;
+    }).join('');
+  }
+
+  function collectSmartFields(obj, prefix) {
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      const fid = (prefix + '_' + k).replace(/[^a-z0-9]/gi,'_');
+      const el = document.getElementById(fid);
+      if (!el) { out[k] = v; continue; }
+      if (Array.isArray(v) || (typeof v === 'object' && v !== null)) {
+        try { out[k] = JSON.parse(el.value); } catch { out[k] = v; }
+      } else if (typeof v === 'boolean') {
+        out[k] = el.value === 'true';
+      } else if (typeof v === 'number') {
+        out[k] = parseFloat(el.value) || 0;
+      } else {
+        out[k] = el.value;
+      }
+    }
+    return out;
+  }
+
   async function loadPageContentSections() {
     const page = document.getElementById('pcPageSelect').value;
     const container = document.getElementById('pcSectionsContainer');
-    container.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading sections…</p>';
+    container.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading sections&hellip;</p>';
     const data = await api('GET', '/cms/page-content?page=' + encodeURIComponent(page));
     if (!data) { container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>Failed to load content.</div>'; return; }
     const sections = data.sections || {};
     const keys = Object.keys(sections);
-    if (!keys.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i>No content found for this page.</div>'; return; }
-    container.innerHTML = keys.map(function(k) {
+    if (!keys.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i>No content found for this page. Make sure the server has seeded the page content.</div>'; return; }
+    container.innerHTML = keys.map(k => {
       const safeId = 'pc_' + k.replace(/[^a-z0-9]/gi,'_');
-      const pretty = JSON.stringify(sections[k], null, 2);
-      return '<div class="table-card" style="padding:1.5rem;">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">' +
-          '<div>' +
-            '<h3 style="font-size:.95rem;font-weight:700;color:var(--primary-dark);text-transform:capitalize;">' + escHtml(k.replace(/_/g,' ')) + '</h3>' +
-            '<p style="font-size:.75rem;color:var(--text-gray);margin-top:.2rem;">Key: <code style="background:rgba(0,102,255,0.07);padding:.1rem .4rem;border-radius:4px;">' + escHtml(k) + '</code></p>' +
-          '</div>' +
-          '<button class="btn btn-primary btn-sm" data-section="' + escHtml(k) + '" data-page="' + escHtml(page) + '" data-tid="' + safeId + '" onclick="savePageSection(this)">' +
-            '<i class="fas fa-save"></i> Save Section' +
-          '</button>' +
-        '</div>' +
-        '<textarea id="' + safeId + '" rows="14" style="width:100%;font-family:monospace;font-size:.78rem;line-height:1.5;padding:.75rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;outline:none;resize:vertical;background:#FAFBFC;color:var(--text-dark);">' + escHtml(pretty) + '</textarea>' +
-      '</div>';
+      const val = sections[k];
+      const pretty = escHtml(JSON.stringify(val, null, 2));
+      const isObj = val && typeof val === 'object';
+      const smartHTML = isObj ? buildSmartFields(val, safeId) : '';
+      return `<div class="table-card" style="padding:1.5rem;" data-section="${escHtml(k)}" data-page="${escHtml(page)}" id="scard_${safeId}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;">
+          <div>
+            <h3 style="font-size:.95rem;font-weight:700;color:var(--primary-dark);text-transform:capitalize;">${escHtml(k.replace(/_/g,' '))}</h3>
+            <p style="font-size:.75rem;color:var(--text-gray);margin-top:.2rem;">Key: <code style="background:rgba(0,102,255,0.07);padding:.1rem .4rem;border-radius:4px;">${escHtml(k)}</code></p>
+          </div>
+          <button class="btn btn-primary btn-sm" data-section="${escHtml(k)}" data-page="${escHtml(page)}" data-sid="${safeId}" onclick="savePageSection(this)">
+            <i class="fas fa-save"></i> Save Section
+          </button>
+        </div>
+        ${isObj ? `<div class="pc-section-tabs">
+          <button class="pc-tab active" onclick="switchPcTab(this,'smart_${safeId}','json_${safeId}')"><i class="fas fa-sliders-h"></i> Smart Edit</button>
+          <button class="pc-tab" onclick="switchPcTab(this,'json_${safeId}','smart_${safeId}')"><i class="fas fa-code"></i> JSON</button>
+        </div>
+        <div id="smart_${safeId}">${smartHTML}</div>
+        <div id="json_${safeId}" style="display:none;"><textarea id="${safeId}" rows="14" class="pc-json-editor">${pretty}</textarea></div>` :
+        `<textarea id="${safeId}" rows="6" class="pc-json-editor">${pretty}</textarea>`}
+      </div>`;
     }).join('');
+  }
+
+  function switchPcTab(btn, showId, hideId) {
+    btn.parentElement.querySelectorAll('.pc-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(showId).style.display = '';
+    document.getElementById(hideId).style.display = 'none';
+    // Sync JSON from smart fields when switching to JSON tab
+    if (showId.startsWith('json_')) {
+      const safeId = showId.replace('json_','');
+      const card = document.getElementById('scard_' + safeId);
+      const section = card ? card.dataset.section : null;
+      const page = card ? card.dataset.page : null;
+      if (section && page) syncSmartToJson(safeId, section, page);
+    }
+  }
+
+  function syncSmartToJson(safeId, section, page) {
+    // Re-fetch current section data to get base object shape
+    api('GET', '/cms/page-content?page=' + encodeURIComponent(page)).then(data => {
+      if (!data) return;
+      const val = data.sections[section];
+      if (!val || typeof val !== 'object') return;
+      const collected = collectSmartFields(val, 'pc_' + section.replace(/[^a-z0-9]/gi,'_'));
+      const ta = document.getElementById(safeId);
+      if (ta) ta.value = JSON.stringify(collected, null, 2);
+    });
   }
 
   async function savePageSection(btn) {
     const page = btn.dataset.page;
     const section = btn.dataset.section;
-    const tid = btn.dataset.tid;
-    const raw = document.getElementById(tid).value;
+    const sid = btn.dataset.sid;
+    const card = document.getElementById('scard_' + sid);
+    // Determine which tab is active
+    const jsonDiv = document.getElementById('json_' + sid);
+    const smartDiv = document.getElementById('smart_' + sid);
     let content;
-    try { content = JSON.parse(raw); } catch(e) {
-      toast('Invalid JSON — fix the syntax before saving.', 'error'); return;
+    if (jsonDiv && jsonDiv.style.display !== 'none') {
+      // JSON mode
+      const ta = document.getElementById(sid);
+      try { content = JSON.parse(ta.value); } catch { toast('Invalid JSON — fix syntax before saving.', 'error'); return; }
+    } else if (smartDiv) {
+      // Smart mode — collect from fields
+      const data = await api('GET', '/cms/page-content?page=' + encodeURIComponent(page));
+      if (!data) { toast('Failed to read current data', 'error'); return; }
+      const val = data.sections[section];
+      if (typeof val === 'object') {
+        content = collectSmartFields(val, 'pc_' + section.replace(/[^a-z0-9]/gi,'_'));
+      } else {
+        const ta = document.getElementById(sid);
+        try { content = JSON.parse(ta.value); } catch { toast('Invalid JSON', 'error'); return; }
+      }
+    } else {
+      const ta = document.getElementById(sid);
+      try { content = JSON.parse(ta.value); } catch { toast('Invalid JSON', 'error'); return; }
     }
-    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving&hellip;';
     const ok = await api('PUT', '/cms/page-content', { page, section, content });
     btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Section';
-    if (ok) toast('"' + section + '" saved successfully.', 'success');
+    if (ok && ok.success) toast('"' + section + '" saved!', 'success');
+  }
+
+  // ── MEDIA LIBRARY ────────────────────────────────────────────────────────────
+  async function loadMedia() {
+    const grid = document.getElementById('mediaGrid');
+    const empty = document.getElementById('mediaEmpty');
+    grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding-top:.5rem;"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</p>';
+    const data = await api('GET', '/cms/media');
+    if (!data || !data.files || !data.files.length) {
+      grid.innerHTML = ''; empty.style.display = 'block'; return;
+    }
+    empty.style.display = 'none';
+    grid.innerHTML = data.files.map(f => `
+      <div class="media-item">
+        <span class="mi-name">${escHtml(f.filename)}</span>
+        <img src="${escHtml(f.url)}" alt="" loading="lazy">
+        <div class="mi-actions">
+          <button class="mi-copy" onclick="copyUrl('${escHtml(f.url)}')"><i class="fas fa-copy"></i> Copy URL</button>
+          <button class="mi-del" onclick="deleteMedia('${escHtml(f.filename)}',this)"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`).join('');
+    // Drag & drop on drop zone
+    const dz = document.getElementById('mediaDropZone');
+    if (dz && !dz._dzBound) {
+      dz._dzBound = true;
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+      dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); handleMediaFiles(e.dataTransfer.files); });
+    }
+  }
+
+  function copyUrl(url) {
+    const abs = location.origin + url;
+    navigator.clipboard.writeText(abs).then(() => toast('URL copied to clipboard!'))
+      .catch(() => { const ta = document.createElement('textarea'); ta.value = abs; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('URL copied!'); });
+  }
+
+  async function deleteMedia(filename, btn) {
+    if (!confirm('Delete this image permanently?')) return;
+    btn.closest('.media-item').style.opacity = '.3';
+    const ok = await api('DELETE', '/cms/media/' + encodeURIComponent(filename));
+    if (ok && ok.success) { btn.closest('.media-item').remove(); toast('Image deleted'); }
+    else { btn.closest('.media-item').style.opacity = '1'; toast('Delete failed', 'error'); }
+  }
+
+  async function handleMediaFiles(files) {
+    if (!files || !files.length) return;
+    const prog = document.getElementById('mediaUploadProg');
+    const bar  = document.getElementById('mediaProgBar');
+    const txt  = document.getElementById('mediaProgTxt');
+    prog.style.display = 'block'; bar.style.width = '0%';
+    let done = 0, total = files.length;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) { toast(file.name + ': not an image', 'error'); done++; continue; }
+      txt.textContent = 'Uploading ' + file.name + '…';
+      const fd = new FormData(); fd.append('image', file);
+      try {
+        const res = await fetch(API + '/cms/upload', { method:'POST', headers:{Authorization:'Bearer '+token}, body:fd });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || 'Upload failed');
+      } catch(e) { toast(file.name + ': ' + e.message, 'error'); }
+      done++; bar.style.width = Math.round(done/total*100) + '%';
+    }
+    txt.textContent = 'Done!';
+    setTimeout(() => { prog.style.display = 'none'; bar.style.width = '0%'; }, 1200);
+    toast(total + ' image' + (total > 1 ? 's' : '') + ' uploaded!', 'success');
+    loadMedia();
+  }
+
+  // ── Inline image upload helpers ───────────────────────────────────────────────
+  let _inlineTarget = null;
+  function triggerInlineUpload(fieldId, previewId, urlId) {
+    _inlineTarget = { fieldId, previewId, urlId };
+    const inp = document.getElementById('inlineImgInput');
+    inp.value = ''; inp.click();
+  }
+  async function handleInlineUpload(input) {
+    if (!input.files || !input.files[0] || !_inlineTarget) return;
+    const fd = new FormData(); fd.append('image', input.files[0]);
+    try {
+      const res = await fetch(API + '/cms/upload', { method:'POST', headers:{Authorization:'Bearer '+token}, body:fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      setImgField(_inlineTarget.fieldId, _inlineTarget.previewId, _inlineTarget.urlId, d.url);
+      toast('Image uploaded!', 'success');
+    } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
+  }
+  function setImgField(fieldId, previewId, urlId, url) {
+    const f = document.getElementById(fieldId);
+    const p = document.getElementById(previewId);
+    const u = document.getElementById(urlId);
+    if (f) f.value = url || '';
+    if (p) {
+      if (url) {
+        p.className = 'iuw-preview';
+        p.innerHTML = `<img src="${escHtml(url)}" onerror="this.parentElement.className='iuw-preview';this.parentElement.innerHTML='<i class=\\'fas fa-image\\'></i>'">`;
+      } else {
+        p.className = 'iuw-preview'; p.innerHTML = '<i class="fas fa-image"></i>';
+      }
+    }
+    if (u) u.textContent = url || 'No image set';
+  }
+  function clearImgField(fieldId, previewId, urlId) { setImgField(fieldId, previewId, urlId, ''); }
+
+  // ── Media Picker Modal ─────────────────────────────────────────────────────────
+  let _pickerTarget = null;
+  function openMediaPicker(fieldId, previewId, urlId) {
+    _pickerTarget = { fieldId, previewId, urlId };
+    const grid = document.getElementById('mpickerGrid');
+    grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</p>';
+    document.getElementById('mediaPickerModal').classList.add('active');
+    api('GET', '/cms/media').then(data => {
+      if (!data || !data.files || !data.files.length) {
+        grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;">No images yet. Upload some first.</p>'; return;
+      }
+      grid.innerHTML = data.files.map(f => `
+        <div class="mpicker-item" onclick="pickerSelect(this,'${escHtml(f.url)}')" title="${escHtml(f.filename)}">
+          <img src="${escHtml(f.url)}" alt="" loading="lazy">
+          <div class="mpicker-check"><i class="fas fa-check"></i></div>
+        </div>`).join('');
+    });
+  }
+  function pickerSelect(el, url) {
+    document.querySelectorAll('.mpicker-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected'); el.dataset.selectedUrl = url;
+  }
+  function confirmPickerSelect() {
+    const sel = document.querySelector('.mpicker-item.selected');
+    if (!sel) { toast('Please select an image first', 'error'); return; }
+    if (_pickerTarget) setImgField(_pickerTarget.fieldId, _pickerTarget.previewId, _pickerTarget.urlId, sel.dataset.selectedUrl);
+    closeModal('mediaPickerModal');
+  }
+  async function uploadAndPickImg(input) {
+    if (!input.files || !input.files[0]) return;
+    const fd = new FormData(); fd.append('image', input.files[0]);
+    try {
+      const res = await fetch(API + '/cms/upload', { method:'POST', headers:{Authorization:'Bearer '+token}, body:fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      toast('Uploaded!', 'success');
+      openMediaPicker(_pickerTarget?.fieldId, _pickerTarget?.previewId, _pickerTarget?.urlId);
+    } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
   }
   function badgeHtml(s) { return `<span class="badge badge-${s}">${s}</span>`; }
 
@@ -1492,13 +1909,14 @@
       document.getElementById('postExcerpt').value = p.excerpt || '';
       document.getElementById('postContent').innerHTML = p.content || '';
       document.getElementById('postAuthor').value = p.author;
-      document.getElementById('postCoverImage').value = p.cover_image || '';
+      setImgField('postCoverImage','postCoverPreview','postCoverUrl', p.cover_image||'');
     } else {
-      ['postTitle','postExcerpt','postCoverImage'].forEach(i => document.getElementById(i).value = '');
+      ['postTitle','postExcerpt'].forEach(i => document.getElementById(i).value = '');
       document.getElementById('postContent').innerHTML = '';
       document.getElementById('postCategory').value = '';
       document.getElementById('postStatus').value = 'draft';
       document.getElementById('postAuthor').value = 'SeedsAds Team';
+      clearImgField('postCoverImage','postCoverPreview','postCoverUrl');
     }
     document.getElementById('postModal').classList.add('active');
   }

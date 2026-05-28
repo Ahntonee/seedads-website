@@ -230,6 +230,19 @@ async function createTables() {
   for (const sql of stmts) await pool.query(sql);
 }
 
+// ── Column migrations (add new columns to existing tables safely) ─────────────
+async function migrateColumns() {
+  const migrations = [
+    { table: 'team_members',   column: 'photo_url',  sql: "ALTER TABLE team_members ADD COLUMN photo_url VARCHAR(500) AFTER bio" },
+    { table: 'portfolio_items', column: 'image_url', sql: "ALTER TABLE portfolio_items ADD COLUMN image_url VARCHAR(500) AFTER icon" },
+    { table: 'case_studies',   column: 'image_url',  sql: "ALTER TABLE case_studies ADD COLUMN image_url VARCHAR(500) AFTER icon" },
+  ];
+  for (const m of migrations) {
+    try { await pool.query(m.sql); }
+    catch (e) { if (!e.message.includes('Duplicate column name')) throw e; }
+  }
+}
+
 // ── Seed helpers ──────────────────────────────────────────────────────────────
 async function seedAdmin() {
   const [rows] = await pool.query('SELECT id FROM admins WHERE username = ?', ['admin']);
@@ -660,6 +673,7 @@ async function seedPageContent() {
 // ── Public init function called by server.js ──────────────────────────────────
 async function init() {
   await createTables();
+  await migrateColumns();
   await seedAdmin();
   await seedSettings();
   await seedCms();
