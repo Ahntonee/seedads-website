@@ -7,6 +7,11 @@ if (!process.env.JWT_SECRET) {
   console.error('        Copy backend/.env.example to backend/.env and fill in your values.');
   process.exit(1);
 }
+if (!process.env.DATABASE_URL) {
+  console.error('[FATAL] DATABASE_URL is not set in .env — refusing to start.');
+  console.error('        Example: DATABASE_URL=postgresql://postgres:password@localhost:5432/seedsads');
+  process.exit(1);
+}
 
 const express    = require('express');
 const cors       = require('cors');
@@ -16,6 +21,8 @@ const fs         = require('fs');
 const jwt        = require('jsonwebtoken');
 const rateLimit  = require('express-rate-limit');
 const { pruneAttempts } = require('./security');
+
+const db = require('./database');
 
 const { router: authRouter }    = require('./routes/auth');
 const contactsRouter            = require('./routes/contacts');
@@ -169,14 +176,21 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start server ──────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log('');
-  console.log('  SeedsAds Server');
-  console.log('  http://localhost:' + PORT);
-  console.log('  Admin:  /admin/login.html');
-  console.log('  Client: /user/login.html');
-  console.log('');
-});
+db.init()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log('');
+      console.log('  SeedsAds Server');
+      console.log('  http://localhost:' + PORT);
+      console.log('  Admin:  /admin/login.html');
+      console.log('  Client: /user/login.html');
+      console.log('');
+    });
+  })
+  .catch(err => {
+    console.error('[FATAL] Database init failed:', err.message);
+    process.exit(1);
+  });
 
 // Prune stale login attempt records every hour
 setInterval(pruneAttempts, 60 * 60 * 1000);

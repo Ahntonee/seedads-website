@@ -2,7 +2,7 @@
 const express  = require('express');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
-const db       = require('../database');
+const { pool } = require('../database');
 const {
   isAdminLockedOut,
   recordFailedAttempt,
@@ -15,54 +15,65 @@ const router = express.Router();
 const SECRET = process.env.JWT_SECRET;
 
 // ── Admin login ───────────────────────────────────────────────────────────────
-router.post('/login', (req, res) => {
-  const username = sanitizeText(req.body.username, 100);
-  const password = req.body.password;
+router.post('/login', async (req, res) => {
+  try {
+    const username = sanitizeText(req.body.username, 100);
+    const password = req.body.password;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    if (isAdminLockedOut(username)) {
+      return res.status(429).json({
+        error: 'Account temporarily locked after too many failed attempts. Please try again in 30 minutes.',
+      });
+    }
+
+    const ip         = req.ip || req.connection.remoteAddress;
+    const identifier = 'admin:' + username.toLowerCase();
+    const { rows }   = await pool.query('SELECT * FROM admins WHERE username = $1', [username]);
+    const admin      = rows[0];
+
+    if (!admin || !bcrypt.compareSync(password, admin.password)) {
+      recordFailedAttempt(identifier, ip);
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    clearAttempts(identifier);
+    const token = jwt.sign(
+      { id: admin.id, username: admin.username, name: admin.name },
+      SECRET,
+      { expiresIn: '24h' }
+    );
+    res.json({ token, name: admin.name });
+  } catch (err) {
+    console.error('[auth/login]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  // Lockout check — 5 failed attempts → 30-minute lockout
-  if (isAdminLockedOut(username)) {
-    return res.status(429).json({
-      error: 'Account temporarily locked after too many failed attempts. Please try again in 30 minutes.',
-    });
-  }
-
-  const ip         = req.ip || req.connection.remoteAddress;
-  const identifier = 'admin:' + username.toLowerCase();
-  const admin      = db.prepare('SELECT * FROM admins WHERE username = ?').get(username);
-
-  if (!admin || !bcrypt.compareSync(password, admin.password)) {
-    recordFailedAttempt(identifier, ip);
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  clearAttempts(identifier);
-  const token = jwt.sign(
-    { id: admin.id, username: admin.username, name: admin.name },
-    SECRET,
-    { expiresIn: '24h' }
-  );
-  res.json({ token, name: admin.name });
 });
 
 // ── Admin change password ─────────────────────────────────────────────────────
-router.post('/change-password', requireAuth, (req, res) => {
-  const { currentPassword, newPassword } = req.body;
+router.post('/change-password', requireAuth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
 
-  const err = validatePassword(newPassword);
-  if (err) return res.status(400).json({ error: err });
+    const err = validatePassword(newPassword);
+    if (err) return res.status(400).json({ error: err });
 
-  const admin = db.prepare('SELECT * FROM admins WHERE id = ?').get(req.admin.id);
-  if (!bcrypt.compareSync(currentPassword, admin.password)) {
-    return res.status(400).json({ error: 'Current password is incorrect' });
+    const { rows } = await pool.query('SELECT * FROM admins WHERE id = $1', [req.admin.id]);
+    const admin    = rows[0];
+    if (!bcrypt.compareSync(currentPassword, admin.password)) {
+      return res.status(400).json({ error: 'Current password is incorrect' });
+    }
+
+    const hash = bcrypt.hashSync(newPassword, 12);
+    await pool.query('UPDATE admins SET password = $1 WHERE id = $2', [hash, req.admin.id]);
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('[auth/change-password]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const hash = bcrypt.hashSync(newPassword, 12);
-  db.prepare('UPDATE admins SET password = ? WHERE id = ?').run(hash, req.admin.id);
-  res.json({ success: true, message: 'Password updated successfully' });
 });
 
 // ── requireAuth middleware (admin JWT) ────────────────────────────────────────

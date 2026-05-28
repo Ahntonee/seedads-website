@@ -3,7 +3,7 @@ const express  = require('express');
 const bcrypt   = require('bcryptjs');
 const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');
-const db       = require('../database');
+const { pool } = require('../database');
 const { requireAuth } = require('./auth');
 const mailer   = require('../mailer');
 const {
@@ -35,68 +35,81 @@ function requireUser(req, res, next) {
 }
 
 // ── Register ──────────────────────────────────────────────────────────────────
-router.post('/register', (req, res) => {
-  const first_name = sanitizeText(req.body.first_name, 100);
-  const last_name  = sanitizeText(req.body.last_name, 100);
-  const email      = sanitizeEmail(req.body.email);
-  const phone      = sanitizePhone(req.body.phone);
-  const password   = req.body.password;
-  const plan       = sanitizeText(req.body.plan, 100);
+router.post('/register', async (req, res) => {
+  try {
+    const first_name = sanitizeText(req.body.first_name, 100);
+    const last_name  = sanitizeText(req.body.last_name,  100);
+    const email      = sanitizeEmail(req.body.email);
+    const phone      = sanitizePhone(req.body.phone);
+    const password   = req.body.password;
+    const plan       = sanitizeText(req.body.plan, 100);
 
-  if (!first_name || !last_name) return res.status(400).json({ error: 'First name and last name are required' });
-  if (!email)   return res.status(400).json({ error: 'A valid email address is required' });
+    if (!first_name || !last_name) return res.status(400).json({ error: 'First name and last name are required' });
+    if (!email) return res.status(400).json({ error: 'A valid email address is required' });
 
-  const pwErr = validatePassword(password);
-  if (pwErr) return res.status(400).json({ error: pwErr });
+    const pwErr = validatePassword(password);
+    if (pwErr) return res.status(400).json({ error: pwErr });
 
-  const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
-  if (existing) return res.status(409).json({ error: 'An account with this email already exists' });
+    const { rows: existing } = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    if (existing.length) return res.status(409).json({ error: 'An account with this email already exists' });
 
-  const hash   = bcrypt.hashSync(password, 12);
-  const result = db.prepare(
-    'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(first_name, last_name, email, phone, hash, plan);
+    const hash = bcrypt.hashSync(password, 12);
+    const { rows } = await pool.query(
+      'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+      [first_name, last_name, email, phone, hash, plan]
+    );
+    const newId = rows[0].id;
 
-  const token = jwt.sign(
-    { id: result.lastInsertRowid, email, first_name, last_name, role: 'user' },
-    SECRET, { expiresIn: '7d' }
-  );
-  mailer.welcomeUser({ first_name, email, plan }).catch(() => {});
-  res.json({
-    token,
-    user: { id: result.lastInsertRowid, first_name, last_name, email, plan, payment_status: 'unpaid', approved: 0 },
-  });
+    const token = jwt.sign(
+      { id: newId, email, first_name, last_name, role: 'user' },
+      SECRET, { expiresIn: '7d' }
+    );
+    mailer.welcomeUser({ first_name, email, plan }).catch(() => {});
+    res.json({
+      token,
+      user: { id: newId, first_name, last_name, email, plan, payment_status: 'unpaid', approved: 0 },
+    });
+  } catch (err) {
+    console.error('[users/register]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-router.post('/login', (req, res) => {
-  const email    = sanitizeEmail(req.body.email);
-  const password = req.body.password;
+router.post('/login', async (req, res) => {
+  try {
+    const email    = sanitizeEmail(req.body.email);
+    const password = req.body.password;
 
-  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
 
-  const identifier = 'user:' + email;
-  if (isUserLockedOut(email)) {
-    return res.status(429).json({
-      error: 'Account temporarily locked after too many failed attempts. Please try again in 15 minutes.',
-    });
+    const identifier = 'user:' + email;
+    if (isUserLockedOut(email)) {
+      return res.status(429).json({
+        error: 'Account temporarily locked after too many failed attempts. Please try again in 15 minutes.',
+      });
+    }
+
+    const ip = req.ip || req.connection.remoteAddress;
+    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = rows[0];
+
+    if (!user || !bcrypt.compareSync(password, user.password)) {
+      recordFailedAttempt(identifier, ip);
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    clearAttempts(identifier);
+    const token = jwt.sign(
+      { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: 'user' },
+      SECRET, { expiresIn: '7d' }
+    );
+    const { password: _, ...safeUser } = user;
+    res.json({ token, user: safeUser });
+  } catch (err) {
+    console.error('[users/login]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const ip   = req.ip || req.connection.remoteAddress;
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-
-  if (!user || !bcrypt.compareSync(password, user.password)) {
-    recordFailedAttempt(identifier, ip);
-    return res.status(401).json({ error: 'Invalid email or password' });
-  }
-
-  clearAttempts(identifier);
-  const token = jwt.sign(
-    { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: 'user' },
-    SECRET, { expiresIn: '7d' }
-  );
-  const { password: _, ...safeUser } = user;
-  res.json({ token, user: safeUser });
 });
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
@@ -119,16 +132,19 @@ router.post('/google', async (req, res) => {
     const last_name  = sanitizeText(info.family_name || '',      100);
     if (!email) return res.status(400).json({ error: 'Google account has no valid email' });
 
-    let user  = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    let { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    let user  = rows[0];
     let isNew = false;
 
     if (!user) {
-      isNew       = true;
-      const hash  = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
-      const res2  = db.prepare(
-        'INSERT INTO users (first_name, last_name, email, password) VALUES (?, ?, ?, ?)'
-      ).run(first_name, last_name, email, hash);
-      user = db.prepare('SELECT * FROM users WHERE id = ?').get(res2.lastInsertRowid);
+      isNew      = true;
+      const hash = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
+      const ins  = await pool.query(
+        'INSERT INTO users (first_name, last_name, email, password) VALUES ($1,$2,$3,$4) RETURNING id',
+        [first_name, last_name, email, hash]
+      );
+      const r2 = await pool.query('SELECT * FROM users WHERE id = $1', [ins.rows[0].id]);
+      user = r2.rows[0];
       mailer.welcomeUser({ first_name, email, plan: null }).catch(() => {});
     }
 
@@ -147,87 +163,121 @@ router.post('/google', async (req, res) => {
 // ── Forgot password ───────────────────────────────────────────────────────────
 router.post('/forgot-password', async (req, res) => {
   const email = sanitizeEmail(req.body.email);
-  // Always respond the same way — prevents email enumeration attacks
-  const MSG = 'If that email is registered, a reset link has been sent. Check your inbox (and spam folder).';
-
+  const MSG   = 'If that email is registered, a reset link has been sent. Check your inbox (and spam folder).';
   if (!email) return res.json({ success: true, message: MSG });
 
-  const user = db.prepare('SELECT id, first_name, email FROM users WHERE email = ?').get(email);
-  if (user) {
-    const token     = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
-
-    // Delete any existing tokens for this user, then insert new one
-    db.prepare('DELETE FROM password_reset_tokens WHERE user_id = ?').run(user.id);
-    db.prepare(
-      'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)'
-    ).run(user.id, token, expiresAt);
-
-    mailer.sendPasswordReset({ first_name: user.first_name, email: user.email, token }).catch(() => {});
+  try {
+    const { rows } = await pool.query('SELECT id, first_name, email FROM users WHERE email = $1', [email]);
+    const user = rows[0];
+    if (user) {
+      const token     = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [user.id]);
+      await pool.query(
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1,$2,$3)',
+        [user.id, token, expiresAt]
+      );
+      mailer.sendPasswordReset({ first_name: user.first_name, email: user.email, token }).catch(() => {});
+    }
+    res.json({ success: true, message: MSG });
+  } catch (err) {
+    console.error('[users/forgot-password]', err.message);
+    res.json({ success: true, message: MSG }); // Don't leak errors
   }
-
-  res.json({ success: true, message: MSG });
 });
 
 // ── Reset password ────────────────────────────────────────────────────────────
-router.post('/reset-password', (req, res) => {
-  const { token, password } = req.body;
-  if (!token || !password) {
-    return res.status(400).json({ error: 'Reset token and new password are required' });
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Reset token and new password are required' });
+    }
+
+    const pwErr = validatePassword(password);
+    if (pwErr) return res.status(400).json({ error: pwErr });
+
+    const { rows } = await pool.query(
+      'SELECT * FROM password_reset_tokens WHERE token = $1 AND used = 0',
+      [token]
+    );
+    const record = rows[0];
+
+    if (!record || new Date(record.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
+    }
+
+    const hash = bcrypt.hashSync(password, 12);
+    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hash, record.user_id]);
+    await pool.query('UPDATE password_reset_tokens SET used = 1 WHERE id = $1', [record.id]);
+    res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
+  } catch (err) {
+    console.error('[users/reset-password]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
-
-  const pwErr = validatePassword(password);
-  if (pwErr) return res.status(400).json({ error: pwErr });
-
-  const record = db.prepare(
-    'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0'
-  ).get(token);
-
-  if (!record || new Date(record.expires_at) < new Date()) {
-    return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
-  }
-
-  const hash = bcrypt.hashSync(password, 12);
-  db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, record.user_id);
-  db.prepare('UPDATE password_reset_tokens SET used = 1 WHERE id = ?').run(record.id);
-
-  res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
 });
 
 // ── Get own profile ───────────────────────────────────────────────────────────
-router.get('/me', requireUser, (req, res) => {
-  const user = db.prepare(
-    'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = ?'
-  ).get(req.user.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
-  const lastPayment = db.prepare(
-    'SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
-  ).get(req.user.id);
-  res.json({ user, lastPayment });
+router.get('/me', requireUser, async (req, res) => {
+  try {
+    const { rows: uRows } = await pool.query(
+      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = $1',
+      [req.user.id]
+    );
+    if (!uRows[0]) return res.status(404).json({ error: 'User not found' });
+    const { rows: pRows } = await pool.query(
+      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+      [req.user.id]
+    );
+    res.json({ user: uRows[0], lastPayment: pRows[0] || null });
+  } catch (err) {
+    console.error('[users/me]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ── Admin: list all users ─────────────────────────────────────────────────────
-router.get('/', requireAuth, (req, res) => {
-  const users = db.prepare(
-    'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, created_at FROM users ORDER BY created_at DESC'
-  ).all();
-  res.json({ users });
+router.get('/', requireAuth, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json({ users: rows });
+  } catch (err) {
+    console.error('[users/list]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ── Admin: update user plan / status ─────────────────────────────────────────
-router.patch('/:id', requireAuth, (req, res) => {
-  const { plan, payment_status, approved } = req.body;
-  const cleanPlan = sanitizeText(plan, 100);
-  db.prepare(
-    'UPDATE users SET plan = COALESCE(?, plan), payment_status = COALESCE(?, payment_status), approved = COALESCE(?, approved) WHERE id = ?'
-  ).run(cleanPlan, payment_status ?? null, approved !== undefined ? Number(approved) : null, req.params.id);
-  res.json({ success: true });
+router.patch('/:id', requireAuth, async (req, res) => {
+  try {
+    const { plan, payment_status, approved } = req.body;
+    const cleanPlan = sanitizeText(plan, 100);
+    await pool.query(
+      `UPDATE users SET
+        plan           = COALESCE($1, plan),
+        payment_status = COALESCE($2, payment_status),
+        approved       = COALESCE($3, approved)
+       WHERE id = $4`,
+      [cleanPlan || null, payment_status ?? null, approved !== undefined ? Number(approved) : null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[users/patch]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ── Admin: delete user ────────────────────────────────────────────────────────
-router.delete('/:id', requireAuth, (req, res) => {
-  db.prepare('DELETE FROM users WHERE id = ?').run(req.params.id);
-  res.json({ success: true });
+router.delete('/:id', requireAuth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[users/delete]', err.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 module.exports = { router, requireUser };
