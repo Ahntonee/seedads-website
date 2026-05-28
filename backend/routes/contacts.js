@@ -19,12 +19,12 @@ router.post('/', async (req, res) => {
     if (!name)  return res.status(400).json({ error: 'Name is required' });
     if (!email) return res.status(400).json({ error: 'A valid email address is required' });
 
-    const { rows } = await pool.query(
-      'INSERT INTO contacts (name, email, phone, service, budget, message) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO contacts (name, email, phone, service, budget, message) VALUES (?,?,?,?,?,?)',
       [name, email, phone, service, budget, message]
     );
     mailer.notifyNewContact({ name, email, phone, service, message }).catch(() => {});
-    res.json({ success: true, id: rows[0].id });
+    res.json({ success: true, id: result.insertId });
   } catch (err) {
     console.error('[contacts/post]', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -38,26 +38,26 @@ router.get('/', requireAuth, async (req, res) => {
     const pageSize   = parseInt(limit) || 20;
     const pageOffset = ((parseInt(page) || 1) - 1) * pageSize;
 
-    let query = 'SELECT * FROM contacts WHERE 1=1';
+    let where = 'WHERE 1=1';
     const filterParams = [];
-    let idx = 1;
 
     if (status) {
-      query += ` AND status = $${idx++}`;
+      where += ' AND status = ?';
       filterParams.push(sanitizeText(status, 50));
     }
     if (search) {
       const s = '%' + sanitizeText(search, 100) + '%';
-      query += ` AND (name ILIKE $${idx} OR email ILIKE $${idx + 1})`;
-      idx += 2;
+      where += ' AND (name LIKE ? OR email LIKE ?)';
       filterParams.push(s, s);
     }
 
-    const countResult = await pool.query(`SELECT COUNT(*) as c FROM contacts WHERE 1=1${filterParams.length ? query.slice(query.indexOf(' AND')) : ''}`, filterParams);
-    const total = parseInt(countResult.rows[0].c);
+    const [countRows] = await pool.query(`SELECT COUNT(*) as c FROM contacts ${where}`, filterParams);
+    const total = parseInt(countRows[0].c);
 
-    query += ` ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`;
-    const { rows: contacts } = await pool.query(query, [...filterParams, pageSize, pageOffset]);
+    const [contacts] = await pool.query(
+      `SELECT * FROM contacts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...filterParams, pageSize, pageOffset]
+    );
 
     res.json({ contacts, total });
   } catch (err) {
@@ -72,7 +72,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
     const status = sanitizeText(req.body.status, 50);
     const notes  = sanitizeText(req.body.notes, 2000);
     await pool.query(
-      'UPDATE contacts SET status = COALESCE($1, status), notes = COALESCE($2, notes) WHERE id = $3',
+      'UPDATE contacts SET status = COALESCE(?, status), notes = COALESCE(?, notes) WHERE id = ?',
       [status || null, notes || null, req.params.id]
     );
     res.json({ success: true });
@@ -85,7 +85,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 // Admin: delete contact
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM contacts WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM contacts WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     console.error('[contacts/delete]', err.message);

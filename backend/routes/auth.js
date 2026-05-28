@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
 
     const ip         = req.ip || req.connection.remoteAddress;
     const identifier = 'admin:' + username.toLowerCase();
-    const { rows }   = await pool.query('SELECT * FROM admins WHERE username = $1', [username]);
+    const [rows]     = await pool.query('SELECT * FROM admins WHERE username = ?', [username]);
     const admin      = rows[0];
 
     if (!admin || !bcrypt.compareSync(password, admin.password)) {
@@ -61,14 +61,14 @@ router.post('/change-password', requireAuth, async (req, res) => {
     const err = validatePassword(newPassword);
     if (err) return res.status(400).json({ error: err });
 
-    const { rows } = await pool.query('SELECT * FROM admins WHERE id = $1', [req.admin.id]);
-    const admin    = rows[0];
+    const [rows] = await pool.query('SELECT * FROM admins WHERE id = ?', [req.admin.id]);
+    const admin  = rows[0];
     if (!bcrypt.compareSync(currentPassword, admin.password)) {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
 
     const hash = bcrypt.hashSync(newPassword, 12);
-    await pool.query('UPDATE admins SET password = $1 WHERE id = $2', [hash, req.admin.id]);
+    await pool.query('UPDATE admins SET password = ? WHERE id = ?', [hash, req.admin.id]);
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (err) {
     console.error('[auth/change-password]', err.message);

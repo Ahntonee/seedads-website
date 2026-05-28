@@ -14,24 +14,22 @@ router.get('/', requireAuth, async (req, res) => {
     const pageOffset  = ((parseInt(page) || 1) - 1) * pageSize;
 
     const filterParams = [];
-    let whereClause = 'WHERE 1=1';
-    let idx = 1;
+    let where = 'WHERE 1=1';
 
     if (cleanStatus) {
-      whereClause += ` AND status = $${idx++}`;
+      where += ' AND status = ?';
       filterParams.push(cleanStatus);
     }
     if (cleanSearch) {
-      whereClause += ` AND (name ILIKE $${idx} OR email ILIKE $${idx + 1} OR company ILIKE $${idx + 2})`;
-      idx += 3;
+      where += ' AND (name LIKE ? OR email LIKE ? OR company LIKE ?)';
       filterParams.push(`%${cleanSearch}%`, `%${cleanSearch}%`, `%${cleanSearch}%`);
     }
 
-    const countRes = await pool.query(`SELECT COUNT(*) as c FROM leads ${whereClause}`, filterParams);
-    const total    = parseInt(countRes.rows[0].c);
+    const [countRows] = await pool.query(`SELECT COUNT(*) as c FROM leads ${where}`, filterParams);
+    const total = parseInt(countRows[0].c);
 
-    const { rows: leads } = await pool.query(
-      `SELECT * FROM leads ${whereClause} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+    const [leads] = await pool.query(
+      `SELECT * FROM leads ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...filterParams, pageSize, pageOffset]
     );
 
@@ -56,11 +54,11 @@ router.post('/', requireAuth, async (req, res) => {
     if (!name)  return res.status(400).json({ error: 'Name is required' });
     if (!email) return res.status(400).json({ error: 'A valid email address is required' });
 
-    const { rows } = await pool.query(
-      'INSERT INTO leads (name, email, phone, company, plan, status, value, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO leads (name, email, phone, company, plan, status, value, notes) VALUES (?,?,?,?,?,?,?,?)',
       [name, email, phone, company, plan, status, value, notes]
     );
-    res.json({ success: true, id: rows[0].id });
+    res.json({ success: true, id: result.insertId });
   } catch (err) {
     console.error('[leads/post]', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -82,16 +80,16 @@ router.patch('/:id', requireAuth, async (req, res) => {
 
     await pool.query(
       `UPDATE leads SET
-        name       = COALESCE($1, name),
-        email      = COALESCE($2, email),
-        phone      = COALESCE($3, phone),
-        company    = COALESCE($4, company),
-        plan       = COALESCE($5, plan),
-        status     = COALESCE($6, status),
-        value      = COALESCE($7, value),
-        notes      = COALESCE($8, notes),
+        name       = COALESCE(?, name),
+        email      = COALESCE(?, email),
+        phone      = COALESCE(?, phone),
+        company    = COALESCE(?, company),
+        plan       = COALESCE(?, plan),
+        status     = COALESCE(?, status),
+        value      = COALESCE(?, value),
+        notes      = COALESCE(?, notes),
         updated_at = CURRENT_TIMESTAMP
-       WHERE id = $9`,
+       WHERE id = ?`,
       [name, email, phone, company, plan, status, value, notes, req.params.id]
     );
     res.json({ success: true });
@@ -103,7 +101,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM leads WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM leads WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     console.error('[leads/delete]', err.message);

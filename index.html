@@ -3383,5 +3383,116 @@
     }
     </script>
 
+
+    <script>
+    /* ── CMS: fetch homepage content and hydrate the page ────────────────────── */
+    (function () {
+      function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+      function stars(n) {
+        var s = ''; for (var i = 0; i < Math.min(5, n || 5); i++) s += '<i class="fas fa-star"></i>'; return s;
+      }
+
+      function applyHero(d) {
+        var h1 = document.querySelector('.hero-content h1');
+        if (h1) h1.innerHTML = esc(d.headline) + ' <span>' + esc(d.headline_highlight) + '</span>';
+        var sub = document.querySelector('.hero-subtitle');
+        if (sub) sub.textContent = d.subtitle || '';
+        var items = document.querySelectorAll('.hero-stats .stat-item');
+        [['stat1_value','stat1_label'],['stat2_value','stat2_label'],['stat3_value','stat3_label']].forEach(function(k, i) {
+          if (!items[i]) return;
+          var h3 = items[i].querySelector('h3'); var p = items[i].querySelector('p');
+          if (h3) h3.textContent = d[k[0]] || '';
+          if (p)  p.textContent  = d[k[1]] || '';
+        });
+      }
+
+      function applyServices(d) {
+        var sec = document.getElementById('services'); if (!sec) return;
+        var tag = sec.querySelector('.section-tag'), title = sec.querySelector('.section-title'), sub = sec.querySelector('.section-subtitle');
+        if (tag)   tag.textContent   = d.tag   || '';
+        if (title) title.textContent = d.title || '';
+        if (sub)   sub.textContent   = d.subtitle || '';
+        var grid = sec.querySelector('.services-grid');
+        if (!grid || !Array.isArray(d.items)) return;
+        grid.innerHTML = d.items.map(function(s) {
+          return '<div class="service-card"><div class="service-content"><div class="service-icon"><i class="' + esc(s.icon) + '"></i></div>' +
+            '<h3 class="service-title">' + esc(s.title) + '</h3><p class="service-desc">' + esc(s.desc) + '</p>' +
+            '<a href="' + esc(s.link) + '" class="service-link">Learn More <i class="fas fa-arrow-right"></i></a></div></div>';
+        }).join('');
+        grid.querySelectorAll('.service-card').forEach(function(c) {
+          c.addEventListener('mouseenter', function() { this.style.transform = 'translateY(-10px) scale(1.02)'; });
+          c.addEventListener('mouseleave', function() { this.style.transform = 'translateY(0) scale(1)'; });
+        });
+      }
+
+      function applyWhyUs(d) {
+        var sec = document.querySelector('.why-us'); if (!sec) return;
+        var tag = sec.querySelector('.section-tag'), title = sec.querySelector('.section-title'), sub = sec.querySelector('.section-subtitle');
+        if (tag)   tag.textContent   = d.tag   || '';
+        if (title) title.textContent = d.title || '';
+        if (sub)   sub.textContent   = d.subtitle || '';
+        var grid = sec.querySelector('.why-grid');
+        if (!grid || !Array.isArray(d.cards)) return;
+        grid.innerHTML = d.cards.map(function(c) {
+          return '<div class="why-card"><div class="why-icon"><i class="' + esc(c.icon) + '"></i></div>' +
+            '<h3 class="why-title">' + esc(c.title) + '</h3><p class="why-desc">' + esc(c.desc) + '</p></div>';
+        }).join('');
+      }
+
+      function applyProcess(d) {
+        var sec = document.getElementById('process'); if (!sec) return;
+        var tag = sec.querySelector('.section-tag'), title = sec.querySelector('.section-title'), sub = sec.querySelector('.section-subtitle');
+        if (tag)   tag.textContent   = d.tag   || '';
+        if (title) title.textContent = d.title || '';
+        if (sub)   sub.textContent   = d.subtitle || '';
+        var steps = sec.querySelector('.process-steps');
+        if (!steps || !Array.isArray(d.steps)) return;
+        steps.innerHTML = d.steps.map(function(s) {
+          return '<div class="step"><div class="step-number">' + esc(s.number) + '</div>' +
+            '<h3 class="step-title">' + esc(s.title) + '</h3><p class="step-desc">' + esc(s.desc) + '</p></div>';
+        }).join('');
+      }
+
+      function applyTestimonials(d) {
+        var sec = document.querySelector('.testimonials'); if (!sec) return;
+        var tag = sec.querySelector('.section-tag'), title = sec.querySelector('.section-title'), sub = sec.querySelector('.section-subtitle');
+        if (tag)   tag.textContent   = d.tag   || '';
+        if (title) title.textContent = d.title || '';
+        if (sub)   sub.textContent   = d.subtitle || '';
+        var grid = sec.querySelector('.testimonial-grid');
+        if (!grid || !Array.isArray(d.items)) return;
+        grid.innerHTML = d.items.map(function(t) {
+          return '<div class="testimonial-card"><div class="stars">' + stars(t.stars) + '</div>' +
+            '<p class="testimonial-text">&ldquo;' + esc(t.text) + '&rdquo;</p>' +
+            '<div class="testimonial-author"><div class="author-avatar">' + esc(t.avatar) + '</div>' +
+            '<div class="author-info"><h4>' + esc(t.author_name) + '</h4><p>' + esc(t.author_role) + '</p></div></div></div>';
+        }).join('');
+      }
+
+      function applyCta(d) {
+        var sec = document.querySelector('.cta'); if (!sec) return;
+        var h2 = sec.querySelector('h2'); if (h2) h2.textContent = d.headline || '';
+        var ps = sec.querySelectorAll('.cta-container > p');
+        ps.forEach(function(p) { if (!p.classList.contains('cta-contact')) p.textContent = d.subtitle || ''; });
+        var btn = sec.querySelector('.cta-btn');
+        if (btn && d.btn_text) btn.innerHTML = esc(d.btn_text) + ' <i class="fas fa-calendar-check"></i>';
+      }
+
+      fetch('/api/cms/page-content?page=homepage')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var s = data.sections || {};
+          try { if (s.hero)         applyHero(s.hero); }         catch(e) {}
+          try { if (s.services)     applyServices(s.services); } catch(e) {}
+          try { if (s.why_us)       applyWhyUs(s.why_us); }      catch(e) {}
+          try { if (s.process)      applyProcess(s.process); }   catch(e) {}
+          try { if (s.testimonials) applyTestimonials(s.testimonials); } catch(e) {}
+          try { if (s.cta)          applyCta(s.cta); }           catch(e) {}
+        })
+        .catch(function() { /* keep hardcoded fallback */ });
+    })();
+    </script>
 </body>
 </html>

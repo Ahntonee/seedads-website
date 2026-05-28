@@ -17,7 +17,7 @@
     html{scroll-behavior:smooth;}
     body{font-family:'Inter',sans-serif;background:var(--soft-white);color:var(--text-dark);display:flex;min-height:100vh;}
 
-    .sidebar{width:var(--sidebar-w);background:var(--primary-dark);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;transition:transform .3s;}
+    .sidebar{width:var(--sidebar-w);background:var(--primary-dark);height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100;transition:transform .3s;overflow:hidden;}
     .sidebar-logo{padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.08);}
     .sidebar-logo a{font-family:'Space Grotesk',sans-serif;font-size:1.4rem;font-weight:700;color:white;text-decoration:none;display:flex;align-items:center;gap:.5rem;}
     .sidebar-logo span{color:var(--accent-blue);}
@@ -192,10 +192,13 @@
     <div class="nav-item" onclick="showPage('portfolio')"><i class="fas fa-project-diagram"></i> Portfolio</div>
     <div class="nav-item" onclick="showPage('casestudies')"><i class="fas fa-briefcase"></i> Case Studies</div>
     <div class="nav-item" onclick="showPage('courses')"><i class="fas fa-book-open"></i> Courses</div>
+    <div class="nav-item" onclick="showPage('pagecontent')"><i class="fas fa-file-edit"></i> Page Content</div>
     <div class="nav-section-label">Users</div>
     <div class="nav-item" onclick="showPage('users')"><i class="fas fa-user-circle"></i> Registered Users</div>
     <div class="nav-section-label">System</div>
     <div class="nav-item" onclick="showPage('settings')"><i class="fas fa-cog"></i> Settings</div>
+    <!-- TODO: Replace # with Succeed Lawani's dashboard URL when ready -->
+    <a href="#" target="_blank" class="nav-item" style="text-decoration:none;color:rgba(255,255,255,0.65);"><i class="fas fa-external-link-alt"></i> Succeed Lawani Profile Dashboard</a>
   </nav>
   <div class="sidebar-footer">
     <div class="admin-info">
@@ -423,6 +426,36 @@
       <div class="section-header"><h2>DMI Courses</h2><button class="btn btn-primary" onclick="openCmsCourseModal()"><i class="fas fa-plus"></i> Add Course</button></div>
       <div style="overflow-x:auto;"><table><thead><tr><th>Title</th><th>Level</th><th>Duration</th><th>Students</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="coursesBody"></tbody></table></div>
       <div id="coursesEmpty" class="empty-state" style="display:none"><i class="fas fa-book-open"></i>No courses yet.</div>
+    </div>
+
+    <!-- PAGE CONTENT EDITOR -->
+    <div class="page" id="page-pagecontent">
+      <div class="section-header">
+        <h2>Page Content</h2>
+        <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;">
+          <select id="pcPageSelect" style="padding:.55rem .9rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;font-size:.82rem;font-family:'Inter',sans-serif;outline:none;background:#FAFBFC;color:#1A1A2E;cursor:pointer;" onchange="loadPageContentSections()">
+            <option value="homepage">Homepage</option>
+            <option value="about">About Page</option>
+            <option value="contact">Contact Page</option>
+            <option value="service-seo">Service: SEO</option>
+            <option value="service-ppc">Service: PPC</option>
+            <option value="service-social-media">Service: Social Media</option>
+            <option value="service-content-marketing">Service: Content Marketing</option>
+            <option value="service-email-marketing">Service: Email Marketing</option>
+            <option value="service-analytics">Service: Analytics &amp; CRO</option>
+            <option value="service-consultancy">Service: Consultancy</option>
+            <option value="service-lead-generation">Service: Lead Generation</option>
+            <option value="service-mobile-marketing">Service: Mobile Marketing</option>
+            <option value="blog-articles">Blog: Articles Hero</option>
+            <option value="blog-tips">Blog: Tips Hero</option>
+            <option value="blog-insights">Blog: Insights Hero</option>
+            <option value="blog-guides">Blog: Guides Hero</option>
+          </select>
+          <button class="btn btn-outline" onclick="loadPageContentSections()"><i class="fas fa-sync-alt"></i> Reload</button>
+        </div>
+      </div>
+      <p style="font-size:.82rem;color:var(--text-gray);margin-bottom:1.5rem;">Edit each section's content as JSON and click <strong>Save Section</strong>. Changes go live immediately on the website.</p>
+      <div id="pcSectionsContainer" style="display:flex;flex-direction:column;gap:1.5rem;"></div>
     </div>
 
   </div>
@@ -824,7 +857,7 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
-    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses' };
+    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     if (page === 'overview') loadOverview();
     if (page === 'payments') loadPayments();
@@ -840,6 +873,7 @@
     if (page === 'portfolio') loadCmsPortfolio();
     if (page === 'casestudies') loadCmsCasestudies();
     if (page === 'courses') loadCmsCourses();
+    if (page === 'pagecontent') loadPageContentSections();
     if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
   }
 
@@ -1144,6 +1178,49 @@
   }
   function fmtDate(d) { if (!d) return '&mdash;'; return new Date(d).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' }); }
   function fmtMoney(v) { return '&#8358;' + Number(v || 0).toLocaleString('en-NG'); }
+
+  // ── PAGE CONTENT EDITOR ─────────────────────────────────────────────────────
+  async function loadPageContentSections() {
+    const page = document.getElementById('pcPageSelect').value;
+    const container = document.getElementById('pcSectionsContainer');
+    container.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;"><i class="fas fa-spinner fa-spin"></i> Loading sections…</p>';
+    const data = await api('GET', '/cms/page-content?page=' + encodeURIComponent(page));
+    if (!data) { container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>Failed to load content.</div>'; return; }
+    const sections = data.sections || {};
+    const keys = Object.keys(sections);
+    if (!keys.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i>No content found for this page.</div>'; return; }
+    container.innerHTML = keys.map(function(k) {
+      const safeId = 'pc_' + k.replace(/[^a-z0-9]/gi,'_');
+      const pretty = JSON.stringify(sections[k], null, 2);
+      return '<div class="table-card" style="padding:1.5rem;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;">' +
+          '<div>' +
+            '<h3 style="font-size:.95rem;font-weight:700;color:var(--primary-dark);text-transform:capitalize;">' + escHtml(k.replace(/_/g,' ')) + '</h3>' +
+            '<p style="font-size:.75rem;color:var(--text-gray);margin-top:.2rem;">Key: <code style="background:rgba(0,102,255,0.07);padding:.1rem .4rem;border-radius:4px;">' + escHtml(k) + '</code></p>' +
+          '</div>' +
+          '<button class="btn btn-primary btn-sm" data-section="' + escHtml(k) + '" data-page="' + escHtml(page) + '" data-tid="' + safeId + '" onclick="savePageSection(this)">' +
+            '<i class="fas fa-save"></i> Save Section' +
+          '</button>' +
+        '</div>' +
+        '<textarea id="' + safeId + '" rows="14" style="width:100%;font-family:monospace;font-size:.78rem;line-height:1.5;padding:.75rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:8px;outline:none;resize:vertical;background:#FAFBFC;color:var(--text-dark);">' + escHtml(pretty) + '</textarea>' +
+      '</div>';
+    }).join('');
+  }
+
+  async function savePageSection(btn) {
+    const page = btn.dataset.page;
+    const section = btn.dataset.section;
+    const tid = btn.dataset.tid;
+    const raw = document.getElementById(tid).value;
+    let content;
+    try { content = JSON.parse(raw); } catch(e) {
+      toast('Invalid JSON — fix the syntax before saving.', 'error'); return;
+    }
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+    const ok = await api('PUT', '/cms/page-content', { page, section, content });
+    btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Section';
+    if (ok) toast('"' + section + '" saved successfully.', 'success');
+  }
   function badgeHtml(s) { return `<span class="badge badge-${s}">${s}</span>`; }
 
   // â”€â”€ OVERVIEW â”€â”€

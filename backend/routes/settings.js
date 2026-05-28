@@ -7,7 +7,7 @@ const router = express.Router();
 // Public: get all settings
 router.get('/', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT key, value FROM settings');
+    const [rows] = await pool.query('SELECT `key`, value FROM settings');
     const settings = {};
     rows.forEach(r => { settings[r.key] = r.value; });
     res.json(settings);
@@ -26,7 +26,7 @@ router.put('/', requireAuth, async (req, res) => {
 
     for (const [k, v] of pairs) {
       await pool.query(
-        'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+        'INSERT INTO settings (`key`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)',
         [k, v]
       );
     }

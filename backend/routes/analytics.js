@@ -10,7 +10,7 @@ router.post('/pageview', async (req, res) => {
     const { path, referrer } = req.body;
     if (!path) return res.status(400).json({ error: 'path required' });
     await pool.query(
-      'INSERT INTO page_views (path, referrer) VALUES ($1, $2)',
+      'INSERT INTO page_views (path, referrer) VALUES (?, ?)',
       [path.slice(0, 300), (referrer || '').slice(0, 300) || null]
     );
     res.json({ ok: true });
@@ -23,22 +23,22 @@ router.post('/pageview', async (req, res) => {
 // Admin: top pages + daily totals for last 30 days
 router.get('/pageviews', requireAuth, async (req, res) => {
   try {
-    const { rows: topPages } = await pool.query(`
+    const [topPages] = await pool.query(`
       SELECT path, COUNT(*) as views
       FROM page_views
-      WHERE created_at >= NOW() - INTERVAL '30 days'
+      WHERE created_at >= NOW() - INTERVAL 30 DAY
       GROUP BY path ORDER BY views DESC LIMIT 20
     `);
 
-    const { rows: daily } = await pool.query(`
+    const [daily] = await pool.query(`
       SELECT DATE(created_at) as day, COUNT(*) as views
       FROM page_views
-      WHERE created_at >= NOW() - INTERVAL '30 days'
+      WHERE created_at >= NOW() - INTERVAL 30 DAY
       GROUP BY day ORDER BY day ASC
     `);
 
-    const { rows: totalRow }   = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE created_at >= NOW() - INTERVAL '30 days'`);
-    const { rows: todayRow }   = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE DATE(created_at) = CURRENT_DATE`);
+    const [totalRow] = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE created_at >= NOW() - INTERVAL 30 DAY`);
+    const [todayRow] = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE DATE(created_at) = CURDATE()`);
 
     res.json({
       topPages,
@@ -55,7 +55,7 @@ router.get('/pageviews', requireAuth, async (req, res) => {
 // Admin: full overview
 router.get('/overview', requireAuth, async (req, res) => {
   try {
-    const q = (sql, params = []) => pool.query(sql, params).then(r => r.rows[0]);
+    const q = (sql, params = []) => pool.query(sql, params).then(([rows]) => rows[0]);
 
     const [totalContactsRow, newContactsRow, totalLeadsRow, activeLeadsRow, totalRevenueRow, totalPostsRow] = await Promise.all([
       q('SELECT COUNT(*) as c FROM contacts'),
@@ -66,10 +66,10 @@ router.get('/overview', requireAuth, async (req, res) => {
       q('SELECT COUNT(*) as c FROM blog_posts'),
     ]);
 
-    const { rows: recentContacts }  = await pool.query("SELECT name, email, service, created_at FROM contacts ORDER BY created_at DESC LIMIT 5");
-    const { rows: contactsByStatus } = await pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
-    const { rows: leadsByStatus }    = await pool.query("SELECT status, COUNT(*) as count FROM leads GROUP BY status");
-    const { rows: revenueByPlan }    = await pool.query("SELECT plan, COALESCE(SUM(value),0) as total FROM leads WHERE status='client' GROUP BY plan");
+    const [recentContacts]  = await pool.query("SELECT name, email, service, created_at FROM contacts ORDER BY created_at DESC LIMIT 5");
+    const [contactsByStatus] = await pool.query("SELECT status, COUNT(*) as count FROM contacts GROUP BY status");
+    const [leadsByStatus]    = await pool.query("SELECT status, COUNT(*) as count FROM leads GROUP BY status");
+    const [revenueByPlan]    = await pool.query("SELECT plan, COALESCE(SUM(value),0) as total FROM leads WHERE status='client' GROUP BY plan");
 
     res.json({
       stats: {

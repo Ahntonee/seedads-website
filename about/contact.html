@@ -802,5 +802,40 @@
             }
         });
     </script>
+    <script>
+    /* ── CMS: hydrate Contact page from API ────────────────────────────────── */
+    (function () {
+      function esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+      fetch('/api/cms/page-content?page=contact')
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var s = data.sections || {};
+          try {
+            if (s.hero) {
+              var h1 = document.querySelector('.page-hero h1');
+              if (h1) h1.textContent = s.hero.title || '';
+              var p = document.querySelector('.page-hero-container > p');
+              if (p) p.textContent = s.hero.subtitle || '';
+            }
+          } catch(e){}
+          try {
+            if (s.locations && Array.isArray(s.locations)) {
+              var grid = document.querySelector('.locations-grid');
+              if (grid) {
+                grid.innerHTML = s.locations.map(function(loc){
+                  var addrHtml = esc(loc.address||'').replace(/,\s*/g,',<br>');
+                  var phoneHtml = loc.phone ? '<br><a href="tel:'+esc((loc.phone||'').replace(/\s/g,''))+'">'+esc(loc.phone)+'</a>' : '';
+                  return '<div class="location-card"><i class="fas fa-building"></i>'+
+                    '<h3>'+esc(loc.name)+'</h3><p>'+addrHtml+phoneHtml+'</p></div>';
+                }).join('');
+              }
+            }
+          } catch(e){}
+        })
+        .catch(function(){});
+    })();
+    </script>
 </body>
 </html>

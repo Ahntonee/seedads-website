@@ -61,13 +61,13 @@ router.get('/download/:filename', async (req, res) => {
 
     if (!payload.role) return res.download(filepath, filename);
 
-    const { rows: itemRows } = await pool.query(
-      'SELECT plan_access FROM dmi_content WHERE file_path LIKE $1',
+    const [itemRows] = await pool.query(
+      'SELECT plan_access FROM dmi_content WHERE file_path LIKE ?',
       ['%' + filename]
     );
     if (!itemRows[0]) return res.status(404).json({ error: 'File not found in content library' });
 
-    const { rows: userRows } = await pool.query('SELECT plan, approved FROM users WHERE id = $1', [payload.id]);
+    const [userRows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [payload.id]);
     const freshUser = userRows[0];
     if (!freshUser || !freshUser.approved) {
       return res.status(403).json({ error: 'Your account is not yet approved. Please wait for admin approval.' });
@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
     if (auth && auth.startsWith('Bearer ')) {
       try {
         const payload = jwt.verify(auth.slice(7), SECRET);
-        const { rows } = await pool.query('SELECT plan FROM users WHERE id = $1', [payload.id]);
+        const [rows] = await pool.query('SELECT plan FROM users WHERE id = ?', [payload.id]);
         userPlan = rows[0] ? rows[0].plan : null;
       } catch {}
     }
@@ -98,10 +98,10 @@ router.get('/', async (req, res) => {
     const { category } = req.query;
     let query  = 'SELECT * FROM dmi_content WHERE published = 1';
     const params = [];
-    if (category) { query += ' AND category = $1'; params.push(category); }
+    if (category) { query += ' AND category = ?'; params.push(category); }
     query += ' ORDER BY sort_order ASC, created_at DESC';
 
-    const { rows: all } = await pool.query(query, params);
+    const [all] = await pool.query(query, params);
     const items = all.map(item => ({
       ...item,
       accessible:   canAccess(userPlan, item.plan_access),
@@ -120,7 +120,7 @@ router.get('/', async (req, res) => {
 // ── Admin: list all content ────────────────────────────────────────────────
 router.get('/admin', requireAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM dmi_content ORDER BY sort_order ASC, created_at DESC');
+    const [rows] = await pool.query('SELECT * FROM dmi_content ORDER BY sort_order ASC, created_at DESC');
     res.json({ items: rows });
   } catch (err) {
     console.error('[dmi/admin]', err.message);
@@ -137,13 +137,13 @@ router.post('/', requireAuth, upload.single('file'), async (req, res) => {
     const file_path = req.file ? '/uploads/dmi/' + req.file.filename : null;
     const file_name = req.file ? req.file.originalname : null;
 
-    const { rows } = await pool.query(
+    const [result] = await pool.query(
       `INSERT INTO dmi_content (title, description, type, file_path, file_name, external_url, plan_access, category, sort_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+       VALUES (?,?,?,?,?,?,?,?,?)`,
       [title, description || null, type || 'pdf', file_path, file_name,
        external_url || null, plan_access || 'all', category || null, parseInt(sort_order) || 0]
     );
-    res.json({ success: true, id: rows[0].id });
+    res.json({ success: true, id: result.insertId });
   } catch (err) {
     console.error('[dmi/post]', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -154,7 +154,7 @@ router.post('/', requireAuth, upload.single('file'), async (req, res) => {
 router.patch('/:id', requireAuth, upload.single('file'), async (req, res) => {
   try {
     const { title, description, type, external_url, plan_access, category, sort_order, published } = req.body;
-    const { rows: existing } = await pool.query('SELECT * FROM dmi_content WHERE id = $1', [req.params.id]);
+    const [existing] = await pool.query('SELECT * FROM dmi_content WHERE id = ?', [req.params.id]);
     if (!existing[0]) return res.status(404).json({ error: 'Not found' });
 
     const file_path = req.file ? '/uploads/dmi/' + req.file.filename : existing[0].file_path;
@@ -162,18 +162,18 @@ router.patch('/:id', requireAuth, upload.single('file'), async (req, res) => {
 
     await pool.query(
       `UPDATE dmi_content SET
-        title        = COALESCE($1, title),
-        description  = COALESCE($2, description),
-        type         = COALESCE($3, type),
-        file_path    = $4,
-        file_name    = $5,
-        external_url = COALESCE($6, external_url),
-        plan_access  = COALESCE($7, plan_access),
-        category     = COALESCE($8, category),
-        sort_order   = COALESCE($9, sort_order),
-        published    = COALESCE($10, published),
+        title        = COALESCE(?, title),
+        description  = COALESCE(?, description),
+        type         = COALESCE(?, type),
+        file_path    = ?,
+        file_name    = ?,
+        external_url = COALESCE(?, external_url),
+        plan_access  = COALESCE(?, plan_access),
+        category     = COALESCE(?, category),
+        sort_order   = COALESCE(?, sort_order),
+        published    = COALESCE(?, published),
         updated_at   = CURRENT_TIMESTAMP
-       WHERE id = $11`,
+       WHERE id = ?`,
       [title || null, description || null, type || null, file_path, file_name,
        external_url || null, plan_access || null, category || null,
        sort_order !== undefined ? parseInt(sort_order) : null,
@@ -190,12 +190,12 @@ router.patch('/:id', requireAuth, upload.single('file'), async (req, res) => {
 // ── Admin: delete DMI resource ─────────────────────────────────────────────
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT file_path FROM dmi_content WHERE id = $1', [req.params.id]);
+    const [rows] = await pool.query('SELECT file_path FROM dmi_content WHERE id = ?', [req.params.id]);
     if (rows[0] && rows[0].file_path) {
       const abs = path.join(__dirname, '..', rows[0].file_path);
       if (fs.existsSync(abs)) fs.unlinkSync(abs);
     }
-    await pool.query('DELETE FROM dmi_content WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM dmi_content WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     console.error('[dmi/delete]', err.message);

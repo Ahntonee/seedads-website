@@ -7,9 +7,9 @@ if (!process.env.JWT_SECRET) {
   console.error('        Copy backend/.env.example to backend/.env and fill in your values.');
   process.exit(1);
 }
-if (!process.env.DATABASE_URL) {
-  console.error('[FATAL] DATABASE_URL is not set in .env — refusing to start.');
-  console.error('        Example: DATABASE_URL=postgresql://postgres:password@localhost:5432/seedsads');
+if (!process.env.DB_HOST || !process.env.DB_NAME) {
+  console.error('[FATAL] DB_HOST and DB_NAME must be set in .env — refusing to start.');
+  console.error('        Example: DB_HOST=localhost  DB_PORT=3306  DB_USER=root  DB_PASSWORD=  DB_NAME=seedsads');
   process.exit(1);
 }
 

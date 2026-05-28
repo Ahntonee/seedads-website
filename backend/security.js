@@ -1,21 +1,25 @@
 /**
  * security.js — Shared security helpers
- * Login lockout, input sanitization, validation utilities
+ * Login lockout (in-memory), input sanitization, validation utilities
  */
 'use strict';
-const db = require('./database');
 
-// ── Login lockout ────────────────────────────────────────────────────────────
+// ── Login lockout (in-memory) ────────────────────────────────────────────────
+// Keeps attempt timestamps per identifier. Resets on server restart,
+// which is acceptable — persistent lockouts can be added later if needed.
+
 const ADMIN_MAX_ATTEMPTS  = 5;
 const ADMIN_WINDOW_MS     = 30 * 60 * 1000; // 30 minutes
 const USER_MAX_ATTEMPTS   = 10;
 const USER_WINDOW_MS      = 15 * 60 * 1000; // 15 minutes
 
+// identifier -> [timestamp, timestamp, ...]
+const attemptStore = new Map();
+
 function _recentAttempts(identifier, windowMs) {
-  const cutoff = new Date(Date.now() - windowMs).toISOString();
-  return db.prepare(
-    'SELECT COUNT(*) as c FROM login_attempts WHERE identifier = ? AND attempt_at > ?'
-  ).get(identifier, cutoff).c;
+  const cutoff   = Date.now() - windowMs;
+  const attempts = attemptStore.get(identifier) || [];
+  return attempts.filter(t => t > cutoff).length;
 }
 
 function isAdminLockedOut(username) {
@@ -26,18 +30,25 @@ function isUserLockedOut(email) {
   return _recentAttempts('user:' + email.toLowerCase(), USER_WINDOW_MS) >= USER_MAX_ATTEMPTS;
 }
 
-function recordFailedAttempt(identifier, ip) {
-  db.prepare('INSERT INTO login_attempts (identifier, ip) VALUES (?, ?)').run(identifier, ip || null);
+function recordFailedAttempt(identifier) {
+  const attempts = attemptStore.get(identifier) || [];
+  attempts.push(Date.now());
+  attemptStore.set(identifier, attempts);
 }
 
 function clearAttempts(identifier) {
-  db.prepare('DELETE FROM login_attempts WHERE identifier = ?').run(identifier);
+  attemptStore.delete(identifier);
 }
 
-// Prune attempts older than 24 hours (run periodically)
+// Prune stale entries to prevent memory growth (called every hour from server.js)
 function pruneAttempts() {
-  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  db.prepare('DELETE FROM login_attempts WHERE attempt_at < ?').run(cutoff);
+  const maxWindow = Math.max(ADMIN_WINDOW_MS, USER_WINDOW_MS);
+  const cutoff    = Date.now() - maxWindow;
+  for (const [key, attempts] of attemptStore.entries()) {
+    const fresh = attempts.filter(t => t > cutoff);
+    if (fresh.length === 0) attemptStore.delete(key);
+    else attemptStore.set(key, fresh);
+  }
 }
 
 // ── Input sanitization ───────────────────────────────────────────────────────
@@ -58,7 +69,6 @@ function sanitizeText(str, maxLen = 500) {
 function sanitizeEmail(str) {
   if (!str || typeof str !== 'string') return null;
   const trimmed = str.trim().toLowerCase().slice(0, 320);
-  // RFC 5322 simplified regex
   const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(trimmed);
   return valid ? trimmed : null;
 }
@@ -72,15 +82,14 @@ function sanitizePhone(str) {
 /** Sanitize blog HTML content — allow safe tags, block scripts/iframes/etc. */
 function sanitizeBlogContent(html) {
   if (!html || typeof html !== 'string') return null;
-  // Remove obviously dangerous elements
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
     .replace(/<object[\s\S]*?<\/object>/gi, '')
     .replace(/<embed[^>]*>/gi, '')
     .replace(/<link[^>]*>/gi, '')
-    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '') // remove inline event handlers
-    .replace(/javascript\s*:/gi, 'blocked:')       // block javascript: URIs
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/javascript\s*:/gi, 'blocked:')
     .trim();
 }
 

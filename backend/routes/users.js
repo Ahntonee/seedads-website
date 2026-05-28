@@ -50,15 +50,15 @@ router.post('/register', async (req, res) => {
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ error: pwErr });
 
-    const { rows: existing } = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(409).json({ error: 'An account with this email already exists' });
 
     const hash = bcrypt.hashSync(password, 12);
-    const { rows } = await pool.query(
-      'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES (?,?,?,?,?,?)',
       [first_name, last_name, email, phone, hash, plan]
     );
-    const newId = rows[0].id;
+    const newId = result.insertId;
 
     const token = jwt.sign(
       { id: newId, email, first_name, last_name, role: 'user' },
@@ -91,7 +91,7 @@ router.post('/login', async (req, res) => {
     }
 
     const ip = req.ip || req.connection.remoteAddress;
-    const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     const user = rows[0];
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
@@ -132,19 +132,19 @@ router.post('/google', async (req, res) => {
     const last_name  = sanitizeText(info.family_name || '',      100);
     if (!email) return res.status(400).json({ error: 'Google account has no valid email' });
 
-    let { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    let [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
     let user  = rows[0];
     let isNew = false;
 
     if (!user) {
       isNew      = true;
       const hash = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
-      const ins  = await pool.query(
-        'INSERT INTO users (first_name, last_name, email, password) VALUES ($1,$2,$3,$4) RETURNING id',
+      const [insResult] = await pool.query(
+        'INSERT INTO users (first_name, last_name, email, password) VALUES (?,?,?,?)',
         [first_name, last_name, email, hash]
       );
-      const r2 = await pool.query('SELECT * FROM users WHERE id = $1', [ins.rows[0].id]);
-      user = r2.rows[0];
+      const [r2] = await pool.query('SELECT * FROM users WHERE id = ?', [insResult.insertId]);
+      user = r2[0];
       mailer.welcomeUser({ first_name, email, plan: null }).catch(() => {});
     }
 
@@ -167,14 +167,14 @@ router.post('/forgot-password', async (req, res) => {
   if (!email) return res.json({ success: true, message: MSG });
 
   try {
-    const { rows } = await pool.query('SELECT id, first_name, email FROM users WHERE email = $1', [email]);
+    const [rows] = await pool.query('SELECT id, first_name, email FROM users WHERE email = ?', [email]);
     const user = rows[0];
     if (user) {
       const token     = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [user.id]);
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+      await pool.query('DELETE FROM password_reset_tokens WHERE user_id = ?', [user.id]);
       await pool.query(
-        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ($1,$2,$3)',
+        'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?,?,?)',
         [user.id, token, expiresAt]
       );
       mailer.sendPasswordReset({ first_name: user.first_name, email: user.email, token }).catch(() => {});
@@ -197,8 +197,8 @@ router.post('/reset-password', async (req, res) => {
     const pwErr = validatePassword(password);
     if (pwErr) return res.status(400).json({ error: pwErr });
 
-    const { rows } = await pool.query(
-      'SELECT * FROM password_reset_tokens WHERE token = $1 AND used = 0',
+    const [rows] = await pool.query(
+      'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0',
       [token]
     );
     const record = rows[0];
@@ -208,8 +208,8 @@ router.post('/reset-password', async (req, res) => {
     }
 
     const hash = bcrypt.hashSync(password, 12);
-    await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hash, record.user_id]);
-    await pool.query('UPDATE password_reset_tokens SET used = 1 WHERE id = $1', [record.id]);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hash, record.user_id]);
+    await pool.query('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [record.id]);
     res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
   } catch (err) {
     console.error('[users/reset-password]', err.message);
@@ -220,13 +220,13 @@ router.post('/reset-password', async (req, res) => {
 // ── Get own profile ───────────────────────────────────────────────────────────
 router.get('/me', requireUser, async (req, res) => {
   try {
-    const { rows: uRows } = await pool.query(
-      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = $1',
+    const [uRows] = await pool.query(
+      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
     if (!uRows[0]) return res.status(404).json({ error: 'User not found' });
-    const { rows: pRows } = await pool.query(
-      'SELECT * FROM payments WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1',
+    const [pRows] = await pool.query(
+      'SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
       [req.user.id]
     );
     res.json({ user: uRows[0], lastPayment: pRows[0] || null });
@@ -239,7 +239,7 @@ router.get('/me', requireUser, async (req, res) => {
 // ── Admin: list all users ─────────────────────────────────────────────────────
 router.get('/', requireAuth, async (req, res) => {
   try {
-    const { rows } = await pool.query(
+    const [rows] = await pool.query(
       'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, created_at FROM users ORDER BY created_at DESC'
     );
     res.json({ users: rows });
@@ -256,10 +256,10 @@ router.patch('/:id', requireAuth, async (req, res) => {
     const cleanPlan = sanitizeText(plan, 100);
     await pool.query(
       `UPDATE users SET
-        plan           = COALESCE($1, plan),
-        payment_status = COALESCE($2, payment_status),
-        approved       = COALESCE($3, approved)
-       WHERE id = $4`,
+        plan           = COALESCE(?, plan),
+        payment_status = COALESCE(?, payment_status),
+        approved       = COALESCE(?, approved)
+       WHERE id = ?`,
       [cleanPlan || null, payment_status ?? null, approved !== undefined ? Number(approved) : null, req.params.id]
     );
     res.json({ success: true });
@@ -272,7 +272,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 // ── Admin: delete user ────────────────────────────────────────────────────────
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     console.error('[users/delete]', err.message);

@@ -19,18 +19,17 @@ router.get('/', async (req, res) => {
     const pageOffset = ((parseInt(page) || 1) - 1) * pageSize;
 
     const filterParams = [];
-    let whereClause = 'WHERE 1=1';
-    let idx = 1;
+    let where = 'WHERE 1=1';
 
-    if (cleanStatus)   { whereClause += ` AND status = $${idx++}`;   filterParams.push(cleanStatus); }
-    if (cleanCategory) { whereClause += ` AND category = $${idx++}`; filterParams.push(cleanCategory); }
+    if (cleanStatus)   { where += ' AND status = ?';   filterParams.push(cleanStatus); }
+    if (cleanCategory) { where += ' AND category = ?'; filterParams.push(cleanCategory); }
 
-    const countRes = await pool.query(`SELECT COUNT(*) as c FROM blog_posts ${whereClause}`, filterParams);
-    const total    = parseInt(countRes.rows[0].c);
+    const [countRows] = await pool.query(`SELECT COUNT(*) as c FROM blog_posts ${where}`, filterParams);
+    const total = parseInt(countRows[0].c);
 
-    const { rows: posts } = await pool.query(
+    const [posts] = await pool.query(
       `SELECT id, title, slug, excerpt, category, cover_image, status, author, created_at
-       FROM blog_posts ${whereClause} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx + 1}`,
+       FROM blog_posts ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...filterParams, pageSize, pageOffset]
     );
 
@@ -44,7 +43,7 @@ router.get('/', async (req, res) => {
 // Public: get single post by id
 router.get('/:id', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM blog_posts WHERE id = $1', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM blog_posts WHERE id = ?', [req.params.id]);
     if (!rows[0]) return res.status(404).json({ error: 'Post not found' });
     res.json(rows[0]);
   } catch (err) {
@@ -67,11 +66,11 @@ router.post('/', requireAuth, async (req, res) => {
     if (!title) return res.status(400).json({ error: 'Title is required' });
     const slug = slugify(title) + '-' + Date.now();
 
-    const { rows } = await pool.query(
-      'INSERT INTO blog_posts (title, slug, excerpt, content, category, status, author, cover_image) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id',
+    const [result] = await pool.query(
+      'INSERT INTO blog_posts (title, slug, excerpt, content, category, status, author, cover_image) VALUES (?,?,?,?,?,?,?,?)',
       [title, slug, excerpt, content, category, status, author, cover_image]
     );
-    res.json({ success: true, id: rows[0].id, slug });
+    res.json({ success: true, id: result.insertId, slug });
   } catch (err) {
     console.error('[blog/post]', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -91,16 +90,16 @@ router.patch('/:id', requireAuth, async (req, res) => {
 
     await pool.query(
       `UPDATE blog_posts SET
-        title       = COALESCE($1, title),
-        excerpt     = COALESCE($2, excerpt),
-        content     = COALESCE($3, content),
-        category    = COALESCE($4, category),
-        status      = COALESCE($5, status),
-        author      = COALESCE($6, author),
-        cover_image = CASE WHEN $7 IS NOT NULL THEN $7 ELSE cover_image END,
+        title       = COALESCE(?, title),
+        excerpt     = COALESCE(?, excerpt),
+        content     = COALESCE(?, content),
+        category    = COALESCE(?, category),
+        status      = COALESCE(?, status),
+        author      = COALESCE(?, author),
+        cover_image = CASE WHEN ? IS NOT NULL THEN ? ELSE cover_image END,
         updated_at  = CURRENT_TIMESTAMP
-       WHERE id = $8`,
-      [title, excerpt, content, category, status, author, cover_image, req.params.id]
+       WHERE id = ?`,
+      [title, excerpt, content, category, status, author, cover_image, cover_image, req.params.id]
     );
     res.json({ success: true });
   } catch (err) {
@@ -112,7 +111,7 @@ router.patch('/:id', requireAuth, async (req, res) => {
 // Admin: delete post
 router.delete('/:id', requireAuth, async (req, res) => {
   try {
-    await pool.query('DELETE FROM blog_posts WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM blog_posts WHERE id = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     console.error('[blog/delete]', err.message);

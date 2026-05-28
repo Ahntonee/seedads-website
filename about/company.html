@@ -654,5 +654,71 @@
             </div>
         </div>
     </div>
+
+    <script>
+    /* ── CMS: hydrate About/Company page from API ───────────────────────────── */
+    (function () {
+      function esc(s) {
+        return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+      fetch('/api/cms/page-content?page=about')
+        .then(function(r){return r.json();})
+        .then(function(data){
+          var s = data.sections || {};
+          // Hero
+          try {
+            if (s.hero) {
+              var h1 = document.querySelector('.page-hero h1');
+              if (h1) h1.textContent = s.hero.title || '';
+              var p = document.querySelector('.page-hero-container > p');
+              if (p) p.textContent = s.hero.subtitle || '';
+            }
+          } catch(e){}
+          // Story
+          try {
+            if (s.story) {
+              var h2 = document.querySelector('.story-content h2');
+              if (h2) h2.textContent = s.story.title || '';
+              var paras = document.querySelectorAll('.story-content p');
+              (s.story.paragraphs || []).forEach(function(txt, i){
+                if (paras[i]) paras[i].textContent = txt;
+              });
+            }
+          } catch(e){}
+          // Values
+          try {
+            if (s.values) {
+              var vh = document.querySelector('.values-container .section-header');
+              if (vh) {
+                var vt = vh.querySelector('h2'); var vs = vh.querySelector('p');
+                if (vt) vt.textContent = s.values.title || '';
+                if (vs) vs.textContent = s.values.subtitle || '';
+              }
+              var grid = document.querySelector('.values-grid');
+              if (grid && Array.isArray(s.values.cards)) {
+                grid.innerHTML = s.values.cards.map(function(c){
+                  return '<div class="value-card"><div class="value-icon"><i class="'+esc(c.icon)+'"></i></div>'+
+                    '<h3>'+esc(c.title)+'</h3><p>'+esc(c.desc)+'</p></div>';
+                }).join('');
+              }
+            }
+          } catch(e){}
+          // Stats
+          try {
+            if (s.stats && Array.isArray(s.stats)) {
+              var items = document.querySelectorAll('.stats-section .stat-item');
+              s.stats.forEach(function(st, i){
+                if (!items[i]) return;
+                var sv = items[i].querySelector('.stat-value');
+                var sl = items[i].querySelector('.stat-label');
+                if (sv) sv.textContent = st.value || '';
+                if (sl) sl.textContent = st.label || '';
+              });
+            }
+          } catch(e){}
+        })
+        .catch(function(){});
+    })();
+    </script>
 </body>
 </html>
