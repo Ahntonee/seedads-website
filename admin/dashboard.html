@@ -159,9 +159,12 @@
 
     .editor-area{border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;overflow:hidden;}
     .editor-toolbar{background:var(--soft-white);border-bottom:1px solid rgba(0,102,255,0.1);padding:.5rem .75rem;display:flex;gap:.25rem;flex-wrap:wrap;}
-    .editor-toolbar button{width:28px;height:28px;border-radius:6px;border:none;background:none;color:var(--text-gray);cursor:pointer;font-size:.8rem;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+    .editor-toolbar button{min-width:28px;height:28px;padding:0 6px;border-radius:6px;border:none;background:none;color:var(--text-gray);cursor:pointer;font-size:.8rem;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:.25rem;white-space:nowrap;}
     .editor-toolbar button:hover{background:white;color:var(--primary-blue);}
+    .editor-toolbar .tb-sep{width:1px;height:18px;background:rgba(0,102,255,0.12);margin:0 2px;flex-shrink:0;}
     #postContent{border:none;border-radius:0;min-height:200px;background:white;}
+    #postContent img{max-width:100%;height:auto;border-radius:8px;margin:.5rem 0;display:block;cursor:pointer;}
+    #postContent img.selected-img{outline:3px solid var(--primary-blue);border-radius:8px;}
 
     .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
     /* ── Media Library ─────────────────────────────────────── */
@@ -532,6 +535,7 @@
 <!-- Hidden inputs for file uploads -->
 <input type="file" id="mediaFileInput" multiple accept="image/*" style="display:none" onchange="handleMediaFiles(this.files)">
 <input type="file" id="inlineImgInput" accept="image/*" style="display:none" onchange="handleInlineUpload(this)">
+<input type="file" id="editorImgInput" accept="image/*" style="display:none" onchange="handleEditorImgUpload(this)">
 
 <!-- Payment review modal -->
 <div class="modal-overlay" id="payModal">
@@ -619,8 +623,11 @@
           <button type="button" onclick="fmt('insertUnorderedList')" title="Bullet list"><i class="fas fa-list-ul"></i></button>
           <button type="button" onclick="fmt('insertOrderedList')" title="Numbered list"><i class="fas fa-list-ol"></i></button>
           <button type="button" onclick="insertLink()" title="Link"><i class="fas fa-link"></i></button>
+          <div class="tb-sep"></div>
+          <button type="button" onclick="uploadEditorImg()" title="Upload image into post"><i class="fas fa-image"></i></button>
+          <button type="button" onclick="browseEditorImg()" title="Insert image from media library" style="font-size:.72rem;padding:0 7px;"><i class="fas fa-images"></i></button>
         </div>
-        <div id="postContent" contenteditable="true" style="padding:1rem;min-height:200px;outline:none;font-size:.9rem;line-height:1.7;"></div>
+        <div id="postContent" contenteditable="true" style="padding:1rem;min-height:200px;outline:none;font-size:.9rem;line-height:1.7;" onmouseup="saveEditorRange()" onkeyup="saveEditorRange()"></div>
       </div>
     </div>
     <div class="form-group"><label>Author</label><input type="text" id="postAuthor" value="SeedsAds Team"></div>
@@ -1624,8 +1631,16 @@
   function confirmPickerSelect() {
     const sel = document.querySelector('.mpicker-item.selected');
     if (!sel) { toast('Please select an image first', 'error'); return; }
-    if (_pickerTarget) setImgField(_pickerTarget.fieldId, _pickerTarget.previewId, _pickerTarget.urlId, sel.dataset.selectedUrl);
-    closeModal('mediaPickerModal');
+    const url = sel.dataset.selectedUrl;
+    if (_pickerTarget && _pickerTarget.insertMode) {
+      // Insert into blog content editor
+      closeModal('mediaPickerModal');
+      insertImgAtCursor(url);
+      toast('Image inserted!', 'success');
+    } else if (_pickerTarget) {
+      setImgField(_pickerTarget.fieldId, _pickerTarget.previewId, _pickerTarget.urlId, url);
+      closeModal('mediaPickerModal');
+    }
   }
   async function uploadAndPickImg(input) {
     if (!input.files || !input.files[0]) return;
@@ -1936,6 +1951,79 @@
 
   function fmt(cmd,val) { document.execCommand(cmd,false,val||null); document.getElementById('postContent').focus(); }
   function insertLink() { const url=prompt('Enter URL:'); if(url) document.execCommand('createLink',false,url); document.getElementById('postContent').focus(); }
+
+  // ── Blog inline image insert ────────────────────────────────────────────────
+  let _editorSavedRange = null;
+
+  function saveEditorRange() {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) _editorSavedRange = sel.getRangeAt(0).cloneRange();
+  }
+  function restoreEditorRange() {
+    if (!_editorSavedRange) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(_editorSavedRange);
+  }
+  function insertImgAtCursor(url) {
+    const editor = document.getElementById('postContent');
+    editor.focus();
+    restoreEditorRange();
+    // Wrap in a paragraph so it sits on its own line
+    const wrapper = document.createElement('p');
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '';
+    img.style.maxWidth = '100%';
+    wrapper.appendChild(img);
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0);
+      range.collapse(false);
+      range.insertNode(wrapper);
+      // Move cursor after inserted image
+      range.setStartAfter(wrapper);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      editor.appendChild(wrapper);
+    }
+  }
+  function uploadEditorImg() {
+    saveEditorRange();
+    document.getElementById('editorImgInput').value = '';
+    document.getElementById('editorImgInput').click();
+  }
+  async function handleEditorImgUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const fd = new FormData(); fd.append('image', input.files[0]);
+    try {
+      const res = await fetch(API + '/cms/upload', { method:'POST', headers:{Authorization:'Bearer '+token}, body:fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      insertImgAtCursor(d.url);
+      toast('Image inserted!', 'success');
+    } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
+  }
+  function browseEditorImg() {
+    saveEditorRange();
+    // Re-use media picker in "insert" mode
+    _pickerTarget = { insertMode: true };
+    const grid = document.getElementById('mpickerGrid');
+    grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</p>';
+    document.getElementById('mediaPickerModal').classList.add('active');
+    api('GET', '/cms/media').then(data => {
+      if (!data || !data.files || !data.files.length) {
+        grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;">No images yet. Upload some first via Media Library.</p>'; return;
+      }
+      grid.innerHTML = data.files.map(f => `
+        <div class="mpicker-item" onclick="pickerSelect(this,'${escHtml(f.url)}')" title="${escHtml(f.filename)}">
+          <img src="${escHtml(f.url)}" alt="" loading="lazy">
+          <div class="mpicker-check"><i class="fas fa-check"></i></div>
+        </div>`).join('');
+    });
+  }
 
   // -- DMI CONTENT --
   let currentDmiId = null;
