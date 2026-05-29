@@ -1,27 +1,40 @@
 'use strict';
-const express  = require('express');
-const path     = require('path');
-const fs       = require('fs');
-const multer   = require('multer');
-const { pool } = require('../database');
+const express    = require('express');
+const path       = require('path');
+const fs         = require('fs');
+const multer     = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { pool }   = require('../database');
 const { requireAuth } = require('./auth');
 const { sanitizeText } = require('../security');
-const router   = express.Router();
+const router     = express.Router();
 
-// ── Image upload (CMS media) ──────────────────────────────────────────────────
-const cmsStorage = multer.diskStorage({
-  destination(req, file, cb) {
-    const dir = path.join(__dirname, '../uploads/cms');
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2, 8) + ext);
-  },
-});
+// ── Cloudinary config (production) / local disk fallback (dev) ────────────────
+const USE_CLOUDINARY = !!(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET);
+if (USE_CLOUDINARY) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key:    process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure:     true,
+  });
+}
+
+// multer: memory storage when using Cloudinary, disk otherwise
 const cmsUpload = multer({
-  storage: cmsStorage,
+  storage: USE_CLOUDINARY
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination(req, file, cb) {
+          const dir = path.join(__dirname, '../uploads/cms');
+          fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename(req, file, cb) {
+          const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+          cb(null, Date.now() + '-' + Math.random().toString(36).slice(2, 8) + ext);
+        },
+      }),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter(req, file, cb) {
     if (/^image\/(jpeg|png|gif|webp|svg\+xml)$/.test(file.mimetype)) cb(null, true);
@@ -29,16 +42,52 @@ const cmsUpload = multer({
   },
 });
 
+// Helper: upload a buffer to Cloudinary and return result
+function uploadToCloudinary(buffer, publicId) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'seedsads/cms', public_id: publicId, resource_type: 'image' },
+      (err, result) => (err ? reject(err) : resolve(result))
+    );
+    stream.end(buffer);
+  });
+}
+
 // POST /api/cms/upload
-router.post('/upload', requireAuth, cmsUpload.single('image'), (req, res) => {
+router.post('/upload', requireAuth, cmsUpload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  res.json({ url: '/uploads/cms/' + req.file.filename, filename: req.file.filename });
+  try {
+    if (USE_CLOUDINARY) {
+      const uniqueId = Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      const result   = await uploadToCloudinary(req.file.buffer, uniqueId);
+      const filename = uniqueId + '.' + result.format;
+      res.json({ url: result.secure_url, filename });
+    } else {
+      res.json({ url: '/uploads/cms/' + req.file.filename, filename: req.file.filename });
+    }
+  } catch (e) {
+    console.error('[cms/upload]', e.message);
+    res.status(500).json({ error: 'Upload failed: ' + e.message });
+  }
 });
 
 // GET /api/cms/media
-router.get('/media', requireAuth, (req, res) => {
-  const dir = path.join(__dirname, '../uploads/cms');
+router.get('/media', requireAuth, async (req, res) => {
   try {
+    if (USE_CLOUDINARY) {
+      const result = await cloudinary.api.resources({
+        type: 'upload', prefix: 'seedsads/cms', max_results: 200, resource_type: 'image',
+      });
+      const files = result.resources.map(r => ({
+        url:      r.secure_url,
+        filename: r.public_id.replace('seedsads/cms/', '') + '.' + r.format,
+        size:     r.bytes,
+        mtime:    r.created_at,
+      })).sort((a, b) => new Date(b.mtime) - new Date(a.mtime));
+      return res.json({ files });
+    }
+    // Local fallback
+    const dir = path.join(__dirname, '../uploads/cms');
     fs.mkdirSync(dir, { recursive: true });
     const files = fs.readdirSync(dir)
       .filter(f => /\.(jpe?g|png|gif|webp|svg)$/i.test(f))
@@ -48,15 +97,29 @@ router.get('/media', requireAuth, (req, res) => {
       })
       .sort((a, b) => new Date(b.mtime) - new Date(a.mtime));
     res.json({ files });
-  } catch { res.json({ files: [] }); }
+  } catch (e) {
+    console.error('[cms/media GET]', e.message);
+    res.json({ files: [] });
+  }
 });
 
 // DELETE /api/cms/media/:filename
-router.delete('/media/:filename', requireAuth, (req, res) => {
-  const safe = path.basename(req.params.filename);
-  const fp   = path.join(__dirname, '../uploads/cms', safe);
-  try { fs.unlinkSync(fp); res.json({ success: true }); }
-  catch { res.status(404).json({ error: 'File not found' }); }
+router.delete('/media/:filename', requireAuth, async (req, res) => {
+  try {
+    if (USE_CLOUDINARY) {
+      // filename = "uniqueId.ext" → public_id = "seedsads/cms/uniqueId"
+      const base     = path.basename(req.params.filename, path.extname(req.params.filename));
+      const publicId = 'seedsads/cms/' + base;
+      await cloudinary.uploader.destroy(publicId, { resource_type: 'image' });
+      return res.json({ success: true });
+    }
+    const safe = path.basename(req.params.filename);
+    const fp   = path.join(__dirname, '../uploads/cms', safe);
+    fs.unlinkSync(fp);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(404).json({ error: 'File not found or delete failed' });
+  }
 });
 
 // Helper: build dynamic SET clause for UPDATE using ? placeholders
