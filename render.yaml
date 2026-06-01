@@ -15,16 +15,8 @@ services:
       # Generate a secure random JWT secret automatically
       - key: JWT_SECRET
         generateValue: true
-      # ── MySQL database (fill in from Railway dashboard) ──
-      - key: DB_HOST
-        sync: false
-      - key: DB_PORT
-        value: 3306
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
+      # ── PostgreSQL database (fill in from Neon dashboard) ──
+      - key: DATABASE_URL
         sync: false
       # ── Cloudinary image uploads (fill in from cloudinary.com dashboard) ──
       - key: CLOUDINARY_CLOUD_NAME

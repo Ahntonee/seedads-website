@@ -484,8 +484,8 @@ router.put('/page-content', requireAuth, async (req, res) => {
     if (!page || !section) return res.status(400).json({ error: 'page and section are required' });
     const contentStr = typeof content === 'string' ? content : JSON.stringify(content);
     await pool.query(
-      'INSERT INTO page_content (page, section, content) VALUES (?,?,?) ON DUPLICATE KEY UPDATE content = ?',
-      [page, section, contentStr, contentStr]
+      'INSERT INTO page_content (page, section, content) VALUES (?,?,?) ON CONFLICT (page, section) DO UPDATE SET content = EXCLUDED.content',
+      [page, section, contentStr]
     );
     res.json({ success: true });
   } catch (err) {

@@ -1,30 +1,56 @@
 'use strict';
-const mysql  = require('mysql2/promise');
-const bcrypt = require('bcryptjs');
+const { Pool }  = require('pg');
+const bcrypt    = require('bcryptjs');
 
-const pool = mysql.createPool({
-  host:             process.env.DB_HOST     || 'localhost',
-  port:             parseInt(process.env.DB_PORT) || 3306,
-  user:             process.env.DB_USER     || 'root',
-  password:         process.env.DB_PASSWORD || '',
-  database:         process.env.DB_NAME     || 'seedsads',
-  waitForConnections: true,
-  connectionLimit:  10,
-  multipleStatements: false,
+// ── PostgreSQL connection pool ─────────────────────────────────────────────────
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/seedsads',
+  ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')
+    ? { rejectUnauthorized: false }
+    : false,
 });
+
+// ── mysql2-compatible shim ─────────────────────────────────────────────────────
+// Converts ? placeholders → $1,$2,… and normalises the return format to match
+// mysql2's [rows, fields] for SELECT and [{ insertId, affectedRows }, []] for writes.
+const pool = {
+  async query(sql, params = []) {
+    // Convert ? → $1, $2, …
+    let i = 0;
+    let pgSql = sql.replace(/\?/g, () => `$${++i}`);
+
+    const isInsert = /^\s*INSERT\b/i.test(pgSql);
+
+    // Inject RETURNING id for INSERT statements so we get insertId back.
+    // ON CONFLICT DO NOTHING returns an empty rows array — that's fine, we use ?. nullish.
+    if (isInsert && !/\bRETURNING\b/i.test(pgSql)) {
+      pgSql = pgSql.trimEnd().replace(/;$/, '') + ' RETURNING id';
+    }
+
+    const result = await pgPool.query(pgSql, params);
+
+    if (isInsert) {
+      return [{ insertId: result.rows[0]?.id ?? null, affectedRows: result.rowCount }, []];
+    }
+    if (/^\s*(UPDATE|DELETE)\b/i.test(pgSql)) {
+      return [{ affectedRows: result.rowCount, changedRows: result.rowCount }, []];
+    }
+    return [result.rows, []];
+  },
+};
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 async function createTables() {
   const stmts = [
     `CREATE TABLE IF NOT EXISTS admins (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       username   VARCHAR(100) UNIQUE NOT NULL,
       password   TEXT NOT NULL,
       name       VARCHAR(200) NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS users (
-      id             INT AUTO_INCREMENT PRIMARY KEY,
+      id             SERIAL PRIMARY KEY,
       first_name     VARCHAR(100) NOT NULL,
       last_name      VARCHAR(100) NOT NULL,
       email          VARCHAR(200) UNIQUE NOT NULL,
@@ -32,12 +58,12 @@ async function createTables() {
       password       TEXT NOT NULL,
       plan           VARCHAR(100),
       payment_status VARCHAR(50) DEFAULT 'unpaid',
-      approved       TINYINT DEFAULT 0,
-      approved_at    DATETIME,
-      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+      approved       SMALLINT DEFAULT 0,
+      approved_at    TIMESTAMP,
+      created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS payments (
-      id               INT AUTO_INCREMENT PRIMARY KEY,
+      id               SERIAL PRIMARY KEY,
       user_id          INT NOT NULL,
       plan             VARCHAR(100),
       amount           VARCHAR(100),
@@ -46,12 +72,12 @@ async function createTables() {
       status           VARCHAR(50) DEFAULT 'pending',
       admin_note       TEXT,
       reviewed_by      INT,
-      reviewed_at      DATETIME,
-      created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+      reviewed_at      TIMESTAMP,
+      created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS contacts (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       name       VARCHAR(200) NOT NULL,
       email      VARCHAR(200) NOT NULL,
       phone      VARCHAR(50),
@@ -60,10 +86,10 @@ async function createTables() {
       message    TEXT,
       status     VARCHAR(50) DEFAULT 'new',
       notes      TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS leads (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       name       VARCHAR(200) NOT NULL,
       email      VARCHAR(200) NOT NULL,
       phone      VARCHAR(50),
@@ -72,36 +98,36 @@ async function createTables() {
       status     VARCHAR(50) DEFAULT 'prospect',
       value      FLOAT DEFAULT 0,
       notes      TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS blog_posts (
-      id          INT AUTO_INCREMENT PRIMARY KEY,
+      id          SERIAL PRIMARY KEY,
       title       VARCHAR(500) NOT NULL,
       slug        VARCHAR(600) UNIQUE NOT NULL,
       excerpt     TEXT,
-      content     LONGTEXT,
+      content     TEXT,
       category    VARCHAR(100),
       cover_image VARCHAR(500),
       status      VARCHAR(50) DEFAULT 'draft',
       author      VARCHAR(200) DEFAULT 'SeedsAds Team',
       author_id   INT,
       author_type VARCHAR(50) DEFAULT 'admin',
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS settings (
-      \`key\`   VARCHAR(100) PRIMARY KEY,
-      value    TEXT
+      key   VARCHAR(100) PRIMARY KEY,
+      value TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS page_views (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       path       VARCHAR(300) NOT NULL,
       referrer   VARCHAR(300),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS dmi_content (
-      id           INT AUTO_INCREMENT PRIMARY KEY,
+      id           SERIAL PRIMARY KEY,
       title        VARCHAR(500) NOT NULL,
       description  TEXT,
       type         VARCHAR(50) NOT NULL DEFAULT 'pdf',
@@ -111,33 +137,33 @@ async function createTables() {
       plan_access  VARCHAR(100) NOT NULL DEFAULT 'all',
       category     VARCHAR(100),
       sort_order   INT DEFAULT 0,
-      published    TINYINT DEFAULT 1,
-      created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      published    SMALLINT DEFAULT 1,
+      created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS login_attempts (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       identifier VARCHAR(200) NOT NULL,
       ip         VARCHAR(100),
-      attempt_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS password_reset_tokens (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       user_id    INT NOT NULL,
       token      VARCHAR(200) NOT NULL UNIQUE,
-      expires_at DATETIME NOT NULL,
-      used       TINYINT DEFAULT 0,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMP NOT NULL,
+      used       SMALLINT DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS pricing_plans (
-      id            INT AUTO_INCREMENT PRIMARY KEY,
+      id            SERIAL PRIMARY KEY,
       name          VARCHAR(100) NOT NULL,
       price         VARCHAR(50),
       billing       VARCHAR(50),
       description   TEXT,
       features      TEXT,
-      is_popular    TINYINT DEFAULT 0,
+      is_popular    SMALLINT DEFAULT 0,
       badge_text    VARCHAR(100),
       badge_color   VARCHAR(200),
       button_text   VARCHAR(50) DEFAULT 'Get Started',
@@ -145,39 +171,41 @@ async function createTables() {
       button_color  VARCHAR(200),
       register_plan VARCHAR(100),
       sort_order    INT DEFAULT 0,
-      published     TINYINT DEFAULT 1,
-      created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      published     SMALLINT DEFAULT 1,
+      created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS faqs (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       question   TEXT NOT NULL,
       answer     TEXT NOT NULL,
       category   VARCHAR(100),
       sort_order INT DEFAULT 0,
-      published  TINYINT DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      published  SMALLINT DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS team_members (
-      id               INT AUTO_INCREMENT PRIMARY KEY,
-      name             VARCHAR(200) NOT NULL,
-      role             VARCHAR(200),
-      bio              TEXT,
-      team_type        VARCHAR(50) DEFAULT 'leadership',
-      linkedin_url     VARCHAR(500),
-      twitter_url      VARCHAR(500),
+      id                SERIAL PRIMARY KEY,
+      name              VARCHAR(200) NOT NULL,
+      role              VARCHAR(200),
+      bio               TEXT,
+      photo_url         VARCHAR(500),
+      team_type         VARCHAR(50) DEFAULT 'leadership',
+      linkedin_url      VARCHAR(500),
+      twitter_url       VARCHAR(500),
       other_social_icon VARCHAR(100),
       other_social_url  VARCHAR(500),
-      sort_order       INT DEFAULT 0,
-      published        TINYINT DEFAULT 1,
-      created_at       DATETIME DEFAULT CURRENT_TIMESTAMP
+      sort_order        INT DEFAULT 0,
+      published         SMALLINT DEFAULT 1,
+      created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS portfolio_items (
-      id          INT AUTO_INCREMENT PRIMARY KEY,
+      id          SERIAL PRIMARY KEY,
       title       VARCHAR(200) NOT NULL,
       category    VARCHAR(100),
       description TEXT,
       icon        VARCHAR(100),
+      image_url   VARCHAR(500),
       stat1_value VARCHAR(50),
       stat1_label VARCHAR(100),
       stat2_value VARCHAR(50),
@@ -185,15 +213,16 @@ async function createTables() {
       stat3_value VARCHAR(50),
       stat3_label VARCHAR(100),
       sort_order  INT DEFAULT 0,
-      published   TINYINT DEFAULT 1,
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+      published   SMALLINT DEFAULT 1,
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS case_studies (
-      id          INT AUTO_INCREMENT PRIMARY KEY,
+      id          SERIAL PRIMARY KEY,
       title       VARCHAR(200) NOT NULL,
       category    VARCHAR(100),
       description TEXT,
       icon        VARCHAR(100),
+      image_url   VARCHAR(500),
       stat1_value VARCHAR(50),
       stat1_label VARCHAR(100),
       stat2_value VARCHAR(50),
@@ -201,11 +230,11 @@ async function createTables() {
       stat3_value VARCHAR(50),
       stat3_label VARCHAR(100),
       sort_order  INT DEFAULT 0,
-      published   TINYINT DEFAULT 1,
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+      published   SMALLINT DEFAULT 1,
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS courses (
-      id             INT AUTO_INCREMENT PRIMARY KEY,
+      id             SERIAL PRIMARY KEY,
       title          VARCHAR(200) NOT NULL,
       description    TEXT,
       level          VARCHAR(50),
@@ -215,31 +244,48 @@ async function createTables() {
       gradient       VARCHAR(200),
       level_color    VARCHAR(50),
       sort_order     INT DEFAULT 0,
-      published      TINYINT DEFAULT 1,
-      created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
+      published      SMALLINT DEFAULT 1,
+      created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS page_content (
-      id         INT AUTO_INCREMENT PRIMARY KEY,
+      id         SERIAL PRIMARY KEY,
       page       VARCHAR(100) NOT NULL,
       section    VARCHAR(100) NOT NULL,
-      content    LONGTEXT,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY page_section (page, section)
+      content    TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (page, section)
     )`,
   ];
-  for (const sql of stmts) await pool.query(sql);
+  for (const sql of stmts) await pgPool.query(sql);
 }
 
 // ── Column migrations (add new columns to existing tables safely) ─────────────
+// PostgreSQL 9.6+ supports ADD COLUMN IF NOT EXISTS (Neon uses pg 15+)
 async function migrateColumns() {
   const migrations = [
-    { table: 'team_members',   column: 'photo_url',  sql: "ALTER TABLE team_members ADD COLUMN photo_url VARCHAR(500) AFTER bio" },
-    { table: 'portfolio_items', column: 'image_url', sql: "ALTER TABLE portfolio_items ADD COLUMN image_url VARCHAR(500) AFTER icon" },
-    { table: 'case_studies',   column: 'image_url',  sql: "ALTER TABLE case_studies ADD COLUMN image_url VARCHAR(500) AFTER icon" },
+    "ALTER TABLE team_members    ADD COLUMN IF NOT EXISTS photo_url  VARCHAR(500)",
+    "ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS image_url  VARCHAR(500)",
+    "ALTER TABLE case_studies    ADD COLUMN IF NOT EXISTS image_url  VARCHAR(500)",
   ];
-  for (const m of migrations) {
-    try { await pool.query(m.sql); }
-    catch (e) { if (!e.message.includes('Duplicate column name')) throw e; }
+  for (const sql of migrations) {
+    try { await pgPool.query(sql); }
+    catch (e) { console.warn('[migrateColumns]', e.message); }
+  }
+}
+
+// ── Reset SERIAL sequences after explicit-ID seeding ─────────────────────────
+// When we INSERT with explicit IDs the pg sequence doesn't advance.
+// Call this after seeding so auto-generated IDs start after the seeded rows.
+async function resetSequences() {
+  const tables = ['pricing_plans', 'faqs', 'team_members', 'portfolio_items', 'case_studies', 'courses'];
+  for (const t of tables) {
+    try {
+      await pgPool.query(
+        `SELECT setval(pg_get_serial_sequence('${t}', 'id'), COALESCE((SELECT MAX(id) FROM ${t}), 0))`
+      );
+    } catch (e) {
+      console.warn(`[resetSequences] ${t}: ${e.message}`);
+    }
   }
 }
 
@@ -274,7 +320,7 @@ async function seedSettings() {
   ];
   for (const [k, v] of defaults) {
     await pool.query(
-      'INSERT IGNORE INTO settings (`key`, value) VALUES (?, ?)',
+      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO NOTHING',
       [k, v]
     );
   }
@@ -298,8 +344,8 @@ async function seedCms() {
   ];
   for (const r of plans) {
     await pool.query(
-      `INSERT IGNORE INTO pricing_plans (id,name,price,billing,description,features,is_popular,badge_text,badge_color,button_text,button_style,button_color,register_plan,sort_order)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, r
+      `INSERT INTO pricing_plans (id,name,price,billing,description,features,is_popular,badge_text,badge_color,button_text,button_style,button_color,register_plan,sort_order)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
     );
   }
 
@@ -314,7 +360,9 @@ async function seedCms() {
     [7,'What makes SeedsAds different from other agencies?','We combine data-driven strategies with creative excellence. Our team stays ahead of industry trends, we provide transparent reporting, and we focus on measurable ROI.','Working With Us',2],
   ];
   for (const r of faqs) {
-    await pool.query('INSERT IGNORE INTO faqs (id,question,answer,category,sort_order) VALUES (?,?,?,?,?)', r);
+    await pool.query(
+      'INSERT INTO faqs (id,question,answer,category,sort_order) VALUES (?,?,?,?,?) ON CONFLICT (id) DO NOTHING', r
+    );
   }
 
   // ── Team Members ─────────────────────────────────────────────────────────
@@ -330,8 +378,8 @@ async function seedCms() {
   ];
   for (const r of team) {
     await pool.query(
-      `INSERT IGNORE INTO team_members (id,name,role,bio,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`, r
+      `INSERT INTO team_members (id,name,role,bio,team_type,linkedin_url,twitter_url,other_social_icon,other_social_url,sort_order)
+       VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
     );
   }
 
@@ -346,8 +394,8 @@ async function seedCms() {
   ];
   for (const r of portfolio) {
     await pool.query(
-      `INSERT IGNORE INTO portfolio_items (id,title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, r
+      `INSERT INTO portfolio_items (id,title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
     );
   }
 
@@ -362,8 +410,8 @@ async function seedCms() {
   ];
   for (const r of cases) {
     await pool.query(
-      `INSERT IGNORE INTO case_studies (id,title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`, r
+      `INSERT INTO case_studies (id,title,category,description,icon,stat1_value,stat1_label,stat2_value,stat2_label,stat3_value,stat3_label,sort_order)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
     );
   }
 
@@ -378,8 +426,8 @@ async function seedCms() {
   ];
   for (const r of courses) {
     await pool.query(
-      `INSERT IGNORE INTO courses (id,title,description,level,duration_hours,students,icon,gradient,level_color,sort_order)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`, r
+      `INSERT INTO courses (id,title,description,level,duration_hours,students,icon,gradient,level_color,sort_order)
+       VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
     );
   }
 }
@@ -387,7 +435,7 @@ async function seedCms() {
 async function seedPageContent() {
   const upsert = async (page, section, content) => {
     await pool.query(
-      'INSERT INTO page_content (page, section, content) VALUES (?,?,?) ON DUPLICATE KEY UPDATE content = content',
+      'INSERT INTO page_content (page, section, content) VALUES (?,?,?) ON CONFLICT (page, section) DO NOTHING',
       [page, section, JSON.stringify(content)]
     );
   };
@@ -678,6 +726,7 @@ async function init() {
   await seedSettings();
   await seedCms();
   await seedPageContent();
+  await resetSequences();
 }
 
 module.exports = { pool, init };
