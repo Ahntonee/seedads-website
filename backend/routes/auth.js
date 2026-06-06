@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
 
     clearAttempts(identifier);
     const token = jwt.sign(
-      { id: admin.id, username: admin.username, name: admin.name },
+      { id: admin.id, username: admin.username, name: admin.name, role: 'admin' },
       SECRET,
       { expiresIn: '24h' }
     );
@@ -77,13 +77,20 @@ router.post('/change-password', requireAuth, async (req, res) => {
 });
 
 // ── requireAuth middleware (admin JWT) ────────────────────────────────────────
+// SECURITY: admin and user tokens are signed with the same JWT_SECRET, so we MUST
+// confirm the token's role is 'admin'. Without this check a regular user's token
+// would pass signature verification and gain admin access (privilege escalation).
 function requireAuth(req, res, next) {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized — admin token required' });
   }
   try {
-    req.admin = jwt.verify(auth.slice(7), SECRET);
+    const payload = jwt.verify(auth.slice(7), SECRET);
+    if (payload.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden — admin privileges required' });
+    }
+    req.admin = payload;
     next();
   } catch {
     res.status(401).json({ error: 'Invalid or expired admin token' });

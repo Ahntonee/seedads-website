@@ -1,7 +1,7 @@
 require('dotenv').config();
 'use strict';
 
-// ── Validate critical env vars before anything else ──────────────────────────
+//  Validate critical env vars before anything else 
 if (!process.env.JWT_SECRET) {
   console.error('[FATAL] JWT_SECRET is not set in .env — refusing to start.');
   console.error('        Copy backend/.env.example to backend/.env and fill in your values.');
@@ -35,12 +35,19 @@ const paymentsRouter            = require('./routes/payments');
 const settingsRouter            = require('./routes/settings');
 const dmiRouter                 = require('./routes/dmi');
 const cmsRouter                 = require('./routes/cms');
+const shopRouter                = require('./routes/shop');
 
 const app    = express();
 const PORT   = process.env.PORT   || 3002;
 const SECRET = process.env.JWT_SECRET;
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-// ── CORS ─────────────────────────────────────────────────────────────────────
+// Behind a reverse proxy (Render, Heroku, Nginx) Express must trust the proxy
+// so req.ip, rate limiting, and login lockout key on the REAL client IP — not
+// the proxy's. Without this, express-rate-limit can also error on X-Forwarded-For.
+app.set('trust proxy', 1);
+
+// CORS
 // Frontend and backend run on the same origin, so CORS is mainly for
 // dev environments. Lock it down to the production domain in production.
 const SITE_URL = (process.env.SITE_URL || '').replace(/\/$/, '');
@@ -49,10 +56,13 @@ const allowedOrigins = [
   `http://127.0.0.1:${PORT}`,
   ...(SITE_URL ? [SITE_URL] : []),
 ];
+if (IS_PROD && !SITE_URL) {
+  console.warn('[WARN] NODE_ENV=production but SITE_URL is not set. Cross-origin requests will be rejected; set SITE_URL to your public domain.');
+}
 
-// ── Security headers (helmet) ─────────────────────────────────────────────────
+// Security headers (helmet) 
 app.use(helmet({
-  // Allow inline scripts/styles the site already uses (Font Awesome CDN, Google Fonts, GSI)
+  // Allowed inline scripts/styles because the site already uses (Font Awesome CDN, Google Fonts, GSI)
   contentSecurityPolicy: false,   // Too strict without fine-tuning; client can enable later
   crossOriginEmbedderPolicy: false,
 }));
@@ -62,17 +72,23 @@ app.use(cors({
     // Allow same-origin requests (no Origin header) and localhost in dev
     if (!origin) return cb(null, true);
     if (allowedOrigins.some(o => origin === o || origin.startsWith(o))) return cb(null, true);
-    // In development (no SITE_URL set), allow all origins
-    if (!SITE_URL) return cb(null, true);
+    // In development (no SITE_URL set) allow all origins for convenience.
+    // In production we FAIL CLOSED: cross-origin requests are rejected so a
+    // forgotten SITE_URL can never silently open CORS to the whole internet.
+    if (!SITE_URL && !IS_PROD) return cb(null, true);
     cb(Object.assign(new Error('CORS: origin not allowed — ' + origin), { status: 403 }));
   },
   credentials: true,
 }));
 
+// Payment webhooks must read the RAW body to verify the gateway's signature,
+// so capture it as a Buffer BEFORE the JSON parser consumes it.
+app.use('/api/shop/webhook', express.raw({ type: '*/*', limit: '1mb' }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
-// ── Rate limiting ─────────────────────────────────────────────────────────────
+// Rate limiting 
 // General API limit (generous for normal usage)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -80,7 +96,9 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again in 15 minutes.' },
-  skip: (req) => req.path === '/api/health',
+  // Never rate-limit health checks or payment webhooks (dropping a webhook
+  // would leave a paid order stuck as 'pending').
+  skip: (req) => req.path === '/api/health' || req.path.startsWith('/api/shop/webhook'),
 });
 
 // Auth endpoints — tight limit to prevent brute-force
@@ -101,6 +119,15 @@ const formLimiter = rateLimit({
   message: { error: 'Too many form submissions. Please try again in an hour.' },
 });
 
+// Shop checkout — prevent order-table spam (each call creates a pending order)
+const checkoutLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,  // 15 minutes
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many checkout attempts. Please try again shortly.' },
+});
+
 app.use('/api/', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/users/login', authLimiter);
@@ -109,8 +136,9 @@ app.use('/api/users/forgot-password', authLimiter);
 app.use('/api/users/reset-password', authLimiter);
 app.use('/api/contacts', formLimiter);
 app.use('/api/leads', formLimiter);
+app.use('/api/shop/checkout', checkoutLimiter);
 
-// ── Protected DMI file serving ────────────────────────────────────────────────
+//  Protected DMI file serving 
 // DMI files are paid content — block direct unauthenticated access.
 // Frontend must use /api/dmi/download/:filename (which validates auth + plan).
 app.use('/uploads/dmi', (req, res) => {
@@ -120,10 +148,10 @@ app.use('/uploads/dmi', (req, res) => {
 // Receipts are served statically (randomized timestamps in filenames, admin only views them)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ── Serve the website ─────────────────────────────────────────────────────────
+// ── Serve the website 
 app.use(express.static(path.join(__dirname, '..')));
 
-// ── API Routes ────────────────────────────────────────────────────────────────
+// ── API Routes
 app.use('/api/auth',     authRouter);
 app.use('/api/contacts', contactsRouter);
 app.use('/api/leads',    leadsRouter);
@@ -134,10 +162,11 @@ app.use('/api/payments', paymentsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/dmi',      dmiRouter);
 app.use('/api/cms',      cmsRouter);
+app.use('/api/shop',     shopRouter);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-// ── 404 handler ───────────────────────────────────────────────────────────────
+//  404 handler 
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Endpoint not found' });
@@ -147,7 +176,7 @@ app.use((req, res) => {
   res.status(404).send('<h1>404 &mdash; Page Not Found</h1>');
 });
 
-// ── Global error handler ──────────────────────────────────────────────────────
+//  Global error handler 
 // Must have 4 params so Express recognises it as an error handler
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
@@ -176,7 +205,7 @@ app.use((err, req, res, next) => {
   res.status(500).send('<h1>500 &mdash; Server Error</h1><p>Something went wrong. Please try again.</p>');
 });
 
-// ── Start server ──────────────────────────────────────────────────────────────
+// ── Start server 
 db.init()
   .then(() => {
     app.listen(PORT, () => {

@@ -1,14 +1,25 @@
 'use strict';
-const { Pool }  = require('pg');
 const bcrypt    = require('bcryptjs');
 
 // ── PostgreSQL connection pool ─────────────────────────────────────────────────
-const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost/seedsads',
-  ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')
-    ? { rejectUnauthorized: false }
-    : false,
-});
+// USE_PG_MEM=1 boots an in-memory PostgreSQL (for local previews — data is NOT saved).
+// Otherwise connect to the real DATABASE_URL (Neon, etc.).
+let pgPool;
+if (process.env.USE_PG_MEM === '1') {
+  const { newDb } = require('pg-mem');
+  const mem = newDb();
+  const adapter = mem.adapters.createPg();
+  pgPool = new adapter.Pool();
+  console.log('  [pg-mem] In-memory PostgreSQL active (preview mode — data is not persisted)');
+} else {
+  const { Pool } = require('pg');
+  pgPool = new Pool({
+    connectionString: process.env.DATABASE_URL || 'postgresql://localhost/seedsads',
+    ssl: process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost')
+      ? { rejectUnauthorized: false }
+      : false,
+  });
+}
 
 // ── mysql2-compatible shim ─────────────────────────────────────────────────────
 // Converts ? placeholders → $1,$2,… and normalises the return format to match
@@ -21,9 +32,12 @@ const pool = {
 
     const isInsert = /^\s*INSERT\b/i.test(pgSql);
 
-    // Inject RETURNING id for INSERT statements so we get insertId back.
-    // ON CONFLICT DO NOTHING returns an empty rows array — that's fine, we use ?. nullish.
-    if (isInsert && !/\bRETURNING\b/i.test(pgSql)) {
+    // Inject RETURNING id so we get insertId back — but ONLY for plain INSERTs.
+    // Skip when:
+    //   • there's an ON CONFLICT clause (seed/upsert queries never read insertId, and
+    //     tables like `settings` have no `id` column → RETURNING id would error)
+    //   • a RETURNING clause is already present
+    if (isInsert && !/ON\s+CONFLICT/i.test(pgSql) && !/\bRETURNING\b/i.test(pgSql)) {
       pgSql = pgSql.trimEnd().replace(/;$/, '') + ' RETURNING id';
     }
 
@@ -255,6 +269,37 @@ async function createTables() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (page, section)
     )`,
+    `CREATE TABLE IF NOT EXISTS shop_products (
+      id           SERIAL PRIMARY KEY,
+      name         VARCHAR(200) NOT NULL,
+      description  TEXT,
+      category     VARCHAR(50) DEFAULT 'new',
+      price        NUMERIC(12,2) DEFAULT 0,
+      compare_at   NUMERIC(12,2),
+      currency     VARCHAR(10) DEFAULT 'NGN',
+      images       TEXT,
+      badge        VARCHAR(50),
+      sku          VARCHAR(100),
+      in_stock     SMALLINT DEFAULT 1,
+      sort_order   INT DEFAULT 0,
+      published    SMALLINT DEFAULT 1,
+      created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS shop_orders (
+      id             SERIAL PRIMARY KEY,
+      reference      VARCHAR(120) UNIQUE NOT NULL,
+      customer_name  VARCHAR(200),
+      customer_email VARCHAR(200),
+      customer_phone VARCHAR(50),
+      items           TEXT,
+      amount          NUMERIC(12,2) DEFAULT 0,
+      currency        VARCHAR(10) DEFAULT 'NGN',
+      gateway         VARCHAR(20),
+      gateway_session VARCHAR(200),
+      status          VARCHAR(20) DEFAULT 'pending',
+      paid_at         TIMESTAMP,
+      created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
   ];
   for (const sql of stmts) await pgPool.query(sql);
 }
@@ -266,6 +311,8 @@ async function migrateColumns() {
     "ALTER TABLE team_members    ADD COLUMN IF NOT EXISTS photo_url  VARCHAR(500)",
     "ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS image_url  VARCHAR(500)",
     "ALTER TABLE case_studies    ADD COLUMN IF NOT EXISTS image_url  VARCHAR(500)",
+    "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS gateway_session VARCHAR(200)",
+    "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS paid_at         TIMESTAMP",
   ];
   for (const sql of migrations) {
     try { await pgPool.query(sql); }
@@ -428,6 +475,30 @@ async function seedCms() {
     await pool.query(
       `INSERT INTO courses (id,title,description,level,duration_hours,students,icon,gradient,level_color,sort_order)
        VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT (id) DO NOTHING`, r
+    );
+  }
+}
+
+async function seedShop() {
+  // Only seed when the table is empty (avoids duplicates and explicit-id sequence issues)
+  const [rows] = await pool.query('SELECT COUNT(*) AS c FROM shop_products');
+  if (parseInt(rows[0].c) > 0) return;
+
+  const img = (seed) => `https://picsum.photos/seed/${seed}/800/800`;
+  const products = [
+    // name, description, category, price, compare_at, images[], badge, in_stock, sort
+    ['Pro Marketing Toolkit', 'A complete toolkit of templates, swipe files, and ad creatives to launch high-converting campaigns in minutes.', 'featured', 45000, 60000, [img('toolkit1'), img('toolkit2'), img('toolkit3'), img('toolkit4')], 'Best Value', 1, 1],
+    ['Social Media Growth Pack', 'Done-for-you content calendar, 100+ post templates, and hashtag research across all major platforms.', 'trending', 30000, 40000, [img('social1'), img('social2'), img('social3')], null, 1, 2],
+    ['SEO Mastery Course', 'Step-by-step video course on ranking #1 on Google, with downloadable checklists and audit templates.', 'best_seller', 55000, 75000, [img('seo1'), img('seo2'), img('seo3')], 'Top Rated', 1, 3],
+    ['Brand Identity Kit', 'Logo templates, color palette guides, and brand style sheets to build a memorable brand in a weekend.', 'new', 25000, null, [img('brand1'), img('brand2'), img('brand3')], 'New', 1, 4],
+    ['Email Funnel Blueprint', 'Plug-and-play email sequences proven to nurture leads and drive sales on autopilot.', 'hot', 35000, 50000, [img('email1'), img('email2'), img('email3')], 'Hot', 1, 5],
+    ['Paid Ads Launch Bundle', 'Everything you need to launch profitable Meta and Google ads: targeting guides, creatives, and scaling playbooks.', 'featured', 65000, 90000, [img('ads1'), img('ads2'), img('ads3'), img('ads4')], 'Bundle', 1, 6],
+  ];
+  for (const [name, description, category, price, compare_at, images, badge, in_stock, sort_order] of products) {
+    await pool.query(
+      `INSERT INTO shop_products (name, description, category, price, compare_at, currency, images, badge, in_stock, sort_order, published)
+       VALUES (?,?,?,?,?,?,?,?,?,?,1)`,
+      [name, description, category, price, compare_at, 'NGN', JSON.stringify(images), badge, in_stock, sort_order]
     );
   }
 }
@@ -725,6 +796,7 @@ async function init() {
   await seedAdmin();
   await seedSettings();
   await seedCms();
+  await seedShop();
   await seedPageContent();
   await resetSequences();
 }

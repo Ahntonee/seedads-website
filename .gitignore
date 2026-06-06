@@ -10,3 +10,7 @@ backend/uploads/*
 .DS_Store
 Thumbs.db
 *.log
+
+# Claude Code — never commit
+.claude/
+backend/static-preview.js

@@ -191,6 +191,15 @@
     .iuw-info{flex:1;min-width:0;}
     .iuw-url{font-size:.72rem;color:var(--text-gray);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:.4rem;}
     .iuw-btns{display:flex;gap:.35rem;flex-wrap:wrap;}
+    /* ── Shop multi-image manager ──────────────────────────── */
+    .shop-img-manager{display:flex;flex-wrap:wrap;gap:.6rem;padding:.75rem;border:1.5px solid rgba(0,102,255,0.15);border-radius:10px;background:var(--soft-white);min-height:90px;}
+    .shop-img-manager:empty::before{content:'No images yet. Add at least 3 images below.';color:var(--text-gray);font-size:.8rem;align-self:center;}
+    .shop-img-item{position:relative;width:84px;height:84px;border-radius:9px;overflow:hidden;border:1px solid rgba(0,102,255,0.12);background:#e2e8f0;flex-shrink:0;}
+    .shop-img-item img{width:100%;height:100%;object-fit:cover;}
+    .shop-img-item .sii-remove{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;border:none;background:rgba(239,68,68,0.92);color:white;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;}
+    .shop-img-item .sii-cover{position:absolute;bottom:0;left:0;right:0;background:var(--primary-blue);color:white;font-size:.6rem;font-weight:700;text-align:center;padding:1px 0;letter-spacing:.3px;}
+    .shop-img-item .sii-order{position:absolute;top:3px;left:3px;display:flex;gap:2px;}
+    .shop-img-item .sii-order button{width:18px;height:18px;border:none;border-radius:4px;background:rgba(10,37,64,0.75);color:white;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;padding:0;}
     /* ── Smart Page Content editor ─────────────────────────── */
     .smart-field{margin-bottom:.85rem;}
     .smart-field>label{display:block;font-size:.8rem;font-weight:600;color:var(--primary-dark);margin-bottom:.3rem;text-transform:capitalize;}
@@ -245,6 +254,8 @@
     <div class="nav-item" onclick="showPage('courses')"><i class="fas fa-book-open"></i> Courses</div>
     <div class="nav-item" onclick="showPage('pagecontent')"><i class="fas fa-file-edit"></i> Page Content</div>
     <div class="nav-item" onclick="showPage('media')"><i class="fas fa-images"></i> Media Library</div>
+    <div class="nav-item" onclick="showPage('shop')"><i class="fas fa-bag-shopping"></i> Shop Products</div>
+    <div class="nav-item" onclick="showPage('shoporders')"><i class="fas fa-box"></i> Shop Orders</div>
     <div class="nav-section-label">Users</div>
     <div class="nav-item" onclick="showPage('users')"><i class="fas fa-user-circle"></i> Registered Users</div>
     <div class="nav-section-label">System</div>
@@ -527,6 +538,20 @@
       </div>
       <div class="media-grid" id="mediaGrid"></div>
       <div id="mediaEmpty" class="empty-state" style="display:none;"><i class="fas fa-images"></i>No images yet. Upload some above!</div>
+    </div>
+
+    <!-- SHOP PRODUCTS -->
+    <div class="page" id="page-shop">
+      <div class="section-header"><h2>Shop Products</h2><button class="btn btn-primary" onclick="openShopModal()"><i class="fas fa-plus"></i> Add Product</button></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Sort</th><th>Actions</th></tr></thead><tbody id="shopBody"></tbody></table></div>
+      <div id="shopEmpty" class="empty-state" style="display:none"><i class="fas fa-bag-shopping"></i>No products yet. Add your first product!</div>
+    </div>
+
+    <!-- SHOP ORDERS -->
+    <div class="page" id="page-shoporders">
+      <div class="section-header"><h2>Shop Orders</h2></div>
+      <div style="overflow-x:auto;"><table><thead><tr><th>Reference</th><th>Customer</th><th>Items</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Date</th></tr></thead><tbody id="shopOrdersBody"></tbody></table></div>
+      <div id="shopOrdersEmpty" class="empty-state" style="display:none"><i class="fas fa-box"></i>No orders yet.</div>
     </div>
 
   </div>
@@ -968,6 +993,59 @@
   </div>
 </div>
 
+<!-- SHOP PRODUCT MODAL -->
+<div class="modal-overlay" id="shopModal">
+  <div class="modal" style="max-width:680px;">
+    <div class="modal-header"><h3 id="shopModalTitle">Add Product</h3><button class="modal-close" onclick="closeModal('shopModal')"><i class="fas fa-times"></i></button></div>
+    <input type="hidden" id="shopId">
+    <div class="form-row">
+      <div class="form-group"><label>Product Name *</label><input type="text" id="shopName" placeholder="e.g. Pro Marketing Toolkit"></div>
+      <div class="form-group"><label>Category</label>
+        <select id="shopCategory">
+          <option value="new">New</option>
+          <option value="featured">Featured</option>
+          <option value="trending">Trending</option>
+          <option value="best_seller">Best Seller</option>
+          <option value="hot">Hot</option>
+          <option value="regular">Regular</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="shopDesc" rows="3" placeholder="Brief product description"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Price *</label><input type="number" id="shopPrice" placeholder="45000" min="0" step="0.01"></div>
+      <div class="form-group"><label>Compare-at Price <small style="font-weight:400;color:var(--text-gray);">(optional, shows strikethrough)</small></label><input type="number" id="shopCompare" placeholder="60000" min="0" step="0.01"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Currency</label>
+        <select id="shopCurrency"><option value="NGN">NGN (₦)</option><option value="USD">USD ($)</option><option value="GBP">GBP (£)</option><option value="EUR">EUR (€)</option></select>
+      </div>
+      <div class="form-group"><label>Custom Badge <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label><input type="text" id="shopBadge" placeholder="e.g. Best Value"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>SKU <small style="font-weight:400;color:var(--text-gray);">(optional)</small></label><input type="text" id="shopSku" placeholder="e.g. TKT-001"></div>
+      <div class="form-group"><label>Sort Order</label><input type="number" id="shopSort" value="0" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>In Stock</label><select id="shopStock"><option value="1">Yes — Available</option><option value="0">No — Out of Stock</option></select></div>
+      <div class="form-group"><label>Published</label><select id="shopPublished"><option value="1">Yes — Visible on shop</option><option value="0">No — Hidden</option></select></div>
+    </div>
+    <div class="form-group">
+      <label>Product Images <small style="font-weight:400;color:var(--text-gray);">(add at least 3 — first image is the cover)</small></label>
+      <div class="shop-img-manager" id="shopImgManager"></div>
+      <div style="display:flex;gap:.5rem;margin-top:.6rem;">
+        <button type="button" class="btn btn-sm btn-outline" onclick="shopAddImageUpload()"><i class="fas fa-upload"></i> Upload Image</button>
+        <button type="button" class="btn btn-sm btn-outline" onclick="shopAddImageBrowse()"><i class="fas fa-images"></i> Browse Library</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('shopModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveShop()"><i class="fas fa-save"></i> Save Product</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="shopImgInput" accept="image/*" style="display:none" onchange="shopHandleUpload(this)">
+
 <div class="toast-wrap" id="toastWrap"></div>
 
 <script>
@@ -977,6 +1055,14 @@
     if (lbl) lbl.textContent = API;
   });
   const UPLOADS = window.location.origin + '/uploads/';
+  // receipt_path may be a full Cloudinary URL (prod), a /uploads/... path (dev),
+  // or a legacy bare filename. Resolve all three to a usable URL.
+  function receiptUrl(rp) {
+    if (!rp) return '';
+    if (/^https?:\/\//i.test(rp)) return rp;
+    if (rp.charAt(0) === '/') return window.location.origin + rp;
+    return UPLOADS + rp;
+  }
   let token = localStorage.getItem('seedads_token');
   let currentContactId = null, currentLeadId = null, currentPostId = null, currentPayId = null;
 
@@ -1012,7 +1098,7 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
-    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content', media:'Media Library' };
+    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content', media:'Media Library', shop:'Shop Products', shoporders:'Shop Orders' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     if (page === 'overview') loadOverview();
     if (page === 'payments') loadPayments();
@@ -1030,6 +1116,8 @@
     if (page === 'courses') loadCmsCourses();
     if (page === 'pagecontent') loadPageContentSections();
     if (page === 'media') loadMedia();
+    if (page === 'shop') loadShop();
+    if (page === 'shoporders') loadShopOrders();
     if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
   }
 
@@ -1637,6 +1725,12 @@
       closeModal('mediaPickerModal');
       insertImgAtCursor(url);
       toast('Image inserted!', 'success');
+    } else if (_pickerTarget && _pickerTarget.shopMode) {
+      // Add to the shop product's image list
+      _shopImages.push(url);
+      renderShopImages();
+      closeModal('mediaPickerModal');
+      toast('Image added!', 'success');
     } else if (_pickerTarget) {
       setImgField(_pickerTarget.fieldId, _pickerTarget.previewId, _pickerTarget.urlId, url);
       closeModal('mediaPickerModal');
@@ -1654,6 +1748,162 @@
     } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
   }
   function badgeHtml(s) { return `<span class="badge badge-${s}">${s}</span>`; }
+
+  // ── SHOP PRODUCTS ─────────────────────────────────────────────────────────────
+  const SHOP_CAT_LABELS = { new:'New', featured:'Featured', trending:'Trending', best_seller:'Best Seller', hot:'Hot', regular:'Regular' };
+  const SHOP_CUR_SYM = { NGN:'₦', USD:'$', GBP:'£', EUR:'€' };
+  let _shopImages = [];   // working array of image URLs for the open modal
+
+  function shopMoney(v, cur) { return (SHOP_CUR_SYM[cur] || '₦') + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+
+  async function loadShop() {
+    const data = await api('GET', '/shop/products');
+    if (!data) return;
+    const tbody = document.getElementById('shopBody');
+    const empty = document.getElementById('shopEmpty');
+    if (!data.products || !data.products.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = data.products.map(p => {
+      const img = (p.images && p.images.length) ? p.images[0] : '';
+      const thumb = img ? `<img src="${escHtml(img)}" style="width:46px;height:46px;border-radius:8px;object-fit:cover;">` : '<div style="width:46px;height:46px;border-radius:8px;background:var(--light-blue);display:flex;align-items:center;justify-content:center;color:var(--text-gray)"><i class="fas fa-image"></i></div>';
+      return `<tr>
+        <td>${thumb}</td>
+        <td><strong>${escHtml(p.name)}</strong>${p.images&&p.images.length?` <small style="color:var(--text-gray)">(${p.images.length} img)</small>`:''}</td>
+        <td><span class="badge">${SHOP_CAT_LABELS[p.category]||p.category}</span></td>
+        <td>${shopMoney(p.price, p.currency)}</td>
+        <td>${p.in_stock?'<span style="color:var(--success)">In stock</span>':'<span style="color:var(--danger)">Out</span>'}</td>
+        <td>${p.sort_order}</td>
+        <td><div class="table-actions">
+          <button class="btn btn-outline btn-sm" onclick='openShopModal(${JSON.stringify(p).replace(/'/g,"&#39;").replace(/"/g,"&quot;")})'><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteShop(${p.id})"><i class="fas fa-trash"></i></button>
+        </div></td></tr>`;
+    }).join('');
+  }
+
+  function openShopModal(item = null) {
+    const e = !!item;
+    document.getElementById('shopId').value       = e ? item.id : '';
+    document.getElementById('shopName').value      = e ? item.name : '';
+    document.getElementById('shopCategory').value  = e ? (item.category || 'new') : 'new';
+    document.getElementById('shopDesc').value      = e ? (item.description || '') : '';
+    document.getElementById('shopPrice').value     = e ? item.price : '';
+    document.getElementById('shopCompare').value   = e && item.compare_at != null ? item.compare_at : '';
+    document.getElementById('shopCurrency').value  = e ? (item.currency || 'NGN') : 'NGN';
+    document.getElementById('shopBadge').value     = e ? (item.badge || '') : '';
+    document.getElementById('shopSku').value       = e ? (item.sku || '') : '';
+    document.getElementById('shopSort').value      = e ? item.sort_order : 0;
+    document.getElementById('shopStock').value     = e ? (item.in_stock ? '1' : '0') : '1';
+    document.getElementById('shopPublished').value = e ? (item.published ? '1' : '0') : '1';
+    _shopImages = e && Array.isArray(item.images) ? item.images.slice() : [];
+    renderShopImages();
+    document.getElementById('shopModalTitle').textContent = e ? 'Edit Product' : 'Add Product';
+    document.getElementById('shopModal').classList.add('active');
+  }
+
+  function renderShopImages() {
+    const wrap = document.getElementById('shopImgManager');
+    wrap.innerHTML = _shopImages.map((url, i) => `
+      <div class="shop-img-item">
+        <img src="${escHtml(url)}" onerror="this.style.display='none'">
+        <div class="sii-order">
+          ${i > 0 ? `<button onclick="shopMoveImage(${i},-1)" title="Move left"><i class="fas fa-chevron-left"></i></button>` : ''}
+          ${i < _shopImages.length-1 ? `<button onclick="shopMoveImage(${i},1)" title="Move right"><i class="fas fa-chevron-right"></i></button>` : ''}
+        </div>
+        <button class="sii-remove" onclick="shopRemoveImage(${i})"><i class="fas fa-times"></i></button>
+        ${i === 0 ? '<div class="sii-cover">COVER</div>' : ''}
+      </div>`).join('');
+  }
+  function shopRemoveImage(i) { _shopImages.splice(i,1); renderShopImages(); }
+  function shopMoveImage(i, dir) {
+    const j = i + dir; if (j < 0 || j >= _shopImages.length) return;
+    [_shopImages[i], _shopImages[j]] = [_shopImages[j], _shopImages[i]];
+    renderShopImages();
+  }
+  function shopAddImageUpload() {
+    const inp = document.getElementById('shopImgInput');
+    inp.value = ''; inp.click();
+  }
+  async function shopHandleUpload(input) {
+    if (!input.files || !input.files[0]) return;
+    const fd = new FormData(); fd.append('image', input.files[0]);
+    try {
+      const res = await fetch(API + '/cms/upload', { method:'POST', headers:{Authorization:'Bearer '+token}, body:fd });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Upload failed');
+      _shopImages.push(d.url); renderShopImages();
+      toast('Image added!', 'success');
+    } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
+  }
+  function shopAddImageBrowse() {
+    // Reuse the media picker in a special "shop" mode
+    _pickerTarget = { shopMode: true };
+    const grid = document.getElementById('mpickerGrid');
+    grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;"><i class="fas fa-spinner fa-spin"></i> Loading&hellip;</p>';
+    document.getElementById('mediaPickerModal').classList.add('active');
+    api('GET', '/cms/media').then(data => {
+      if (!data || !data.files || !data.files.length) {
+        grid.innerHTML = '<p style="color:var(--text-gray);font-size:.85rem;padding:.5rem;">No images yet. Upload some first.</p>'; return;
+      }
+      grid.innerHTML = data.files.map(f => `
+        <div class="mpicker-item" onclick="pickerSelect(this,'${escHtml(f.url)}')" title="${escHtml(f.filename)}">
+          <img src="${escHtml(f.url)}" alt="" loading="lazy">
+          <div class="mpicker-check"><i class="fas fa-check"></i></div>
+        </div>`).join('');
+    });
+  }
+
+  async function saveShop() {
+    const id = document.getElementById('shopId').value;
+    const name = document.getElementById('shopName').value.trim();
+    if (!name) { toast('Product name is required', 'error'); return; }
+    if (_shopImages.length < 1) { toast('Please add at least one product image', 'error'); return; }
+    const body = {
+      name,
+      category:    document.getElementById('shopCategory').value,
+      description: document.getElementById('shopDesc').value,
+      price:       document.getElementById('shopPrice').value,
+      compare_at:  document.getElementById('shopCompare').value || null,
+      currency:    document.getElementById('shopCurrency').value,
+      badge:       document.getElementById('shopBadge').value,
+      sku:         document.getElementById('shopSku').value,
+      sort_order:  document.getElementById('shopSort').value,
+      in_stock:    document.getElementById('shopStock').value === '1',
+      published:   document.getElementById('shopPublished').value === '1',
+      images:      _shopImages,
+    };
+    const ok = id ? await api('PATCH','/shop/products/'+id, body) : await api('POST','/shop/products', body);
+    if (ok && ok.success !== false) { closeModal('shopModal'); toast(id?'Product updated.':'Product added.','success'); loadShop(); }
+    else { toast((ok && ok.error) || 'Save failed', 'error'); }
+  }
+  async function deleteShop(id) {
+    if (!confirm('Delete this product? This cannot be undone.')) return;
+    const ok = await api('DELETE','/shop/products/'+id);
+    if (ok) { toast('Product deleted.','success'); loadShop(); }
+  }
+
+  // ── SHOP ORDERS ───────────────────────────────────────────────────────────────
+  async function loadShopOrders() {
+    const data = await api('GET', '/shop/orders');
+    if (!data) return;
+    const tbody = document.getElementById('shopOrdersBody');
+    const empty = document.getElementById('shopOrdersEmpty');
+    if (!data.orders || !data.orders.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    const statusColors = { paid:'var(--success)', pending:'var(--warning)', failed:'var(--danger)' };
+    tbody.innerHTML = data.orders.map(o => {
+      const items = Array.isArray(o.items) ? o.items : [];
+      const itemSummary = items.map(it => `${escHtml(it.name)} ×${it.qty}`).join(', ');
+      const d = o.created_at ? new Date(o.created_at).toLocaleDateString() : '';
+      return `<tr>
+        <td><code style="font-size:.75rem">${escHtml(o.reference)}</code></td>
+        <td>${escHtml(o.customer_name||'—')}<br><small style="color:var(--text-gray)">${escHtml(o.customer_email||'')}</small></td>
+        <td style="max-width:220px;font-size:.8rem">${itemSummary||'—'}</td>
+        <td><strong>${shopMoney(o.amount, o.currency)}</strong></td>
+        <td>${escHtml(o.gateway||'—')}</td>
+        <td><span style="color:${statusColors[o.status]||'var(--text-gray)'};font-weight:600;text-transform:capitalize">${escHtml(o.status)}</span></td>
+        <td style="font-size:.8rem;color:var(--text-gray)">${d}</td></tr>`;
+    }).join('');
+  }
 
   // â”€â”€ OVERVIEW â”€â”€
   async function loadOverview() {
@@ -1738,7 +1988,7 @@
         <td>${p.amount ? '&#8358;'+Number(p.amount).toLocaleString() : '&mdash;'}</td>
         <td>
           ${p.receipt_path
-            ? `<a href="${UPLOADS}${p.receipt_path}" target="_blank" class="receipt-link"><i class="fas fa-file-image"></i> View Receipt</a>`
+            ? `<a href="${receiptUrl(p.receipt_path)}" target="_blank" class="receipt-link"><i class="fas fa-file-image"></i> View Receipt</a>`
             : '<span style="color:var(--text-gray);font-size:.8rem;">No file</span>'}
         </td>
         <td>${badgeHtml(p.status)}</td>
@@ -1775,8 +2025,8 @@
         </div>
         ${p.receipt_path ? `
           <div style="margin-top:.75rem;"><div style="font-size:.72rem;color:var(--text-gray);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.5rem">Receipt</div>
-          <a href="${UPLOADS}${p.receipt_path}" target="_blank">
-            <img src="${UPLOADS}${p.receipt_path}" class="receipt-modal-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+          <a href="${receiptUrl(p.receipt_path)}" target="_blank">
+            <img src="${receiptUrl(p.receipt_path)}" class="receipt-modal-img" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
             <div style="display:none;padding:.75rem;background:var(--light-blue);border-radius:8px;color:var(--primary-blue);font-size:.85rem;"><i class="fas fa-file-pdf"></i> Click to open receipt file</div>
           </a></div>` : '<div style="color:var(--text-gray);font-size:.85rem;">No receipt file uploaded.</div>'}
       </div>`;

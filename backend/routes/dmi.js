@@ -1,29 +1,21 @@
 'use strict';
 const express  = require('express');
-const multer   = require('multer');
 const path     = require('path');
 const fs       = require('fs');
 const jwt      = require('jsonwebtoken');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
 const { sanitizeText } = require('../security');
+const { makeUploader, persist, remove } = require('../storage');
 const router   = express.Router();
 const SECRET   = process.env.JWT_SECRET;
 
-// ── Upload storage ─────────────────────────────────────────────────────────
+// Local fallback dir (only used when Cloudinary is not configured)
 const dmiUploadsDir = path.join(__dirname, '../uploads/dmi');
-if (!fs.existsSync(dmiUploadsDir)) fs.mkdirSync(dmiUploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, dmiUploadsDir),
-  filename:    (req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
-    cb(null, Date.now() + '-' + safe);
-  },
-});
-
-const upload = multer({
-  storage,
+// DMI files persist to Cloudinary in production (Render disk is wiped on deploy).
+const upload = makeUploader({
+  subdir: 'dmi',
   limits: { fileSize: 500 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const allowed = [
@@ -35,6 +27,13 @@ const upload = multer({
     cb(new Error('Only PDF, video (mp4/webm/ogg/mov), and ZIP files are allowed'));
   },
 });
+
+// Cloudinary resource type: videos → 'video', archives → 'raw', PDFs → 'auto'
+function dmiResourceType(file, type) {
+  if ((file && file.mimetype && file.mimetype.startsWith('video/')) || type === 'video') return 'video';
+  if (file && /zip/i.test(file.mimetype || '')) return 'raw';
+  return 'auto';
+}
 
 // ── Plan access hierarchy ──────────────────────────────────────────────────
 const PLAN_RANK = { all: 0, Starter: 1, 'DMI Course': 2, Growth: 3, Enterprise: 4 };
@@ -56,26 +55,32 @@ router.get('/download/:filename', async (req, res) => {
     catch { return res.status(401).json({ error: 'Invalid or expired token' }); }
 
     const filename = path.basename(req.params.filename);
+    const [itemRows] = await pool.query(
+      'SELECT plan_access, file_path, file_name FROM dmi_content WHERE file_path LIKE ?',
+      ['%' + filename + '%']
+    );
+    const item = itemRows[0];
+
+    // Non-admins must be approved and on a plan that grants access
+    if (payload.role !== 'admin') {
+      if (!item) return res.status(404).json({ error: 'File not found in content library' });
+      const [userRows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [payload.id]);
+      const freshUser = userRows[0];
+      if (!freshUser || !freshUser.approved) {
+        return res.status(403).json({ error: 'Your account is not yet approved. Please wait for admin approval.' });
+      }
+      if (!canAccess(freshUser.plan, item.plan_access)) {
+        return res.status(403).json({ error: 'Your current plan does not include access to this file. Please upgrade.' });
+      }
+    }
+
+    const target = item ? item.file_path : '/uploads/dmi/' + filename;
+    // Cloudinary URL → redirect (access already gated above)
+    if (/^https?:\/\//i.test(target)) return res.redirect(target);
+    // Local disk fallback (dev)
     const filepath = path.join(dmiUploadsDir, filename);
     if (!fs.existsSync(filepath)) return res.status(404).json({ error: 'File not found' });
-
-    if (!payload.role) return res.download(filepath, filename);
-
-    const [itemRows] = await pool.query(
-      'SELECT plan_access FROM dmi_content WHERE file_path LIKE ?',
-      ['%' + filename]
-    );
-    if (!itemRows[0]) return res.status(404).json({ error: 'File not found in content library' });
-
-    const [userRows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [payload.id]);
-    const freshUser = userRows[0];
-    if (!freshUser || !freshUser.approved) {
-      return res.status(403).json({ error: 'Your account is not yet approved. Please wait for admin approval.' });
-    }
-    if (!canAccess(freshUser.plan, itemRows[0].plan_access)) {
-      return res.status(403).json({ error: 'Your current plan does not include access to this file. Please upgrade.' });
-    }
-    res.download(filepath, filename);
+    res.download(filepath, (item && item.file_name) || filename);
   } catch (err) {
     console.error('[dmi/download]', err.message);
     res.status(500).json({ error: 'Internal server error' });
@@ -134,7 +139,9 @@ router.post('/', requireAuth, upload.single('file'), async (req, res) => {
     const { title, description, type, external_url, plan_access, category, sort_order } = req.body;
     if (!title) return res.status(400).json({ error: 'Title is required' });
 
-    const file_path = req.file ? '/uploads/dmi/' + req.file.filename : null;
+    const { url: file_path } = await persist(req.file, {
+      folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(req.file, type),
+    });
     const file_name = req.file ? req.file.originalname : null;
 
     const [result] = await pool.query(
@@ -157,8 +164,17 @@ router.patch('/:id', requireAuth, upload.single('file'), async (req, res) => {
     const [existing] = await pool.query('SELECT * FROM dmi_content WHERE id = ?', [req.params.id]);
     if (!existing[0]) return res.status(404).json({ error: 'Not found' });
 
-    const file_path = req.file ? '/uploads/dmi/' + req.file.filename : existing[0].file_path;
-    const file_name = req.file ? req.file.originalname : existing[0].file_name;
+    let file_path = existing[0].file_path;
+    let file_name = existing[0].file_name;
+    if (req.file) {
+      const out = await persist(req.file, {
+        folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(req.file, type),
+      });
+      // Replace old file (best-effort) to avoid orphaned storage
+      await remove(existing[0].file_path, { resourceType: dmiResourceType(req.file, type) });
+      file_path = out.url;
+      file_name = req.file.originalname;
+    }
 
     await pool.query(
       `UPDATE dmi_content SET
@@ -192,8 +208,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT file_path FROM dmi_content WHERE id = ?', [req.params.id]);
     if (rows[0] && rows[0].file_path) {
-      const abs = path.join(__dirname, '..', rows[0].file_path);
-      if (fs.existsSync(abs)) fs.unlinkSync(abs);
+      await remove(rows[0].file_path);
     }
     await pool.query('DELETE FROM dmi_content WHERE id = ?', [req.params.id]);
     res.json({ success: true });

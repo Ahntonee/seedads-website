@@ -18,12 +18,19 @@ services:
       # ── PostgreSQL database (fill in from Neon dashboard) ──
       - key: DATABASE_URL
         sync: false
-      # ── Cloudinary image uploads (fill in from cloudinary.com dashboard) ──
+      # ── Cloudinary — REQUIRED in prod (images, receipts, DMI files) ──
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
         sync: false
       - key: CLOUDINARY_API_SECRET
+        sync: false
+      # ── Payment gateways (Shop) ──
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
         sync: false
       # ── Optional ──
       - key: ADMIN_PASSWORD

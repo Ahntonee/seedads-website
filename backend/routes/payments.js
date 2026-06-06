@@ -1,26 +1,18 @@
 'use strict';
 const express  = require('express');
-const multer   = require('multer');
 const path     = require('path');
-const fs       = require('fs');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
 const { requireUser } = require('./users');
+const { makeUploader, persist } = require('../storage');
 const mailer   = require('../mailer');
 const router   = express.Router();
 
-const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (_, __, cb) => cb(null, uploadDir),
-  filename:    (_, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `receipt_${Date.now()}${ext}`);
-  },
-});
-const upload = multer({
-  storage,
+// Receipts persist to Cloudinary in production (Render's disk is wiped on deploy)
+// and to backend/uploads/receipts locally in dev. Random filenames prevent
+// receipts from being guessed/enumerated.
+const upload = makeUploader({
+  subdir: 'receipts',
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_, file, cb) => {
     const allowed = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'];
@@ -35,16 +27,19 @@ router.post('/upload', requireUser, upload.single('receipt'), async (req, res) =
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const { plan, amount } = req.body;
 
+    // receipt_path = Cloudinary URL (prod) or /uploads/receipts/<file> (dev)
+    const { url: receiptPath } = await persist(req.file, { folder: 'seedsads/receipts', subdir: 'receipts' });
+
     const [result] = await pool.query(
       'INSERT INTO payments (user_id, plan, amount, receipt_path, receipt_filename, status) VALUES (?,?,?,?,?,?)',
-      [req.user.id, plan || null, amount || null, req.file.filename, req.file.originalname, 'pending']
+      [req.user.id, plan || null, amount || null, receiptPath, req.file.originalname, 'pending']
     );
     await pool.query("UPDATE users SET payment_status = 'pending' WHERE id = ?", [req.user.id]);
 
     const [uRows] = await pool.query('SELECT first_name, last_name, email FROM users WHERE id = ?', [req.user.id]);
     if (uRows[0]) mailer.notifyPaymentUploaded({ ...uRows[0], plan: plan || null, amount: amount || null }).catch(() => {});
 
-    res.json({ success: true, id: result.insertId, filename: req.file.filename });
+    res.json({ success: true, id: result.insertId, receipt_path: receiptPath });
   } catch (err) {
     console.error('[payments/upload]', err.message);
     res.status(500).json({ error: 'Internal server error' });
