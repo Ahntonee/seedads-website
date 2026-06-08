@@ -36,6 +36,7 @@ const settingsRouter            = require('./routes/settings');
 const dmiRouter                 = require('./routes/dmi');
 const cmsRouter                 = require('./routes/cms');
 const shopRouter                = require('./routes/shop');
+const donationsRouter           = require('./routes/donations');
 
 const app    = express();
 const PORT   = process.env.PORT   || 3002;
@@ -84,6 +85,7 @@ app.use(cors({
 // Payment webhooks must read the RAW body to verify the gateway's signature,
 // so capture it as a Buffer BEFORE the JSON parser consumes it.
 app.use('/api/shop/webhook', express.raw({ type: '*/*', limit: '1mb' }));
+app.use('/api/donations/webhook', express.raw({ type: '*/*', limit: '1mb' }));
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
@@ -98,7 +100,9 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests. Please try again in 15 minutes.' },
   // Never rate-limit health checks or payment webhooks (dropping a webhook
   // would leave a paid order stuck as 'pending').
-  skip: (req) => req.path === '/api/health' || req.path.startsWith('/api/shop/webhook'),
+  skip: (req) => req.path === '/api/health'
+    || req.path.startsWith('/api/shop/webhook')
+    || req.path.startsWith('/api/donations/webhook'),
 });
 
 // Auth endpoints — tight limit to prevent brute-force
@@ -137,6 +141,7 @@ app.use('/api/users/reset-password', authLimiter);
 app.use('/api/contacts', formLimiter);
 app.use('/api/leads', formLimiter);
 app.use('/api/shop/checkout', checkoutLimiter);
+app.use('/api/donations/init', checkoutLimiter);
 
 //  Protected DMI file serving 
 // DMI files are paid content — block direct unauthenticated access.
@@ -163,6 +168,7 @@ app.use('/api/settings', settingsRouter);
 app.use('/api/dmi',      dmiRouter);
 app.use('/api/cms',      cmsRouter);
 app.use('/api/shop',     shopRouter);
+app.use('/api/donations', donationsRouter);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 

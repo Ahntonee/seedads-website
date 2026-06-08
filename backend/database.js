@@ -300,6 +300,19 @@ async function createTables() {
       paid_at         TIMESTAMP,
       created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS donations (
+      id          SERIAL PRIMARY KEY,
+      reference   VARCHAR(120) UNIQUE NOT NULL,
+      donor_name  VARCHAR(200),
+      donor_email VARCHAR(200),
+      message     TEXT,
+      amount      NUMERIC(12,2) DEFAULT 0,
+      currency    VARCHAR(10) DEFAULT 'NGN',
+      gateway     VARCHAR(20) DEFAULT 'flutterwave',
+      status      VARCHAR(20) DEFAULT 'pending',
+      paid_at     TIMESTAMP,
+      created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
   ];
   for (const sql of stmts) await pgPool.query(sql);
 }
