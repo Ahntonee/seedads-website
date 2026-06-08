@@ -6,13 +6,13 @@ const { requireAuth } = require('./auth');
 const { sanitizeText } = require('../security');
 const router   = express.Router();
 
-// ── Payment gateway config (optional — endpoints degrade gracefully if absent) ──
-const PAYSTACK_SECRET        = process.env.PAYSTACK_SECRET_KEY   || '';
-const STRIPE_SECRET          = process.env.STRIPE_SECRET_KEY     || '';
-const STRIPE_WEBHOOK_SECRET  = process.env.STRIPE_WEBHOOK_SECRET || '';
-const SITE_URL               = (process.env.SITE_URL || '').replace(/\/$/, '');
+// ── Payment gateway config ──
+const PAYSTACK_SECRET       = process.env.PAYSTACK_SECRET_KEY  || '';
+const FLW_SECRET_KEY        = process.env.FLW_SECRET_KEY       || '';
+const FLW_WEBHOOK_HASH      = process.env.FLW_WEBHOOK_HASH     || '';
+const SITE_URL              = (process.env.SITE_URL || '').replace(/\/$/, '');
 
-// Mark an order paid exactly once (idempotent). Returns true if it transitioned.
+// Mark an order paid exactly once (idempotent).
 async function markOrderPaid(reference) {
   const [r] = await pool.query(
     "UPDATE shop_orders SET status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE reference = ? AND status <> 'paid'",
@@ -21,22 +21,7 @@ async function markOrderPaid(reference) {
   return (r && r.affectedRows) > 0;
 }
 
-// Verify a Stripe webhook signature manually (avoids adding the stripe SDK).
-// Header format: "t=timestamp,v1=signature". signed_payload = `${t}.${rawBody}`.
-function verifyStripeSignature(rawBody, sigHeader, secret) {
-  if (!sigHeader || !secret) return false;
-  const parts = Object.fromEntries(sigHeader.split(',').map(kv => kv.split('=')));
-  const t = parts.t, v1 = parts.v1;
-  if (!t || !v1) return false;
-  // Reject events older than 5 minutes (replay protection)
-  if (Math.abs(Date.now() / 1000 - Number(t)) > 300) return false;
-  const expected = crypto.createHmac('sha256', secret).update(`${t}.${rawBody}`).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(v1), Buffer.from(expected));
-  } catch { return false; }
-}
-
-// ── Helpers ─────────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 function parseImages(raw) {
   if (!raw) return [];
   try { const a = JSON.parse(raw); return Array.isArray(a) ? a : []; }
@@ -55,7 +40,6 @@ const VALID_CATEGORIES = ['new', 'featured', 'trending', 'best_seller', 'hot', '
 //  PUBLIC — Products
 // ════════════════════════════════════════════════════════════════════════════════
 
-// GET /api/shop/products?category=
 router.get('/products', async (req, res) => {
   try {
     const category = sanitizeText(req.query.category, 50);
@@ -73,7 +57,6 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// GET /api/shop/products/:id
 router.get('/products/:id', async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM shop_products WHERE id = ?', [req.params.id]);
@@ -111,7 +94,6 @@ function readProductBody(body) {
   };
 }
 
-// POST /api/shop/products
 router.post('/products', requireAuth, async (req, res) => {
   try {
     const p = readProductBody(req.body);
@@ -129,7 +111,6 @@ router.post('/products', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH /api/shop/products/:id
 router.patch('/products/:id', requireAuth, async (req, res) => {
   try {
     const p = readProductBody(req.body);
@@ -148,7 +129,6 @@ router.patch('/products/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/shop/products/:id
 router.delete('/products/:id', requireAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM shop_products WHERE id = ?', [req.params.id]);
@@ -163,7 +143,6 @@ router.delete('/products/:id', requireAuth, async (req, res) => {
 //  CHECKOUT
 // ════════════════════════════════════════════════════════════════════════════════
 
-// Recompute the order total server-side from real product prices (never trust the client).
 async function buildOrderFromCart(cart) {
   if (!Array.isArray(cart) || !cart.length) throw new Error('Cart is empty');
   const ids = cart.map(i => parseInt(i.id)).filter(Boolean);
@@ -191,7 +170,7 @@ async function buildOrderFromCart(cart) {
   return { amount: Math.round(amount * 100) / 100, currency, items };
 }
 
-// POST /api/shop/checkout/paystack   { cart:[{id,qty}], customer:{name,email,phone} }
+// POST /api/shop/checkout/paystack
 router.post('/checkout/paystack', async (req, res) => {
   try {
     const { cart, customer } = req.body;
@@ -229,8 +208,8 @@ router.post('/checkout/paystack', async (req, res) => {
   }
 });
 
-// POST /api/shop/checkout/stripe   { cart:[{id,qty}], customer:{name,email,phone} }
-router.post('/checkout/stripe', async (req, res) => {
+// POST /api/shop/checkout/flutterwave
+router.post('/checkout/flutterwave', async (req, res) => {
   try {
     const { cart, customer } = req.body;
     const email = sanitizeText(customer?.email, 200);
@@ -242,47 +221,46 @@ router.post('/checkout/stripe', async (req, res) => {
       `INSERT INTO shop_orders (reference,customer_name,customer_email,customer_phone,items,amount,currency,gateway,status)
        VALUES (?,?,?,?,?,?,?,?,?)`,
       [reference, sanitizeText(customer?.name, 200), email, sanitizeText(customer?.phone, 50),
-       JSON.stringify(items), amount, currency, 'stripe', 'pending']
+       JSON.stringify(items), amount, currency, 'flutterwave', 'pending']
     );
 
-    if (!STRIPE_SECRET) {
+    if (!FLW_SECRET_KEY) {
       return res.status(503).json({
-        error: 'Stripe is not configured yet. Add STRIPE_SECRET_KEY to enable live payments.',
+        error: 'Flutterwave is not configured yet. Add FLW_SECRET_KEY to enable live payments.',
         demo: true, reference, amount, currency,
       });
     }
 
-    const base = (SITE_URL || `${req.protocol}://${req.get('host')}`);
-    const form = new URLSearchParams();
-    form.append('mode', 'payment');
-    form.append('success_url', base + '/shop.html?ref=' + reference + '&status=success');
-    form.append('cancel_url',  base + '/shop.html?ref=' + reference + '&status=cancelled');
-    form.append('customer_email', email);
-    form.append('client_reference_id', reference);
-    items.forEach((it, i) => {
-      form.append(`line_items[${i}][price_data][currency]`, currency.toLowerCase());
-      form.append(`line_items[${i}][price_data][product_data][name]`, it.name);
-      form.append(`line_items[${i}][price_data][unit_amount]`, String(Math.round(it.price * 100)));
-      form.append(`line_items[${i}][quantity]`, String(it.qty));
-    });
-
-    const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+    const redirect_url = (SITE_URL || `${req.protocol}://${req.get('host')}`) + '/shop.html?ref=' + reference;
+    const r = await fetch('https://api.flutterwave.com/v3/payments', {
       method: 'POST',
-      headers: { Authorization: 'Bearer ' + STRIPE_SECRET, 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: form.toString(),
+      headers: { Authorization: 'Bearer ' + FLW_SECRET_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tx_ref: reference,
+        amount,
+        currency,
+        redirect_url,
+        customer: {
+          email,
+          name: sanitizeText(customer?.name, 200) || '',
+          phone_number: sanitizeText(customer?.phone, 50) || '',
+        },
+        customizations: {
+          title: 'SeedsAds Shop',
+          logo: (SITE_URL || '') + '/assets/logo.png',
+        },
+      }),
     });
     const data = await r.json();
-    if (data.error) throw new Error(data.error.message || 'Stripe session failed');
-    // Persist the session id so /verify can confirm payment on the customer's return
-    await pool.query('UPDATE shop_orders SET gateway_session = ? WHERE reference = ?', [data.id, reference]);
-    res.json({ authorization_url: data.url, reference });
+    if (data.status !== 'success') throw new Error(data.message || 'Flutterwave initialization failed');
+    res.json({ authorization_url: data.data.link, reference });
   } catch (err) {
-    console.error('[shop/checkout/stripe]', err.message);
+    console.error('[shop/checkout/flutterwave]', err.message);
     res.status(400).json({ error: err.message });
   }
 });
 
-// GET /api/shop/verify/:reference  — confirm a Paystack payment, mark order paid
+// GET /api/shop/verify/:reference
 router.get('/verify/:reference', async (req, res) => {
   try {
     const reference = sanitizeText(req.params.reference, 120);
@@ -305,13 +283,13 @@ router.get('/verify/:reference', async (req, res) => {
       return res.json({ status: order.status, order });
     }
 
-    // Stripe — retrieve the checkout session and confirm it was paid
-    if (order.gateway === 'stripe' && STRIPE_SECRET && order.gateway_session) {
-      const r = await fetch('https://api.stripe.com/v1/checkout/sessions/' + encodeURIComponent(order.gateway_session), {
-        headers: { Authorization: 'Bearer ' + STRIPE_SECRET },
+    // Flutterwave — verify by tx_ref
+    if (order.gateway === 'flutterwave' && FLW_SECRET_KEY) {
+      const r = await fetch('https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(reference), {
+        headers: { Authorization: 'Bearer ' + FLW_SECRET_KEY },
       });
       const data = await r.json();
-      if (!data.error && data.payment_status === 'paid') {
+      if (data.status === 'success' && data.data && data.data.status === 'successful') {
         await markOrderPaid(reference);
         return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
       }
@@ -326,8 +304,7 @@ router.get('/verify/:reference', async (req, res) => {
 });
 
 // ════════════════════════════════════════════════════════════════════════════════
-//  WEBHOOKS — reliable server-to-server payment confirmation
-//  (req.body is a raw Buffer here; see express.raw mount in server.js)
+//  WEBHOOKS
 // ════════════════════════════════════════════════════════════════════════════════
 
 // POST /api/shop/webhook/paystack
@@ -346,28 +323,25 @@ router.post('/webhook/paystack', async (req, res) => {
     res.sendStatus(200);
   } catch (err) {
     console.error('[shop/webhook/paystack]', err.message);
-    res.sendStatus(200); // 200 so the gateway doesn't endlessly retry on our parse errors
+    res.sendStatus(200);
   }
 });
 
-// POST /api/shop/webhook/stripe
-router.post('/webhook/stripe', async (req, res) => {
+// POST /api/shop/webhook/flutterwave
+router.post('/webhook/flutterwave', async (req, res) => {
   try {
-    if (!STRIPE_WEBHOOK_SECRET) return res.sendStatus(200);
+    if (!FLW_WEBHOOK_HASH) return res.sendStatus(200);
+    const sig = req.headers['verif-hash'];
+    if (!sig || sig !== FLW_WEBHOOK_HASH) return res.sendStatus(401);
+
     const raw = Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body));
-    if (!verifyStripeSignature(raw.toString('utf8'), req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET)) {
-      return res.sendStatus(401);
-    }
     const event = JSON.parse(raw.toString('utf8'));
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      if (session.payment_status === 'paid' && session.client_reference_id) {
-        await markOrderPaid(session.client_reference_id);
-      }
+    if (event.event === 'charge.completed' && event.data && event.data.status === 'successful' && event.data.tx_ref) {
+      await markOrderPaid(event.data.tx_ref);
     }
     res.sendStatus(200);
   } catch (err) {
-    console.error('[shop/webhook/stripe]', err.message);
+    console.error('[shop/webhook/flutterwave]', err.message);
     res.sendStatus(200);
   }
 });
