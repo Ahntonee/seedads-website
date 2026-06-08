@@ -26,7 +26,7 @@
     apiBase: '',
     publicKey: 'FLWPUBK-XXXXXXXXXXXXXXXX-X',   // ← replace with the client's real Flutterwave public key
     title: 'Support Our Work',
-    subtitle: 'Your gift helps us keep growing. Thank you! 💚',
+    subtitle: 'Your gift helps us keep growing. Thank you!',
     currency: 'NGN',
     presets: [1000, 5000, 10000, 25000]
   }, window.DONATE_CONFIG || {});
@@ -175,12 +175,26 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount: amount, currency: CFG.currency, name: name, email: email, message: message })
     })
-    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(function (r) {
+      // Read as text first so an empty/non-JSON response can't throw a cryptic
+      // "Unexpected end of JSON input" — surface a friendly message instead.
+      return r.text().then(function (txt) {
+        var d = {};
+        if (txt) { try { d = JSON.parse(txt); } catch (e) { d = {}; } }
+        return { status: r.status, d: d };
+      });
+    })
     .then(function (res) {
-      var d = res.d;
+      var d = res.d || {};
       var reference = d.reference;
       var pubKey = d.publicKey || CFG.publicKey;
-      if (!reference) throw new Error(d.error || 'Could not start donation.');
+
+      // Server reachable but donations not configured (no Flutterwave key yet)
+      if (!pubKey || /^FLWPUBK-X+/.test(pubKey)) {
+        giveBtn.disabled = false;
+        return setMsg('Donations aren’t live yet — please check back soon. Thank you for your support!');
+      }
+      if (!reference) throw new Error(d.error || 'Could not start the donation. Please try again.');
 
       return loadFlutterwave().then(function () {
         giveBtn.disabled = false; setMsg('');
@@ -197,7 +211,14 @@
         });
       });
     })
-    .catch(function (err) { giveBtn.disabled = false; setMsg(err.message || 'Something went wrong.'); });
+    .catch(function (err) {
+      giveBtn.disabled = false;
+      // Network failure (server down/unreachable) lands here as a TypeError
+      var msg = (err && err.message && !/Failed to fetch|NetworkError/i.test(err.message))
+        ? err.message
+        : 'Could not reach the server. Please try again in a moment.';
+      setMsg(msg);
+    });
   }
 
   function verify(reference, setMsg) {
