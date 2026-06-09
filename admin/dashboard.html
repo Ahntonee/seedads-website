@@ -230,6 +230,7 @@
   </style>
 </head>
 <body>
+<script src="/js/dialog.js"></script>
 
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
@@ -1208,7 +1209,7 @@
     if (ok) { closeModal('cmsPlanModal'); toast(id?'Plan updated.':'Plan added.','success'); loadCmsPricing(); }
   }
   async function deleteCmsPlan(id) {
-    if (!confirm('Delete this pricing plan?')) return;
+    if (!(await dialogConfirm('Delete this pricing plan?'))) return;
     const ok = await api('DELETE','/cms/pricing-plans/'+id);
     if (ok) { toast('Plan deleted.','success'); loadCmsPricing(); }
   }
@@ -1247,7 +1248,7 @@
     if (ok) { closeModal('cmsFaqModal'); toast(id?'FAQ updated.':'FAQ added.','success'); loadCmsFaqs(); }
   }
   async function deleteCmsFaq(id) {
-    if (!confirm('Delete this FAQ?')) return;
+    if (!(await dialogConfirm('Delete this FAQ?'))) return;
     const ok = await api('DELETE','/cms/faqs/'+id);
     if (ok) { toast('FAQ deleted.','success'); loadCmsFaqs(); }
   }
@@ -1291,7 +1292,7 @@
     if (ok) { closeModal('cmsTeamModal'); toast(id?'Member updated.':'Member added.','success'); loadCmsTeam(); }
   }
   async function deleteCmsTeam(id) {
-    if (!confirm('Delete this team member?')) return;
+    if (!(await dialogConfirm('Delete this team member?'))) return;
     const ok = await api('DELETE','/cms/team/'+id);
     if (ok) { toast('Member deleted.','success'); loadCmsTeam(); }
   }
@@ -1338,7 +1339,7 @@
     if (ok) { closeModal('cmsPortfolioModal'); toast(id?'Project updated.':'Project added.','success'); loadCmsPortfolio(); }
   }
   async function deleteCmsPortfolio(id) {
-    if (!confirm('Delete this portfolio item?')) return;
+    if (!(await dialogConfirm('Delete this portfolio item?'))) return;
     const ok = await api('DELETE','/cms/portfolio/'+id);
     if (ok) { toast('Item deleted.','success'); loadCmsPortfolio(); }
   }
@@ -1385,7 +1386,7 @@
     if (ok) { closeModal('cmsCaseModal'); toast(id?'Case study updated.':'Case study added.','success'); loadCmsCasestudies(); }
   }
   async function deleteCmsCase(id) {
-    if (!confirm('Delete this case study?')) return;
+    if (!(await dialogConfirm('Delete this case study?'))) return;
     const ok = await api('DELETE','/cms/case-studies/'+id);
     if (ok) { toast('Case study deleted.','success'); loadCmsCasestudies(); }
   }
@@ -1431,7 +1432,7 @@
     if (ok) { closeModal('cmsCourseModal'); toast(id?'Course updated.':'Course added.','success'); loadCmsCourses(); }
   }
   async function deleteCmsCourse(id) {
-    if (!confirm('Delete this course?')) return;
+    if (!(await dialogConfirm('Delete this course?'))) return;
     const ok = await api('DELETE','/cms/courses/'+id);
     if (ok) { toast('Course deleted.','success'); loadCmsCourses(); }
   }
@@ -1640,7 +1641,7 @@
   }
 
   async function deleteMedia(filename, btn) {
-    if (!confirm('Delete this image permanently?')) return;
+    if (!(await dialogConfirm('Delete this image permanently?'))) return;
     btn.closest('.media-item').style.opacity = '.3';
     const ok = await api('DELETE', '/cms/media/' + encodeURIComponent(filename));
     if (ok && ok.success) { btn.closest('.media-item').remove(); toast('Image deleted'); }
@@ -1888,7 +1889,7 @@
     else { toast((ok && ok.error) || 'Save failed', 'error'); }
   }
   async function deleteShop(id) {
-    if (!confirm('Delete this product? This cannot be undone.')) return;
+    if (!(await dialogConfirm('Delete this product? This cannot be undone.'))) return;
     const ok = await api('DELETE','/shop/products/'+id);
     if (ok) { toast('Product deleted.','success'); loadShop(); }
   }
@@ -2130,7 +2131,7 @@
     closeModal('contactModal'); toast('Contact updated'); loadContacts(); loadOverview();
   }
   async function deleteContact() {
-    if (!currentContactId || !confirm('Delete this contact?')) return;
+    if (!currentContactId || !(await dialogConfirm('Delete this contact?', { variant: 'danger', confirmText: 'Delete' }))) return;
     await api('DELETE', `/contacts/${currentContactId}`);
     closeModal('contactModal'); toast('Contact deleted'); loadContacts(); loadOverview();
   }
@@ -2179,7 +2180,7 @@
   }
 
   async function deleteLead(id) {
-    if (!confirm('Delete this lead?')) return;
+    if (!(await dialogConfirm('Delete this lead?'))) return;
     await api('DELETE',`/leads/${id}`); toast('Lead deleted'); loadLeads(); loadOverview();
   }
 
@@ -2232,7 +2233,7 @@
   }
 
   async function deletePost(id) {
-    if (!confirm('Delete this post?')) return;
+    if (!(await dialogConfirm('Delete this post?'))) return;
     await api('DELETE',`/blog/${id}`); toast('Post deleted'); loadBlog();
   }
 
@@ -2383,7 +2384,7 @@
   }
 
   async function deleteDmi(id) {
-    if (!confirm('Delete this resource? The file will also be removed.')) return;
+    if (!(await dialogConfirm('Delete this resource? The file will also be removed.'))) return;
     await api('DELETE', '/dmi/' + id);
     toast('Resource deleted');
     loadDmi();
