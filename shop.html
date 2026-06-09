@@ -470,7 +470,7 @@
                 <label style="display:block;font-size:0.85rem;font-weight:600;color:var(--primary-dark);margin:1rem 0 0.6rem;">Choose payment method</label>
                 <div class="pay-options">
                     <button class="pay-btn" id="payPaystack" onclick="pay('paystack')"><i class="fas fa-bolt"></i> Paystack <small>Cards, transfer, USSD</small></button>
-                    <button class="pay-btn" id="payStripe" onclick="pay('stripe')"><i class="fab fa-stripe-s"></i> Stripe <small>International cards</small></button>
+                    <button class="pay-btn" id="payFlutterwave" onclick="pay('flutterwave')"><i class="fas fa-credit-card"></i> Flutterwave <small>Cards, transfer, USSD</small></button>
                 </div>
             </div>
         </div>
@@ -729,7 +729,7 @@
             if (!name) { toast('Please enter your name', 'error'); return; }
             if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { toast('Please enter a valid email', 'error'); return; }
 
-            const btn = document.getElementById(gateway === 'paystack' ? 'payPaystack' : 'payStripe');
+            const btn = document.getElementById(gateway === 'paystack' ? 'payPaystack' : 'payFlutterwave');
             const orig = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 

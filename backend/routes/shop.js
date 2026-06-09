@@ -7,9 +7,11 @@ const { sanitizeText } = require('../security');
 const router   = express.Router();
 
 // ── Payment gateway config ──
+// Flutterwave keys are unified with the donations module under FLUTTERWAVE_*,
+// with a fallback to the older FLW_* names so existing deploys keep working.
 const PAYSTACK_SECRET       = process.env.PAYSTACK_SECRET_KEY  || '';
-const FLW_SECRET_KEY        = process.env.FLW_SECRET_KEY       || '';
-const FLW_WEBHOOK_HASH      = process.env.FLW_WEBHOOK_HASH     || '';
+const FLW_SECRET_KEY        = process.env.FLUTTERWAVE_SECRET_KEY   || process.env.FLW_SECRET_KEY   || '';
+const FLW_WEBHOOK_HASH      = process.env.FLUTTERWAVE_WEBHOOK_HASH || process.env.FLW_WEBHOOK_HASH || '';
 const SITE_URL              = (process.env.SITE_URL || '').replace(/\/$/, '');
 
 // Mark an order paid exactly once (idempotent).
@@ -226,7 +228,7 @@ router.post('/checkout/flutterwave', async (req, res) => {
 
     if (!FLW_SECRET_KEY) {
       return res.status(503).json({
-        error: 'Flutterwave is not configured yet. Add FLW_SECRET_KEY to enable live payments.',
+        error: 'Flutterwave is not configured yet. Add FLUTTERWAVE_SECRET_KEY to enable live payments.',
         demo: true, reference, amount, currency,
       });
     }
