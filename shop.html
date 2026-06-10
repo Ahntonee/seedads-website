@@ -741,8 +741,26 @@
                     body: JSON.stringify({ cart, customer: { name, email, phone } }),
                 });
                 const data = await res.json();
-                if (res.ok && data.authorization_url) {
-                    window.location.href = data.authorization_url;
+                if (res.ok && data.publicKey) {
+                    btn.disabled = false; btn.innerHTML = orig;
+                    closeModal('checkoutModal');
+                    window.FlutterwaveCheckout({
+                        public_key: data.publicKey,
+                        tx_ref: data.reference,
+                        amount: data.amount,
+                        currency: data.currency || 'NGN',
+                        payment_options: 'card,mobilemoney,ussd,bank_transfer',
+                        customer: { email, name, phone_number: phone },
+                        customizations: { title: 'SeedsAds Shop' },
+                        callback: async function(response) {
+                            if (response.status === 'successful') {
+                                try { await fetch(`${API}/verify/${encodeURIComponent(data.reference)}`); } catch {}
+                                toast('Payment successful! Thank you for your order.', 'success');
+                                CART = []; saveCart(); updateCartCount();
+                            }
+                        },
+                        onclose: function() {}
+                    });
                     return;
                 }
                 if (data.demo) {
@@ -830,6 +848,8 @@
         updateCartCount();
         loadProducts().then(checkPaymentReturn);
     </script>
+<!-- Flutterwave inline SDK -->
+<script src="https://checkout.flutterwave.com/v3.js"></script>
 <!-- Donate widget -->
 <script>window.DONATE_CONFIG={apiBase:'',publicKey:'FLWPUBK-XXXXXXXXXXXXXXXX-X',title:'Support SeedsAds',currency:'NGN',presets:[1000,5000,10000,25000]};</script>
 <script src="/donate-widget.js" defer></script>
