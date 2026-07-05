@@ -10,71 +10,62 @@ const {
   sanitizeText,
   validatePassword,
 } = require('../security');
+const asyncHandler = require('../lib/asyncHandler');
 
 const router = express.Router();
 const SECRET = process.env.JWT_SECRET;
 
 // ── Admin login ───────────────────────────────────────────────────────────────
-router.post('/login', async (req, res) => {
-  try {
-    const username = sanitizeText(req.body.username, 100);
-    const password = req.body.password;
+router.post('/login', asyncHandler(async (req, res) => {
+  const username = sanitizeText(req.body.username, 100);
+  const password = req.body.password;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    if (isAdminLockedOut(username)) {
-      return res.status(429).json({
-        error: 'Account temporarily locked after too many failed attempts. Please try again in 30 minutes.',
-      });
-    }
-
-    const ip         = req.ip || req.connection.remoteAddress;
-    const identifier = 'admin:' + username.toLowerCase();
-    const [rows]     = await pool.query('SELECT * FROM admins WHERE username = ?', [username]);
-    const admin      = rows[0];
-
-    if (!admin || !bcrypt.compareSync(password, admin.password)) {
-      recordFailedAttempt(identifier, ip);
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    clearAttempts(identifier);
-    const token = jwt.sign(
-      { id: admin.id, username: admin.username, name: admin.name, role: 'admin' },
-      SECRET,
-      { expiresIn: '24h' }
-    );
-    res.json({ token, name: admin.name });
-  } catch (err) {
-    console.error('[auth/login]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
   }
-});
+
+  if (isAdminLockedOut(username)) {
+    return res.status(429).json({
+      error: 'Account temporarily locked after too many failed attempts. Please try again in 30 minutes.',
+    });
+  }
+
+  const ip         = req.ip || req.connection.remoteAddress;
+  const identifier = 'admin:' + username.toLowerCase();
+  const [rows]     = await pool.query('SELECT * FROM admins WHERE username = ?', [username]);
+  const admin      = rows[0];
+
+  if (!admin || !bcrypt.compareSync(password, admin.password)) {
+    recordFailedAttempt(identifier, ip);
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  clearAttempts(identifier);
+  const token = jwt.sign(
+    { id: admin.id, username: admin.username, name: admin.name, role: 'admin' },
+    SECRET,
+    { expiresIn: '24h' }
+  );
+  res.json({ token, name: admin.name });
+}));
 
 // ── Admin change password ─────────────────────────────────────────────────────
-router.post('/change-password', requireAuth, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
+router.post('/change-password', requireAuth, asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
 
-    const err = validatePassword(newPassword);
-    if (err) return res.status(400).json({ error: err });
+  const err = validatePassword(newPassword);
+  if (err) return res.status(400).json({ error: err });
 
-    const [rows] = await pool.query('SELECT * FROM admins WHERE id = ?', [req.admin.id]);
-    const admin  = rows[0];
-    if (!bcrypt.compareSync(currentPassword, admin.password)) {
-      return res.status(400).json({ error: 'Current password is incorrect' });
-    }
-
-    const hash = bcrypt.hashSync(newPassword, 12);
-    await pool.query('UPDATE admins SET password = ? WHERE id = ?', [hash, req.admin.id]);
-    res.json({ success: true, message: 'Password updated successfully' });
-  } catch (err) {
-    console.error('[auth/change-password]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+  const [rows] = await pool.query('SELECT * FROM admins WHERE id = ?', [req.admin.id]);
+  const admin  = rows[0];
+  if (!bcrypt.compareSync(currentPassword, admin.password)) {
+    return res.status(400).json({ error: 'Current password is incorrect' });
   }
-});
+
+  const hash = bcrypt.hashSync(newPassword, 12);
+  await pool.query('UPDATE admins SET password = ? WHERE id = ?', [hash, req.admin.id]);
+  res.json({ success: true, message: 'Password updated successfully' });
+}));
 
 // ── requireAuth middleware (admin JWT) ────────────────────────────────────────
 // SECURITY: admin and user tokens are signed with the same JWT_SECRET, so we MUST

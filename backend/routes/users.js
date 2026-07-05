@@ -5,6 +5,7 @@ const jwt      = require('jsonwebtoken');
 const crypto   = require('crypto');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
+const asyncHandler = require('../lib/asyncHandler');
 const mailer   = require('../mailer');
 const {
   isUserLockedOut,
@@ -35,84 +36,75 @@ function requireUser(req, res, next) {
 }
 
 // ── Register ──────────────────────────────────────────────────────────────────
-router.post('/register', async (req, res) => {
-  try {
-    const first_name = sanitizeText(req.body.first_name, 100);
-    const last_name  = sanitizeText(req.body.last_name,  100);
-    const email      = sanitizeEmail(req.body.email);
-    const phone      = sanitizePhone(req.body.phone);
-    const password   = req.body.password;
-    const plan       = sanitizeText(req.body.plan, 100);
+router.post('/register', asyncHandler(async (req, res) => {
+  const first_name = sanitizeText(req.body.first_name, 100);
+  const last_name  = sanitizeText(req.body.last_name,  100);
+  const email      = sanitizeEmail(req.body.email);
+  const phone      = sanitizePhone(req.body.phone);
+  const password   = req.body.password;
+  const plan       = sanitizeText(req.body.plan, 100);
 
-    if (!first_name || !last_name) return res.status(400).json({ error: 'First name and last name are required' });
-    if (!email) return res.status(400).json({ error: 'A valid email address is required' });
+  if (!first_name || !last_name) return res.status(400).json({ error: 'First name and last name are required' });
+  if (!email) return res.status(400).json({ error: 'A valid email address is required' });
 
-    const pwErr = validatePassword(password);
-    if (pwErr) return res.status(400).json({ error: pwErr });
+  const pwErr = validatePassword(password);
+  if (pwErr) return res.status(400).json({ error: pwErr });
 
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing.length) return res.status(409).json({ error: 'An account with this email already exists' });
+  const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (existing.length) return res.status(409).json({ error: 'An account with this email already exists' });
 
-    const hash = bcrypt.hashSync(password, 12);
-    const [result] = await pool.query(
-      'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES (?,?,?,?,?,?)',
-      [first_name, last_name, email, phone, hash, plan]
-    );
-    const newId = result.insertId;
+  const hash = bcrypt.hashSync(password, 12);
+  const [result] = await pool.query(
+    'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES (?,?,?,?,?,?)',
+    [first_name, last_name, email, phone, hash, plan]
+  );
+  const newId = result.insertId;
 
-    const token = jwt.sign(
-      { id: newId, email, first_name, last_name, role: 'user' },
-      SECRET, { expiresIn: '7d' }
-    );
-    mailer.welcomeUser({ first_name, email, plan }).catch(() => {});
-    res.json({
-      token,
-      user: { id: newId, first_name, last_name, email, plan, payment_status: 'unpaid', approved: 0 },
-    });
-  } catch (err) {
-    console.error('[users/register]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+  const token = jwt.sign(
+    { id: newId, email, first_name, last_name, role: 'user' },
+    SECRET, { expiresIn: '7d' }
+  );
+  mailer.welcomeUser({ first_name, email, plan }).catch(() => {});
+  res.json({
+    token,
+    user: { id: newId, first_name, last_name, email, plan, payment_status: 'unpaid', approved: 0 },
+  });
+}));
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-router.post('/login', async (req, res) => {
-  try {
-    const email    = sanitizeEmail(req.body.email);
-    const password = req.body.password;
+router.post('/login', asyncHandler(async (req, res) => {
+  const email    = sanitizeEmail(req.body.email);
+  const password = req.body.password;
 
-    if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
+  if (!email || !password) return res.status(400).json({ error: 'Email and password are required' });
 
-    const identifier = 'user:' + email;
-    if (isUserLockedOut(email)) {
-      return res.status(429).json({
-        error: 'Account temporarily locked after too many failed attempts. Please try again in 15 minutes.',
-      });
-    }
-
-    const ip = req.ip || req.connection.remoteAddress;
-    const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    const user = rows[0];
-
-    if (!user || !bcrypt.compareSync(password, user.password)) {
-      recordFailedAttempt(identifier, ip);
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    clearAttempts(identifier);
-    const token = jwt.sign(
-      { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: 'user' },
-      SECRET, { expiresIn: '7d' }
-    );
-    const { password: _, ...safeUser } = user;
-    res.json({ token, user: safeUser });
-  } catch (err) {
-    console.error('[users/login]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+  const identifier = 'user:' + email;
+  if (isUserLockedOut(email)) {
+    return res.status(429).json({
+      error: 'Account temporarily locked after too many failed attempts. Please try again in 15 minutes.',
+    });
   }
-});
+
+  const ip = req.ip || req.connection.remoteAddress;
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+  const user = rows[0];
+
+  if (!user || !bcrypt.compareSync(password, user.password)) {
+    recordFailedAttempt(identifier, ip);
+    return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  clearAttempts(identifier);
+  const token = jwt.sign(
+    { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: 'user' },
+    SECRET, { expiresIn: '7d' }
+  );
+  const { password: _, ...safeUser } = user;
+  res.json({ token, user: safeUser });
+}));
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
+// Keeps its own try/catch — custom failure message on error.
 router.post('/google', async (req, res) => {
   const { credential } = req.body;
   if (!credential) return res.status(400).json({ error: 'No Google credential provided' });
@@ -161,6 +153,7 @@ router.post('/google', async (req, res) => {
 });
 
 // ── Forgot password ───────────────────────────────────────────────────────────
+// Keeps its own try/catch — always returns the same success message (no info leak).
 router.post('/forgot-password', async (req, res) => {
   const email = sanitizeEmail(req.body.email);
   const MSG   = 'If that email is registered, a reset link has been sent. Check your inbox (and spam folder).';
@@ -187,97 +180,72 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // ── Reset password ────────────────────────────────────────────────────────────
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ error: 'Reset token and new password are required' });
-    }
-
-    const pwErr = validatePassword(password);
-    if (pwErr) return res.status(400).json({ error: pwErr });
-
-    const [rows] = await pool.query(
-      'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0',
-      [token]
-    );
-    const record = rows[0];
-
-    if (!record || new Date(record.expires_at) < new Date()) {
-      return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
-    }
-
-    const hash = bcrypt.hashSync(password, 12);
-    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hash, record.user_id]);
-    await pool.query('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [record.id]);
-    res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
-  } catch (err) {
-    console.error('[users/reset-password]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+router.post('/reset-password', asyncHandler(async (req, res) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Reset token and new password are required' });
   }
-});
+
+  const pwErr = validatePassword(password);
+  if (pwErr) return res.status(400).json({ error: pwErr });
+
+  const [rows] = await pool.query(
+    'SELECT * FROM password_reset_tokens WHERE token = ? AND used = 0',
+    [token]
+  );
+  const record = rows[0];
+
+  if (!record || new Date(record.expires_at) < new Date()) {
+    return res.status(400).json({ error: 'This reset link is invalid or has expired. Please request a new one.' });
+  }
+
+  const hash = bcrypt.hashSync(password, 12);
+  await pool.query('UPDATE users SET password = ? WHERE id = ?', [hash, record.user_id]);
+  await pool.query('UPDATE password_reset_tokens SET used = 1 WHERE id = ?', [record.id]);
+  res.json({ success: true, message: 'Password updated successfully. You can now log in.' });
+}));
 
 // ── Get own profile ───────────────────────────────────────────────────────────
-router.get('/me', requireUser, async (req, res) => {
-  try {
-    const [uRows] = await pool.query(
-      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = ?',
-      [req.user.id]
-    );
-    if (!uRows[0]) return res.status(404).json({ error: 'User not found' });
-    const [pRows] = await pool.query(
-      'SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-      [req.user.id]
-    );
-    res.json({ user: uRows[0], lastPayment: pRows[0] || null });
-  } catch (err) {
-    console.error('[users/me]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.get('/me', requireUser, asyncHandler(async (req, res) => {
+  const [uRows] = await pool.query(
+    'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, approved_at, created_at FROM users WHERE id = ?',
+    [req.user.id]
+  );
+  if (!uRows[0]) return res.status(404).json({ error: 'User not found' });
+  const [pRows] = await pool.query(
+    'SELECT * FROM payments WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
+    [req.user.id]
+  );
+  res.json({ user: uRows[0], lastPayment: pRows[0] || null });
+}));
 
 // ── Admin: list all users ─────────────────────────────────────────────────────
-router.get('/', requireAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, created_at FROM users ORDER BY created_at DESC'
-    );
-    res.json({ users: rows });
-  } catch (err) {
-    console.error('[users/list]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.get('/', requireAuth, asyncHandler(async (req, res) => {
+  const [rows] = await pool.query(
+    'SELECT id, first_name, last_name, email, phone, plan, payment_status, approved, created_at FROM users ORDER BY created_at DESC'
+  );
+  res.json({ users: rows });
+}));
 
 // ── Admin: update user plan / status ─────────────────────────────────────────
-router.patch('/:id', requireAuth, async (req, res) => {
-  try {
-    const { plan, payment_status, approved } = req.body;
-    const cleanPlan = sanitizeText(plan, 100);
-    await pool.query(
-      `UPDATE users SET
-        plan           = COALESCE(?, plan),
-        payment_status = COALESCE(?, payment_status),
-        approved       = COALESCE(?, approved)
-       WHERE id = ?`,
-      [cleanPlan || null, payment_status ?? null, approved !== undefined ? Number(approved) : null, req.params.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[users/patch]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.patch('/:id', requireAuth, asyncHandler(async (req, res) => {
+  const { plan, payment_status, approved } = req.body;
+  const cleanPlan = sanitizeText(plan, 100);
+  await pool.query(
+    `UPDATE users SET
+      plan           = COALESCE(?, plan),
+      payment_status = COALESCE(?, payment_status),
+      approved       = COALESCE(?, approved)
+     WHERE id = ?`,
+    [cleanPlan || null, payment_status ?? null, approved !== undefined ? Number(approved) : null, req.params.id]
+  );
+  res.json({ success: true });
+}));
 
 // ── Admin: delete user ────────────────────────────────────────────────────────
-router.delete('/:id', requireAuth, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[users/delete]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.delete('/:id', requireAuth, asyncHandler(async (req, res) => {
+  await pool.query('DELETE FROM users WHERE id = ?', [req.params.id]);
+  res.json({ success: true });
+}));
 
 module.exports = { router, requireUser };
