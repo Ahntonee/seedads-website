@@ -14,6 +14,7 @@ const express  = require('express');
 const crypto   = require('crypto');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
+const asyncHandler = require('../lib/asyncHandler');
 const { sanitizeText, sanitizeEmail } = require('../security');
 const router   = express.Router();
 
@@ -34,66 +35,56 @@ async function markDonationPaid(reference) {
 }
 
 // ── Public: start a donation ────────────────────────────────────────────────
-router.post('/init', async (req, res) => {
-  try {
-    const amount   = Math.round(Number(req.body.amount) * 100) / 100;
-    const currency = sanitizeText(req.body.currency, 10) || 'NGN';
-    const name     = sanitizeText(req.body.name, 200);
-    const email    = sanitizeEmail(req.body.email);
-    const message  = sanitizeText(req.body.message, 500);
+router.post('/init', asyncHandler(async (req, res) => {
+  const amount   = Math.round(Number(req.body.amount) * 100) / 100;
+  const currency = sanitizeText(req.body.currency, 10) || 'NGN';
+  const name     = sanitizeText(req.body.name, 200);
+  const email    = sanitizeEmail(req.body.email);
+  const message  = sanitizeText(req.body.message, 500);
 
-    if (!amount || isNaN(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
-      return res.status(400).json({ error: `Enter a valid amount (minimum ${currency} ${MIN_AMOUNT}).` });
-    }
-
-    const reference = 'DONATE-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex');
-    await pool.query(
-      `INSERT INTO donations (reference, donor_name, donor_email, message, amount, currency, gateway, status)
-       VALUES (?,?,?,?,?,?,?,?)`,
-      [reference, name, email, message, amount, currency, 'flutterwave', 'pending']
-    );
-
-    if (!FLW_PUBLIC) {
-      return res.status(503).json({
-        error: 'Donations are not configured yet. Add FLUTTERWAVE_PUBLIC_KEY to enable giving.',
-        demo: true, reference, amount, currency,
-      });
-    }
-    res.json({ reference, publicKey: FLW_PUBLIC, amount, currency });
-  } catch (err) {
-    console.error('[donations/init]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+  if (!amount || isNaN(amount) || amount < MIN_AMOUNT || amount > MAX_AMOUNT) {
+    return res.status(400).json({ error: `Enter a valid amount (minimum ${currency} ${MIN_AMOUNT}).` });
   }
-});
+
+  const reference = 'DONATE-' + Date.now() + '-' + crypto.randomBytes(4).toString('hex');
+  await pool.query(
+    `INSERT INTO donations (reference, donor_name, donor_email, message, amount, currency, gateway, status)
+     VALUES (?,?,?,?,?,?,?,?)`,
+    [reference, name, email, message, amount, currency, 'flutterwave', 'pending']
+  );
+
+  if (!FLW_PUBLIC) {
+    return res.status(503).json({
+      error: 'Donations are not configured yet. Add FLUTTERWAVE_PUBLIC_KEY to enable giving.',
+      demo: true, reference, amount, currency,
+    });
+  }
+  res.json({ reference, publicKey: FLW_PUBLIC, amount, currency });
+}));
 
 // ── Public: verify a donation after the popup closes ─────────────────────────
-router.get('/verify/:reference', async (req, res) => {
-  try {
-    const reference = sanitizeText(req.params.reference, 120);
-    const [rows] = await pool.query('SELECT * FROM donations WHERE reference = ?', [reference]);
-    const donation = rows[0];
-    if (!donation) return res.status(404).json({ error: 'Donation not found' });
-    if (donation.status === 'paid') return res.json({ status: 'paid', donation });
+router.get('/verify/:reference', asyncHandler(async (req, res) => {
+  const reference = sanitizeText(req.params.reference, 120);
+  const [rows] = await pool.query('SELECT * FROM donations WHERE reference = ?', [reference]);
+  const donation = rows[0];
+  if (!donation) return res.status(404).json({ error: 'Donation not found' });
+  if (donation.status === 'paid') return res.json({ status: 'paid', donation });
 
-    if (FLW_SECRET) {
-      const r = await fetch(
-        'https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(reference),
-        { headers: { Authorization: 'Bearer ' + FLW_SECRET } }
-      );
-      const data = await r.json();
-      if (data.status === 'success' && data.data &&
-          data.data.status === 'successful' &&
-          Number(data.data.amount) >= Number(donation.amount)) {
-        await markDonationPaid(reference);
-        return res.json({ status: 'paid', donation: { ...donation, status: 'paid' } });
-      }
+  if (FLW_SECRET) {
+    const r = await fetch(
+      'https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(reference),
+      { headers: { Authorization: 'Bearer ' + FLW_SECRET } }
+    );
+    const data = await r.json();
+    if (data.status === 'success' && data.data &&
+        data.data.status === 'successful' &&
+        Number(data.data.amount) >= Number(donation.amount)) {
+      await markDonationPaid(reference);
+      return res.json({ status: 'paid', donation: { ...donation, status: 'paid' } });
     }
-    res.json({ status: donation.status, donation });
-  } catch (err) {
-    console.error('[donations/verify]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+  res.json({ status: donation.status, donation });
+}));
 
 // ── Webhook: Flutterwave server-to-server confirmation ───────────────────────
 // req.body is a raw Buffer here (see express.raw mount in server.js)
@@ -117,17 +108,12 @@ router.post('/webhook/flutterwave', async (req, res) => {
 });
 
 // ── Admin: list donations + totals ───────────────────────────────────────────
-router.get('/', requireAuth, async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM donations ORDER BY created_at DESC');
-    const [tot]  = await pool.query(
-      "SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS count FROM donations WHERE status = 'paid'"
-    );
-    res.json({ donations: rows, totalRaised: Number(tot[0].total), paidCount: Number(tot[0].count) });
-  } catch (err) {
-    console.error('[donations/list]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.get('/', requireAuth, asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM donations ORDER BY created_at DESC');
+  const [tot]  = await pool.query(
+    "SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS count FROM donations WHERE status = 'paid'"
+  );
+  res.json({ donations: rows, totalRaised: Number(tot[0].total), paidCount: Number(tot[0].count) });
+}));
 
 module.exports = router;

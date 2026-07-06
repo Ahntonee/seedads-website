@@ -3,6 +3,7 @@ const express  = require('express');
 const crypto   = require('crypto');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
+const asyncHandler = require('../lib/asyncHandler');
 const { sanitizeText } = require('../security');
 const router   = express.Router();
 
@@ -43,33 +44,23 @@ const VALID_CATEGORIES = ['new', 'featured', 'trending', 'best_seller', 'hot', '
 //  PUBLIC — Products
 // ════════════════════════════════════════════════════════════════════════════════
 
-router.get('/products', async (req, res) => {
-  try {
-    const category = sanitizeText(req.query.category, 50);
-    let sql = 'SELECT * FROM shop_products WHERE published = 1';
-    const params = [];
-    if (category && category !== 'all' && VALID_CATEGORIES.includes(category)) {
-      sql += ' AND category = ?'; params.push(category);
-    }
-    sql += ' ORDER BY sort_order ASC, created_at DESC';
-    const [rows] = await pool.query(sql, params);
-    res.json({ products: rows.map(shapeProduct) });
-  } catch (err) {
-    console.error('[shop/products GET]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+router.get('/products', asyncHandler(async (req, res) => {
+  const category = sanitizeText(req.query.category, 50);
+  let sql = 'SELECT * FROM shop_products WHERE published = 1';
+  const params = [];
+  if (category && category !== 'all' && VALID_CATEGORIES.includes(category)) {
+    sql += ' AND category = ?'; params.push(category);
   }
-});
+  sql += ' ORDER BY sort_order ASC, created_at DESC';
+  const [rows] = await pool.query(sql, params);
+  res.json({ products: rows.map(shapeProduct) });
+}));
 
-router.get('/products/:id', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM shop_products WHERE id = ?', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ error: 'Product not found' });
-    res.json({ product: shapeProduct(rows[0]) });
-  } catch (err) {
-    console.error('[shop/product GET]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.get('/products/:id', asyncHandler(async (req, res) => {
+  const [rows] = await pool.query('SELECT * FROM shop_products WHERE id = ?', [req.params.id]);
+  if (!rows[0]) return res.status(404).json({ error: 'Product not found' });
+  res.json({ product: shapeProduct(rows[0]) });
+}));
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  ADMIN — Product management
@@ -97,50 +88,35 @@ function readProductBody(body) {
   };
 }
 
-router.post('/products', requireAuth, async (req, res) => {
-  try {
-    const p = readProductBody(req.body);
-    if (!p.name) return res.status(400).json({ error: 'Product name is required' });
-    const [result] = await pool.query(
-      `INSERT INTO shop_products
-         (name,description,category,price,compare_at,currency,images,badge,sku,in_stock,sort_order,published)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [p.name, p.description, p.category, p.price, p.compare_at, p.currency, p.images, p.badge, p.sku, p.in_stock, p.sort_order, p.published]
-    );
-    res.json({ success: true, id: result.insertId });
-  } catch (err) {
-    console.error('[shop/products POST]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.post('/products', requireAuth, asyncHandler(async (req, res) => {
+  const p = readProductBody(req.body);
+  if (!p.name) return res.status(400).json({ error: 'Product name is required' });
+  const [result] = await pool.query(
+    `INSERT INTO shop_products
+       (name,description,category,price,compare_at,currency,images,badge,sku,in_stock,sort_order,published)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [p.name, p.description, p.category, p.price, p.compare_at, p.currency, p.images, p.badge, p.sku, p.in_stock, p.sort_order, p.published]
+  );
+  res.json({ success: true, id: result.insertId });
+}));
 
-router.patch('/products/:id', requireAuth, async (req, res) => {
-  try {
-    const p = readProductBody(req.body);
-    if (!p.name) return res.status(400).json({ error: 'Product name is required' });
-    await pool.query(
-      `UPDATE shop_products SET
-         name=?, description=?, category=?, price=?, compare_at=?, currency=?,
-         images=?, badge=?, sku=?, in_stock=?, sort_order=?, published=?
-       WHERE id=?`,
-      [p.name, p.description, p.category, p.price, p.compare_at, p.currency, p.images, p.badge, p.sku, p.in_stock, p.sort_order, p.published, req.params.id]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[shop/products PATCH]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.patch('/products/:id', requireAuth, asyncHandler(async (req, res) => {
+  const p = readProductBody(req.body);
+  if (!p.name) return res.status(400).json({ error: 'Product name is required' });
+  await pool.query(
+    `UPDATE shop_products SET
+       name=?, description=?, category=?, price=?, compare_at=?, currency=?,
+       images=?, badge=?, sku=?, in_stock=?, sort_order=?, published=?
+     WHERE id=?`,
+    [p.name, p.description, p.category, p.price, p.compare_at, p.currency, p.images, p.badge, p.sku, p.in_stock, p.sort_order, p.published, req.params.id]
+  );
+  res.json({ success: true });
+}));
 
-router.delete('/products/:id', requireAuth, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM shop_products WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    console.error('[shop/products DELETE]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.delete('/products/:id', requireAuth, asyncHandler(async (req, res) => {
+  await pool.query('DELETE FROM shop_products WHERE id = ?', [req.params.id]);
+  res.json({ success: true });
+}));
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  CHECKOUT
@@ -243,53 +219,48 @@ router.post('/checkout/flutterwave', async (req, res) => {
 });
 
 // GET /api/shop/verify/:reference
-router.get('/verify/:reference', async (req, res) => {
-  try {
-    const reference = sanitizeText(req.params.reference, 120);
-    const [rows] = await pool.query('SELECT * FROM shop_orders WHERE reference = ?', [reference]);
-    if (!rows[0]) return res.status(404).json({ error: 'Order not found' });
-    const order = rows[0];
+router.get('/verify/:reference', asyncHandler(async (req, res) => {
+  const reference = sanitizeText(req.params.reference, 120);
+  const [rows] = await pool.query('SELECT * FROM shop_orders WHERE reference = ?', [reference]);
+  if (!rows[0]) return res.status(404).json({ error: 'Order not found' });
+  const order = rows[0];
 
-    if (order.status === 'paid') return res.json({ status: 'paid', order });
+  if (order.status === 'paid') return res.json({ status: 'paid', order });
 
-    // Paystack — verify by reference
-    if (order.gateway === 'paystack' && PAYSTACK_SECRET) {
-      const r = await fetch('https://api.paystack.co/transaction/verify/' + encodeURIComponent(reference), {
-        headers: { Authorization: 'Bearer ' + PAYSTACK_SECRET },
-      });
-      const data = await r.json();
-      if (data.status && data.data && data.data.status === 'success') {
-        await markOrderPaid(reference);
-        return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
-      }
-      return res.json({ status: order.status, order });
-    }
-
-    // Flutterwave — verify by tx_ref
-    if (order.gateway === 'flutterwave') {
-      if (FLW_SECRET_KEY) {
-        try {
-          const r = await fetch('https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(reference), {
-            headers: { Authorization: 'Bearer ' + FLW_SECRET_KEY },
-          });
-          const data = await r.json();
-          if (data.status === 'success' && data.data && data.data.status === 'successful') {
-            await markOrderPaid(reference);
-            return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
-          }
-        } catch { /* fall through */ }
-      }
-      // Inline checkout callback confirmed payment client-side; trust it
+  // Paystack — verify by reference
+  if (order.gateway === 'paystack' && PAYSTACK_SECRET) {
+    const r = await fetch('https://api.paystack.co/transaction/verify/' + encodeURIComponent(reference), {
+      headers: { Authorization: 'Bearer ' + PAYSTACK_SECRET },
+    });
+    const data = await r.json();
+    if (data.status && data.data && data.data.status === 'success') {
       await markOrderPaid(reference);
       return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
     }
-
-    res.json({ status: order.status, order });
-  } catch (err) {
-    console.error('[shop/verify]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.json({ status: order.status, order });
   }
-});
+
+  // Flutterwave — verify by tx_ref
+  if (order.gateway === 'flutterwave') {
+    if (FLW_SECRET_KEY) {
+      try {
+        const r = await fetch('https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=' + encodeURIComponent(reference), {
+          headers: { Authorization: 'Bearer ' + FLW_SECRET_KEY },
+        });
+        const data = await r.json();
+        if (data.status === 'success' && data.data && data.data.status === 'successful') {
+          await markOrderPaid(reference);
+          return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
+        }
+      } catch { /* fall through */ }
+    }
+    // Inline checkout callback confirmed payment client-side; trust it
+    await markOrderPaid(reference);
+    return res.json({ status: 'paid', order: { ...order, status: 'paid' } });
+  }
+
+  res.json({ status: order.status, order });
+}));
 
 // ════════════════════════════════════════════════════════════════════════════════
 //  WEBHOOKS
@@ -337,20 +308,15 @@ router.post('/webhook/flutterwave', async (req, res) => {
 // ════════════════════════════════════════════════════════════════════════════════
 //  ADMIN — Orders
 // ════════════════════════════════════════════════════════════════════════════════
-router.get('/orders', requireAuth, async (req, res) => {
-  try {
-    const status = sanitizeText(req.query.status, 20);
-    let sql = 'SELECT * FROM shop_orders';
-    const params = [];
-    if (status) { sql += ' WHERE status = ?'; params.push(status); }
-    sql += ' ORDER BY created_at DESC';
-    const [rows] = await pool.query(sql, params);
-    const orders = rows.map(o => { try { o.items = JSON.parse(o.items || '[]'); } catch { o.items = []; } return o; });
-    res.json({ orders });
-  } catch (err) {
-    console.error('[shop/orders GET]', err.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+router.get('/orders', requireAuth, asyncHandler(async (req, res) => {
+  const status = sanitizeText(req.query.status, 20);
+  let sql = 'SELECT * FROM shop_orders';
+  const params = [];
+  if (status) { sql += ' WHERE status = ?'; params.push(status); }
+  sql += ' ORDER BY created_at DESC';
+  const [rows] = await pool.query(sql, params);
+  const orders = rows.map(o => { try { o.items = JSON.parse(o.items || '[]'); } catch { o.items = []; } return o; });
+  res.json({ orders });
+}));
 
 module.exports = router;
