@@ -15,9 +15,11 @@ const SECRET   = process.env.JWT_SECRET;
 const dmiUploadsDir = path.join(__dirname, '../uploads/dmi');
 
 // DMI files persist to Cloudinary in production (Render disk is wiped on deploy).
+// Files (including the optional preview clip) are capped at 100 MB each.
+const MAX_UPLOAD = 100 * 1024 * 1024; // 100 MB
 const upload = makeUploader({
   subdir: 'dmi',
-  limits: { fileSize: 500 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD },
   fileFilter: (req, file, cb) => {
     const allowed = [
       'application/pdf',
@@ -28,6 +30,12 @@ const upload = makeUploader({
     cb(new Error('Only PDF, video (mp4/webm/ogg/mov), and ZIP files are allowed'));
   },
 });
+
+// Main content file + an optional short preview video (viewable before purchase)
+const dmiUploadFields = upload.fields([
+  { name: 'file',    maxCount: 1 },
+  { name: 'preview', maxCount: 1 },
+]);
 
 // Cloudinary resource type: videos → 'video', archives → 'raw', PDFs → 'auto'
 function dmiResourceType(file, type) {
@@ -83,15 +91,22 @@ router.get('/download/:filename', asyncHandler(async (req, res) => {
   res.download(filepath, (item && item.file_name) || filename);
 }));
 
-// ── Public: list published content (filtered by plan) ─────────────────────
+// ── Public catalog: anyone can browse (logged in or not) ──────────────────
+// Titles, descriptions and preview clips are visible to EVERYONE so visitors can
+// browse and preview before buying. The full content (file_path / external_url)
+// is only exposed to admins or APPROVED (paid) users whose plan grants access.
 router.get('/', asyncHandler(async (req, res) => {
-  let userPlan = null;
+  let userPlan = null, userApproved = false, isAdmin = false;
   const auth = req.headers.authorization;
   if (auth && auth.startsWith('Bearer ')) {
     try {
       const payload = jwt.verify(auth.slice(7), SECRET);
-      const [rows] = await pool.query('SELECT plan FROM users WHERE id = ?', [payload.id]);
-      userPlan = rows[0] ? rows[0].plan : null;
+      if (payload.role === 'admin') {
+        isAdmin = true;
+      } else {
+        const [rows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [payload.id]);
+        if (rows[0]) { userPlan = rows[0].plan; userApproved = !!rows[0].approved; }
+      }
     } catch {}
   }
 
@@ -102,13 +117,23 @@ router.get('/', asyncHandler(async (req, res) => {
   query += ' ORDER BY sort_order ASC, created_at DESC';
 
   const [all] = await pool.query(query, params);
-  const items = all.map(item => ({
-    ...item,
-    accessible:   canAccess(userPlan, item.plan_access),
-    file_path:    canAccess(userPlan, item.plan_access) ? item.file_path    : null,
-    file_name:    canAccess(userPlan, item.plan_access) ? item.file_name    : null,
-    external_url: canAccess(userPlan, item.plan_access) ? item.external_url : null,
-  }));
+  // Free ('all') content stays open to everyone. Paid content requires payment
+  // approval (not merely a plan on the account) AND a plan that grants access.
+  const grants = (item) =>
+    isAdmin ||
+    item.plan_access === 'all' ||
+    (userApproved && canAccess(userPlan, item.plan_access));
+  const items = all.map(item => {
+    const ok = grants(item);
+    return {
+      ...item,
+      accessible:   ok,
+      file_path:    ok ? item.file_path    : null,
+      file_name:    ok ? item.file_name    : null,
+      external_url: ok ? item.external_url : null,
+      // preview_url is intentionally always exposed — it is the free preview clip.
+    };
+  });
 
   res.json({ items, userPlan });
 }));
@@ -120,40 +145,59 @@ router.get('/admin', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 // ── Admin: upload new DMI resource ─────────────────────────────────────────
-router.post('/', requireAuth, upload.single('file'), asyncHandler(async (req, res) => {
+router.post('/', requireAuth, dmiUploadFields, asyncHandler(async (req, res) => {
   const { title, description, type, external_url, plan_access, category, sort_order } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
-  const { url: file_path } = await persist(req.file, {
-    folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(req.file, type),
+  const mainFile    = req.files?.file?.[0]    || null;
+  const previewFile = req.files?.preview?.[0] || null;
+
+  const { url: file_path } = await persist(mainFile, {
+    folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(mainFile, type),
   });
-  const file_name = req.file ? req.file.originalname : null;
+  // Preview clip is always treated as a video and is publicly viewable (not gated).
+  const { url: preview_url } = await persist(previewFile, {
+    folder: 'seedsads/dmi/previews', subdir: 'dmi', resourceType: 'video',
+  });
+  const file_name = mainFile ? mainFile.originalname : null;
 
   const [result] = await pool.query(
-    `INSERT INTO dmi_content (title, description, type, file_path, file_name, external_url, plan_access, category, sort_order)
-     VALUES (?,?,?,?,?,?,?,?,?)`,
-    [title, description || null, type || 'pdf', file_path, file_name,
+    `INSERT INTO dmi_content (title, description, type, file_path, file_name, preview_url, external_url, plan_access, category, sort_order)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    [title, description || null, type || 'pdf', file_path, file_name, preview_url,
      external_url || null, plan_access || 'all', category || null, parseInt(sort_order) || 0]
   );
   res.json({ success: true, id: result.insertId });
 }));
 
 // ── Admin: update DMI resource ─────────────────────────────────────────────
-router.patch('/:id', requireAuth, upload.single('file'), asyncHandler(async (req, res) => {
+router.patch('/:id', requireAuth, dmiUploadFields, asyncHandler(async (req, res) => {
   const { title, description, type, external_url, plan_access, category, sort_order, published } = req.body;
   const [existing] = await pool.query('SELECT * FROM dmi_content WHERE id = ?', [req.params.id]);
   if (!existing[0]) return res.status(404).json({ error: 'Not found' });
 
-  let file_path = existing[0].file_path;
-  let file_name = existing[0].file_name;
-  if (req.file) {
-    const out = await persist(req.file, {
-      folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(req.file, type),
+  const mainFile    = req.files?.file?.[0]    || null;
+  const previewFile = req.files?.preview?.[0] || null;
+
+  let file_path   = existing[0].file_path;
+  let file_name   = existing[0].file_name;
+  let preview_url = existing[0].preview_url;
+
+  if (mainFile) {
+    const out = await persist(mainFile, {
+      folder: 'seedsads/dmi', subdir: 'dmi', resourceType: dmiResourceType(mainFile, type),
     });
     // Replace old file (best-effort) to avoid orphaned storage
-    await remove(existing[0].file_path, { resourceType: dmiResourceType(req.file, type) });
+    await remove(existing[0].file_path, { resourceType: dmiResourceType(mainFile, type) });
     file_path = out.url;
-    file_name = req.file.originalname;
+    file_name = mainFile.originalname;
+  }
+  if (previewFile) {
+    const out = await persist(previewFile, {
+      folder: 'seedsads/dmi/previews', subdir: 'dmi', resourceType: 'video',
+    });
+    await remove(existing[0].preview_url, { resourceType: 'video' });
+    preview_url = out.url;
   }
 
   await pool.query(
@@ -163,6 +207,7 @@ router.patch('/:id', requireAuth, upload.single('file'), asyncHandler(async (req
       type         = COALESCE(?, type),
       file_path    = ?,
       file_name    = ?,
+      preview_url  = ?,
       external_url = COALESCE(?, external_url),
       plan_access  = COALESCE(?, plan_access),
       category     = COALESCE(?, category),
@@ -170,7 +215,7 @@ router.patch('/:id', requireAuth, upload.single('file'), asyncHandler(async (req
       published    = COALESCE(?, published),
       updated_at   = CURRENT_TIMESTAMP
      WHERE id = ?`,
-    [title || null, description || null, type || null, file_path, file_name,
+    [title || null, description || null, type || null, file_path, file_name, preview_url,
      external_url || null, plan_access || null, category || null,
      sort_order !== undefined ? parseInt(sort_order) : null,
      published  !== undefined ? parseInt(published)  : null,
@@ -181,9 +226,10 @@ router.patch('/:id', requireAuth, upload.single('file'), asyncHandler(async (req
 
 // ── Admin: delete DMI resource ─────────────────────────────────────────────
 router.delete('/:id', requireAuth, asyncHandler(async (req, res) => {
-  const [rows] = await pool.query('SELECT file_path FROM dmi_content WHERE id = ?', [req.params.id]);
-  if (rows[0] && rows[0].file_path) {
-    await remove(rows[0].file_path);
+  const [rows] = await pool.query('SELECT file_path, preview_url FROM dmi_content WHERE id = ?', [req.params.id]);
+  if (rows[0]) {
+    if (rows[0].file_path)   await remove(rows[0].file_path);
+    if (rows[0].preview_url) await remove(rows[0].preview_url, { resourceType: 'video' });
   }
   await pool.query('DELETE FROM dmi_content WHERE id = ?', [req.params.id]);
   res.json({ success: true });

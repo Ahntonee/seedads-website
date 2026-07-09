@@ -147,6 +147,7 @@ async function createTables() {
       type         VARCHAR(50) NOT NULL DEFAULT 'pdf',
       file_path    VARCHAR(500),
       file_name    VARCHAR(500),
+      preview_url  VARCHAR(500),
       external_url VARCHAR(500),
       plan_access  VARCHAR(100) NOT NULL DEFAULT 'all',
       category     VARCHAR(100),
@@ -326,6 +327,7 @@ async function migrateColumns() {
     "ALTER TABLE case_studies    ADD COLUMN IF NOT EXISTS image_url  VARCHAR(500)",
     "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS gateway_session VARCHAR(200)",
     "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS paid_at         TIMESTAMP",
+    "ALTER TABLE dmi_content     ADD COLUMN IF NOT EXISTS preview_url     VARCHAR(500)",
   ];
   for (const sql of migrations) {
     try { await pgPool.query(sql); }

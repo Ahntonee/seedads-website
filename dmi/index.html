@@ -549,10 +549,10 @@
 
         <!-- Upgrade CTA (shown when user has locked items) -->
         <div id="upgradeCta" style="display:none;margin-top:3rem;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:20px;padding:2.5rem;text-align:center;">
-          <h3 style="color:white;font-size:1.4rem;font-weight:800;margin-bottom:.75rem;">Unlock More Resources</h3>
-          <p style="color:rgba(255,255,255,.85);margin-bottom:1.5rem;">Some resources require a higher plan. Upgrade to access the full library.</p>
-          <a href="../pricing.html" style="display:inline-flex;align-items:center;gap:.5rem;background:white;color:#6366f1;padding:.85rem 2rem;border-radius:50px;font-weight:700;text-decoration:none;">
-            <i class="fas fa-tags"></i> View Plans
+          <h3 style="color:white;font-size:1.4rem;font-weight:800;margin-bottom:.75rem;">Ready to Start Learning?</h3>
+          <p style="color:rgba(255,255,255,.85);margin-bottom:1.5rem;">Browse and preview any course for free. Enroll to unlock the full videos, materials and certification.</p>
+          <a href="/pricing.html" style="display:inline-flex;align-items:center;gap:.5rem;background:white;color:#6366f1;padding:.85rem 2rem;border-radius:50px;font-weight:700;text-decoration:none;">
+            <i class="fas fa-tags"></i> View Plans &amp; Enroll
           </a>
         </div>
       </div>
@@ -610,7 +610,14 @@
 
           let actionBtn = '';
           if (!item.accessible) {
-            actionBtn = `<a href="../pricing.html" class="dmi-action-btn" style="background:#6366f1;color:white;pointer-events:auto;opacity:1;cursor:pointer;" onclick="event.stopPropagation()"><i class="fas fa-unlock-alt"></i> Upgrade</a>`;
+            const escTitle = item.title.replace(/'/g, "\\'");
+            const previewBtn = item.preview_url
+              ? `<button class="dmi-action-btn" style="background:#00D4AA;color:white;pointer-events:auto;opacity:1;cursor:pointer;margin-right:.4rem;" onclick="event.stopPropagation();openVideo('${item.preview_url}','${escTitle} — Preview')"><i class="fas fa-play"></i> Preview</button>`
+              : '';
+            // Logged-in-but-unapproved → finish payment; anonymous visitor → see plans & enroll
+            const unlockHref  = token ? '/user/dashboard.html#payment' : '/pricing.html';
+            const unlockLabel = token ? 'Complete Payment' : 'Enroll to Unlock';
+            actionBtn = previewBtn + `<a href="${unlockHref}" class="dmi-action-btn" style="background:#6366f1;color:white;pointer-events:auto;opacity:1;cursor:pointer;" onclick="event.stopPropagation()"><i class="fas fa-unlock-alt"></i> ${unlockLabel}</a>`;
           } else if (item.type === 'video' && item.file_path) {
             actionBtn = `<button class="dmi-action-btn" style="background:#6366f1;color:white;" onclick="openVideo('${item.file_path}','${item.title.replace(/'/g,"\\'")}')"><i class="fas fa-play"></i> Watch</button>`;
           } else if (item.type === 'video' && item.external_url) {
