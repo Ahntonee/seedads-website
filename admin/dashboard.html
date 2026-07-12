@@ -406,7 +406,7 @@
 
     <!-- USERS -->
     <div class="page" id="page-users">
-      <div class="section-header"><h2>Registered Users</h2><button class="btn btn-outline" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+      <div class="section-header"><h2>Registered Users</h2><div style="display:flex;gap:.5rem;"><button class="btn btn-primary" onclick="downloadUsersCsv()"><i class="fas fa-download"></i> Download CSV</button><button class="btn btn-outline" onclick="loadUsers()"><i class="fas fa-sync-alt"></i> Refresh</button></div></div>
       <div class="table-card">
         <div class="table-toolbar">
           <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search name or email&hellip;" id="userSearch" oninput="loadUsers()"></div>
@@ -2422,6 +2422,31 @@
         <td>${fmtDate(u.created_at)}</td>
         <td><button class="btn btn-danger btn-sm" data-uid="${u.id}" data-uname="${(u.first_name+' '+u.last_name).replace(/"/g,'&quot;')}" onclick="deleteUser(this)"><i class="fas fa-trash"></i> Delete</button></td>
       </tr>`).join('');
+  }
+
+  // Export ALL registered users (Name, Phone, Email) as a CSV download
+  function csvCell(v) {
+    v = String(v == null ? '' : v);
+    return /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  async function downloadUsersCsv() {
+    const data = await api('GET', '/users');
+    if (!data || !data.users) return;
+    const rows = [['Name', 'Phone', 'Email']];
+    data.users.forEach(u => rows.push([
+      ((u.first_name || '') + ' ' + (u.last_name || '')).trim(),
+      u.phone || '',
+      u.email || '',
+    ]));
+    const csv = rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'seedsads-users-' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast(data.users.length + ' users exported', 'success');
   }
 
   // â”€â”€ SETTINGS â”€â”€
