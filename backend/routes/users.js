@@ -35,7 +35,22 @@ function requireUser(req, res, next) {
   }
 }
 
+// ── Email OTP helpers ─────────────────────────────────────────────────────────
+const OTP_TTL_MS = 10 * 60 * 1000;   // codes are valid for 10 minutes
+const OTP_MAX_ATTEMPTS = 5;          // wrong guesses allowed before a code is burned
+
+function generateOtp() {
+  const code = String(crypto.randomInt(0, 1000000)).padStart(6, '0');
+  const hash = crypto.createHash('sha256').update(code).digest('hex');
+  return { code, hash, expires: Date.now() + OTP_TTL_MS };
+}
+function hashOtp(code) {
+  return crypto.createHash('sha256').update(String(code)).digest('hex');
+}
+
 // ── Register ──────────────────────────────────────────────────────────────────
+// Creates the account in an UNVERIFIED state and emails a 6-digit OTP. No login
+// token is issued until the user confirms the code via /verify-otp.
 router.post('/register', asyncHandler(async (req, res) => {
   const first_name = sanitizeText(req.body.first_name, 100);
   const last_name  = sanitizeText(req.body.last_name,  100);
@@ -50,25 +65,84 @@ router.post('/register', asyncHandler(async (req, res) => {
   const pwErr = validatePassword(password);
   if (pwErr) return res.status(400).json({ error: pwErr });
 
-  const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
-  if (existing.length) return res.status(409).json({ error: 'An account with this email already exists' });
+  const [existing] = await pool.query('SELECT id, email_verified FROM users WHERE email = ?', [email]);
+  if (existing.length) {
+    // Allow a stalled, never-verified signup to restart cleanly.
+    if (existing[0].email_verified === 0 || existing[0].email_verified === false) {
+      const otp = generateOtp();
+      await pool.query(
+        'UPDATE users SET first_name = ?, last_name = ?, phone = ?, password = ?, plan = ?, otp_hash = ?, otp_expires = ?, otp_attempts = 0 WHERE id = ?',
+        [first_name, last_name, phone, bcrypt.hashSync(password, 12), plan, otp.hash, otp.expires, existing[0].id]
+      );
+      mailer.sendOtp({ first_name, email, code: otp.code }).catch(() => {});
+      return res.json({ needsVerification: true, email });
+    }
+    return res.status(409).json({ error: 'An account with this email already exists' });
+  }
 
   const hash = bcrypt.hashSync(password, 12);
-  const [result] = await pool.query(
-    'INSERT INTO users (first_name, last_name, email, phone, password, plan) VALUES (?,?,?,?,?,?)',
-    [first_name, last_name, email, phone, hash, plan]
+  const otp = generateOtp();
+  await pool.query(
+    'INSERT INTO users (first_name, last_name, email, phone, password, plan, email_verified, otp_hash, otp_expires, otp_attempts) VALUES (?,?,?,?,?,?,?,?,?,?)',
+    [first_name, last_name, email, phone, hash, plan, 0, otp.hash, otp.expires, 0]
   );
-  const newId = result.insertId;
+
+  mailer.sendOtp({ first_name, email, code: otp.code }).catch(() => {});
+  res.json({ needsVerification: true, email });
+}));
+
+// ── Verify email OTP ────────────────────────────────────────────────────────
+// Confirms the code, activates the account, sends the welcome email and logs in.
+router.post('/verify-otp', asyncHandler(async (req, res) => {
+  const email = sanitizeEmail(req.body.email);
+  const code  = String(req.body.code || '').trim();
+  if (!email || !/^\d{6}$/.test(code)) return res.status(400).json({ error: 'Enter the 6-digit code sent to your email' });
+
+  const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
+  const user = rows[0];
+  if (!user) return res.status(400).json({ error: 'Invalid or expired code. Please request a new one.' });
+  if (user.email_verified === 1 || user.email_verified === true) {
+    return res.status(400).json({ error: 'This account is already verified. Please log in.' });
+  }
+  if (!user.otp_hash || !user.otp_expires || Number(user.otp_expires) < Date.now()) {
+    return res.status(400).json({ error: 'Your code has expired. Please request a new one.' });
+  }
+  if (Number(user.otp_attempts) >= OTP_MAX_ATTEMPTS) {
+    return res.status(429).json({ error: 'Too many incorrect attempts. Please request a new code.' });
+  }
+  if (hashOtp(code) !== user.otp_hash) {
+    await pool.query('UPDATE users SET otp_attempts = otp_attempts + 1 WHERE id = ?', [user.id]);
+    return res.status(400).json({ error: 'Incorrect code. Please try again.' });
+  }
+
+  await pool.query(
+    'UPDATE users SET email_verified = 1, otp_hash = NULL, otp_expires = NULL, otp_attempts = 0 WHERE id = ?',
+    [user.id]
+  );
+  mailer.welcomeUser({ first_name: user.first_name, email: user.email, plan: user.plan }).catch(() => {});
 
   const token = jwt.sign(
-    { id: newId, email, first_name, last_name, role: 'user' },
+    { id: user.id, email: user.email, first_name: user.first_name, last_name: user.last_name, role: 'user' },
     SECRET, { expiresIn: '7d' }
   );
-  mailer.welcomeUser({ first_name, email, plan }).catch(() => {});
-  res.json({
-    token,
-    user: { id: newId, first_name, last_name, email, plan, payment_status: 'unpaid', approved: 0 },
-  });
+  const { password: _p, otp_hash: _h, otp_expires: _e, otp_attempts: _a, ...safeUser } = user;
+  res.json({ token, user: { ...safeUser, email_verified: 1 } });
+}));
+
+// ── Resend OTP ────────────────────────────────────────────────────────────────
+router.post('/resend-otp', asyncHandler(async (req, res) => {
+  const email = sanitizeEmail(req.body.email);
+  if (!email) return res.status(400).json({ error: 'A valid email address is required' });
+
+  const [rows] = await pool.query('SELECT id, first_name, email_verified FROM users WHERE email = ?', [email]);
+  const user = rows[0];
+  // Always respond the same way so we don't reveal which emails are registered.
+  if (user && (user.email_verified === 0 || user.email_verified === false)) {
+    const otp = generateOtp();
+    await pool.query('UPDATE users SET otp_hash = ?, otp_expires = ?, otp_attempts = 0 WHERE id = ?', [otp.hash, otp.expires, user.id]);
+    mailer.sendOtp({ first_name: user.first_name, email, code: otp.code }).catch(() => {});
+  }
+  res.json({ success: true, message: 'If your account still needs verification, a new code has been sent.' });
 }));
 
 // ── Login ─────────────────────────────────────────────────────────────────────
@@ -92,6 +166,14 @@ router.post('/login', asyncHandler(async (req, res) => {
   if (!user || !bcrypt.compareSync(password, user.password)) {
     recordFailedAttempt(identifier, ip);
     return res.status(401).json({ error: 'Invalid email or password' });
+  }
+
+  // Block accounts that registered but never confirmed their email OTP.
+  if (user.email_verified === 0 || user.email_verified === false) {
+    const otp = generateOtp();
+    await pool.query('UPDATE users SET otp_hash = ?, otp_expires = ?, otp_attempts = 0 WHERE id = ?', [otp.hash, otp.expires, user.id]);
+    mailer.sendOtp({ first_name: user.first_name, email, code: otp.code }).catch(() => {});
+    return res.status(403).json({ needsVerification: true, email, error: 'Please verify your email. We just sent you a new code.' });
   }
 
   clearAttempts(identifier);
@@ -132,8 +214,8 @@ router.post('/google', async (req, res) => {
       isNew      = true;
       const hash = bcrypt.hashSync(crypto.randomBytes(32).toString('hex'), 12);
       const [insResult] = await pool.query(
-        'INSERT INTO users (first_name, last_name, email, password) VALUES (?,?,?,?)',
-        [first_name, last_name, email, hash]
+        'INSERT INTO users (first_name, last_name, email, password, email_verified) VALUES (?,?,?,?,?)',
+        [first_name, last_name, email, hash, 1]
       );
       const [r2] = await pool.query('SELECT * FROM users WHERE id = ?', [insResult.insertId]);
       user = r2[0];

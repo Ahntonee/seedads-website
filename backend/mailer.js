@@ -182,9 +182,31 @@ async function sendPasswordReset({ first_name, email, token }) {
   });
 }
 
+/** Send a 6-digit email verification code to a new user */
+async function sendOtp({ first_name, email, code }) {
+  await send({
+    to: email,
+    subject: code + ' is your SeedsAds verification code',
+    html: `
+      <div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;color:#1A1A2E;">
+        <div style="background:linear-gradient(135deg,#0A2540,#0066FF);padding:24px 32px;border-radius:12px 12px 0 0;">
+          <h2 style="color:white;margin:0;font-size:1.3rem;">Verify your email</h2>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-top:none;padding:28px 32px;border-radius:0 0 12px 12px;">
+          <p style="line-height:1.7;margin-bottom:16px;">Hi <strong>${first_name || 'there'}</strong>, welcome to SeedsAds! Use the code below to confirm your email address and activate your account.</p>
+          <div style="text-align:center;margin:28px 0;">
+            <div style="display:inline-block;background:#E6F0FF;color:#0A2540;font-size:2rem;font-weight:700;letter-spacing:.4em;padding:16px 28px 16px 34px;border-radius:12px;">${code}</div>
+          </div>
+          <p style="line-height:1.7;margin-bottom:8px;font-size:.9rem;color:#6B7280;">This code expires in <strong>10 minutes</strong>. If you didn&#39;t create a SeedsAds account, you can safely ignore this email.</p>
+        </div>
+      </div>`,
+  });
+}
+
 module.exports = {
   notifyNewContact,
   welcomeUser,
+  sendOtp,
   notifyPaymentUploaded,
   notifyPaymentApproved,
   notifyPaymentRejected,

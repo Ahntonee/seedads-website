@@ -314,6 +314,20 @@ async function createTables() {
       paid_at     TIMESTAMP,
       created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS dmi_likes (
+      id         SERIAL PRIMARY KEY,
+      dmi_id     INT NOT NULL,
+      user_id    INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (dmi_id, user_id)
+    )`,
+    `CREATE TABLE IF NOT EXISTS dmi_bookmarks (
+      id         SERIAL PRIMARY KEY,
+      dmi_id     INT NOT NULL,
+      user_id    INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (dmi_id, user_id)
+    )`,
   ];
   for (const sql of stmts) await pgPool.query(sql);
 }
@@ -328,6 +342,12 @@ async function migrateColumns() {
     "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS gateway_session VARCHAR(200)",
     "ALTER TABLE shop_orders     ADD COLUMN IF NOT EXISTS paid_at         TIMESTAMP",
     "ALTER TABLE dmi_content     ADD COLUMN IF NOT EXISTS preview_url     VARCHAR(500)",
+    // Email OTP verification. DEFAULT 1 grandfathers existing accounts as verified;
+    // new registrations explicitly set email_verified = 0 until they confirm the code.
+    "ALTER TABLE users           ADD COLUMN IF NOT EXISTS email_verified  INT DEFAULT 1",
+    "ALTER TABLE users           ADD COLUMN IF NOT EXISTS otp_hash        VARCHAR(64)",
+    "ALTER TABLE users           ADD COLUMN IF NOT EXISTS otp_expires     BIGINT",
+    "ALTER TABLE users           ADD COLUMN IF NOT EXISTS otp_attempts    INT DEFAULT 0",
   ];
   for (const sql of migrations) {
     try { await pgPool.query(sql); }

@@ -160,6 +160,7 @@
     <div class="nav-item active" onclick="showPage('home')"><i class="fas fa-home"></i> Dashboard</div>
     <div class="nav-item" onclick="showPage('payment')"><i class="fas fa-credit-card"></i> Payment</div>
     <div class="nav-item" onclick="showPage('dmi')"><i class="fas fa-graduation-cap"></i> DMI Courses</div>
+    <div class="nav-item" onclick="showPage('saved')"><i class="fas fa-bookmark"></i> Saved Courses</div>
     <div class="nav-label">Site</div>
     <div class="nav-item" onclick="window.location.href='../index.html'"><i class="fas fa-globe"></i> Main Website</div>
     <div class="nav-item" onclick="window.location.href='../blog/articles.html'"><i class="fas fa-newspaper"></i> Blog</div>
@@ -297,6 +298,10 @@
       <div id="dmiContent"></div>
     </div>
 
+    <div class="page" id="page-saved">
+      <div id="savedContent"></div>
+    </div>
+
   </div><!-- /content -->
 </div>
 
@@ -335,9 +340,10 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
-    const titles = { home: 'Dashboard', payment: 'Payment', dmi: 'DMI Courses' };
+    const titles = { home: 'Dashboard', payment: 'Payment', dmi: 'DMI Courses', saved: 'Saved Courses' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     if (page === 'dmi') renderDMI();
+    if (page === 'saved') renderSaved();
     if (page === 'payment') loadPaymentHistory();
     if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('open');
   }
@@ -559,6 +565,39 @@
       el.innerHTML = `<div class="card"><div class="card-header"><h2><i class="fas fa-graduation-cap"></i> DMI - Digital Marketing Institute</h2><span style="background:rgba(0,212,170,0.1);color:var(--success);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px;"><i class="fas fa-check-circle"></i> ${planLabel ? planLabel + ' Plan' : 'Full Access'}</span></div><p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;">Welcome back, ${userData.first_name}! Here are your available DMI resources. <a href="../dmi/index.html" style="color:var(--primary-blue);font-weight:600;margin-left:.5rem;">Browse full library <i class="fas fa-arrow-right" style="font-size:.75rem;"></i></a></p>${contentHtml}</div>`;
     } catch {
       el.innerHTML = '<div class="card"><p style="color:var(--text-gray);text-align:center;padding:2rem;">Could not load DMI content. Please try again.</p></div>';
+    }
+  }
+
+  async function renderSaved() {
+    const el = document.getElementById('savedContent');
+    el.innerHTML = '<div style="text-align:center;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> Loading saved courses...</div>';
+    const typeIcon = { pdf:'fa-file-pdf', video:'fa-play-circle', zip:'fa-file-archive', link:'fa-external-link-alt' };
+    const typeColor = { pdf:'#ef4444', video:'#6366f1', zip:'#f59e0b', link:'#10b981' };
+    try {
+      const res = await fetch(API + '/dmi/bookmarks', { headers: { Authorization: 'Bearer ' + token } });
+      const data = await res.json();
+      const items = data.items || [];
+      if (!items.length) {
+        el.innerHTML = `<div class="card"><div style="text-align:center;padding:2.5rem;color:var(--text-gray);"><i class="fas fa-bookmark" style="font-size:2.5rem;opacity:.25;display:block;margin-bottom:1rem;"></i><h3 style="color:var(--primary-dark);margin-bottom:.5rem;">No saved courses yet</h3><p style="margin-bottom:1.25rem;">Tap the bookmark icon on any course to save it here for quick access.</p><a href="../dmi/index.html" class="btn btn-primary"><i class="fas fa-graduation-cap"></i> Browse DMI Courses</a></div></div>`;
+        return;
+      }
+      const cards = items.map(item => {
+        const icon = typeIcon[item.type] || 'fa-file';
+        const color = typeColor[item.type] || '#6366f1';
+        const title = escHtml(item.title);
+        if (item.accessible) {
+          let action;
+          if (item.type === 'video' && item.file_path) action = `href="#" onclick="event.preventDefault();openDmiVideo('${item.file_path}','${item.title.replace(/'/g,"\\'")}')"`;
+          else if (item.file_path) action = `href="${item.file_path}" download target="_blank"`;
+          else if (item.external_url) action = `href="${item.external_url}" target="_blank" rel="noopener"`;
+          else action = 'href="../dmi/index.html"';
+          return `<a class="course-card" ${action}><div class="course-icon" style="background:${color}20;"><i class="fas ${icon}" style="color:${color};font-size:1.5rem;"></i></div><div class="course-title">${title}</div><div class="course-desc">${escHtml(item.description || item.category || '')}</div></a>`;
+        }
+        return `<a class="course-card" href="../dmi/index.html" style="opacity:.7;"><div class="course-icon" style="background:#f1f5f9;"><i class="fas fa-lock" style="color:#94a3b8;font-size:1.5rem;"></i></div><div class="course-title">${title}</div><div class="course-desc" style="color:#7c3aed;"><i class="fas fa-lock" style="font-size:.65rem;"></i> Requires ${escHtml(item.plan_access)} plan</div></a>`;
+      }).join('');
+      el.innerHTML = `<div class="card"><div class="card-header"><h2><i class="fas fa-bookmark"></i> Saved Courses</h2><span style="color:var(--text-gray);font-size:.85rem;">${items.length} saved</span></div><p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;">Courses you bookmarked from the <a href="../dmi/index.html" style="color:var(--primary-blue);font-weight:600;">DMI library</a>.</p><div class="dmi-courses">${cards}</div></div>`;
+    } catch {
+      el.innerHTML = '<div class="card"><p style="color:var(--text-gray);text-align:center;padding:2rem;">Could not load saved courses. Please try again.</p></div>';
     }
   }
 

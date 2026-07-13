@@ -106,13 +106,14 @@
       <h1>Create Your Account</h1>
       <p>Fill in the details below to get started with SeedsAds.</p>
 
+      <div class="error-box" id="errorBox"><i class="fas fa-exclamation-circle"></i><span id="errorText"></span></div>
+
+      <div id="signupStep">
       <button class="google-btn" onclick="triggerGoogle()">
         <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
         Continue with Google
       </button>
       <div class="divider">or fill in the form</div>
-
-      <div class="error-box" id="errorBox"><i class="fas fa-exclamation-circle"></i><span id="errorText"></span></div>
 
       <form id="registerForm">
         <div class="form-row">
@@ -180,6 +181,24 @@
       </form>
 
       <div class="login-link">Already have an account? <a href="login.html">Sign in</a></div>
+      </div><!-- /signupStep -->
+
+      <div id="otpStep" style="display:none;">
+        <div style="text-align:center;margin-bottom:1.25rem;">
+          <i class="fas fa-envelope-open-text" style="font-size:2.2rem;color:#0066FF;margin-bottom:.6rem;"></i>
+          <h3 style="font-size:1.15rem;color:#0A2540;margin-bottom:.4rem;">Check your email</h3>
+          <p style="color:#64748b;font-size:.88rem;">We sent a 6-digit code to <strong id="otpEmail"></strong>. Enter it below to activate your account.</p>
+        </div>
+        <div class="form-group">
+          <label>Verification Code *</label>
+          <div class="input-wrap">
+            <i class="fas fa-key prefix"></i>
+            <input type="text" id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code" style="letter-spacing:.4em;font-weight:700;text-align:center;">
+          </div>
+        </div>
+        <button type="button" class="submit-btn" id="verifyBtn" onclick="submitOtp()"><i class="fas fa-check-circle"></i> Verify &amp; Continue</button>
+        <div class="login-link" style="margin-top:1rem;">Didn&#39;t get the code? <a href="#" id="resendLink" onclick="resendOtp(event)">Resend it</a> <span id="resendMsg" style="color:#10b981;margin-left:.35rem;"></span></div>
+      </div>
     </div>
   </div>
 
@@ -284,6 +303,11 @@
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Registration failed');
+        // Email OTP flow: no token yet — switch to the verification step.
+        if (data.needsVerification) {
+          showOtpStep(data.email);
+          return;
+        }
         localStorage.setItem('seedads_user_token', data.token);
         localStorage.setItem('seedads_user', JSON.stringify(data.user));
         window.location.href = 'dashboard.html';
@@ -294,6 +318,66 @@
         btn.innerHTML = '<i class="fas fa-user-plus"></i> Create Account';
       }
     });
+
+    // ── Email OTP verification step ─────────────────────────────────────────
+    let pendingEmail = '';
+    function showOtpStep(email) {
+      pendingEmail = email;
+      document.getElementById('errorBox').classList.remove('show');
+      document.getElementById('signupStep').style.display = 'none';
+      document.getElementById('otpStep').style.display = 'block';
+      document.getElementById('otpEmail').textContent = email;
+      document.querySelector('.form-card h1').textContent = 'Verify Your Email';
+      const p = document.querySelector('.form-card > p'); if (p) p.style.display = 'none';
+      setTimeout(() => document.getElementById('otpCode').focus(), 50);
+    }
+
+    async function submitOtp() {
+      const err = document.getElementById('errorBox');
+      const btn = document.getElementById('verifyBtn');
+      err.classList.remove('show');
+      const code = document.getElementById('otpCode').value.trim();
+      if (!/^\d{6}$/.test(code)) {
+        document.getElementById('errorText').textContent = 'Enter the 6-digit code from your email';
+        err.classList.add('show'); return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+      try {
+        const res = await fetch('/api/users/verify-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail, code }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Verification failed');
+        localStorage.setItem('seedads_user_token', data.token);
+        localStorage.setItem('seedads_user', JSON.stringify(data.user));
+        window.location.href = 'dashboard.html';
+      } catch (ex) {
+        document.getElementById('errorText').textContent = ex.message;
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle"></i> Verify &amp; Continue';
+      }
+    }
+
+    async function resendOtp(e) {
+      e.preventDefault();
+      const msg = document.getElementById('resendMsg');
+      msg.textContent = 'Sending...';
+      try {
+        await fetch('/api/users/resend-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingEmail }),
+        });
+        msg.textContent = 'New code sent!';
+      } catch {
+        msg.textContent = '';
+      }
+      setTimeout(() => { msg.textContent = ''; }, 4000);
+    }
   </script>
 </body>
 </html>

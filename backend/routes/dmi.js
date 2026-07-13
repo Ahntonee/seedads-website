@@ -5,6 +5,7 @@ const fs       = require('fs');
 const jwt      = require('jsonwebtoken');
 const { pool } = require('../database');
 const { requireAuth } = require('./auth');
+const { requireUser } = require('./users');
 const asyncHandler = require('../lib/asyncHandler');
 const { sanitizeText } = require('../security');
 const { makeUploader, persist, remove } = require('../storage');
@@ -96,7 +97,7 @@ router.get('/download/:filename', asyncHandler(async (req, res) => {
 // browse and preview before buying. The full content (file_path / external_url)
 // is only exposed to admins or APPROVED (paid) users whose plan grants access.
 router.get('/', asyncHandler(async (req, res) => {
-  let userPlan = null, userApproved = false, isAdmin = false;
+  let userPlan = null, userApproved = false, isAdmin = false, userId = null;
   const auth = req.headers.authorization;
   if (auth && auth.startsWith('Bearer ')) {
     try {
@@ -105,7 +106,7 @@ router.get('/', asyncHandler(async (req, res) => {
         isAdmin = true;
       } else {
         const [rows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [payload.id]);
-        if (rows[0]) { userPlan = rows[0].plan; userApproved = !!rows[0].approved; }
+        if (rows[0]) { userPlan = rows[0].plan; userApproved = !!rows[0].approved; userId = payload.id; }
       }
     } catch {}
   }
@@ -117,6 +118,18 @@ router.get('/', asyncHandler(async (req, res) => {
   query += ' ORDER BY sort_order ASC, created_at DESC';
 
   const [all] = await pool.query(query, params);
+
+  // Public like counts, and (for a logged-in user) which items they liked/bookmarked.
+  const [likeRows] = await pool.query('SELECT dmi_id, COUNT(*) AS c FROM dmi_likes GROUP BY dmi_id');
+  const likeCounts = {}; likeRows.forEach(r => { likeCounts[r.dmi_id] = Number(r.c); });
+  let myLikes = new Set(), myBookmarks = new Set();
+  if (userId) {
+    const [lk] = await pool.query('SELECT dmi_id FROM dmi_likes WHERE user_id = ?', [userId]);
+    const [bm] = await pool.query('SELECT dmi_id FROM dmi_bookmarks WHERE user_id = ?', [userId]);
+    myLikes = new Set(lk.map(r => r.dmi_id));
+    myBookmarks = new Set(bm.map(r => r.dmi_id));
+  }
+
   // Free ('all') content stays open to everyone. Paid content requires payment
   // approval (not merely a plan on the account) AND a plan that grants access.
   const grants = (item) =>
@@ -132,10 +145,63 @@ router.get('/', asyncHandler(async (req, res) => {
       file_name:    ok ? item.file_name    : null,
       external_url: ok ? item.external_url : null,
       // preview_url is intentionally always exposed — it is the free preview clip.
+      like_count:   likeCounts[item.id] || 0,
+      liked:        myLikes.has(item.id),
+      bookmarked:   myBookmarks.has(item.id),
     };
   });
 
   res.json({ items, userPlan });
+}));
+
+// ── User: list bookmarked courses ("Saved Courses") ────────────────────────
+router.get('/bookmarks', requireUser, asyncHandler(async (req, res) => {
+  const [rows] = await pool.query(
+    `SELECT d.* FROM dmi_bookmarks b JOIN dmi_content d ON d.id = b.dmi_id
+     WHERE b.user_id = ? AND d.published = 1 ORDER BY b.created_at DESC`,
+    [req.user.id]
+  );
+  const [urows] = await pool.query('SELECT plan, approved FROM users WHERE id = ?', [req.user.id]);
+  const u = urows[0] || {};
+  const grants = (item) => item.plan_access === 'all' || (!!u.approved && canAccess(u.plan, item.plan_access));
+  const items = rows.map(item => {
+    const ok = grants(item);
+    return { ...item, accessible: ok, bookmarked: true,
+      file_path:    ok ? item.file_path    : null,
+      external_url: ok ? item.external_url : null };
+  });
+  res.json({ items });
+}));
+
+// ── User: toggle like (public counts; login required) ──────────────────────
+router.post('/:id/like', requireUser, asyncHandler(async (req, res) => {
+  const dmiId = parseInt(req.params.id);
+  const [existing] = await pool.query('SELECT id FROM dmi_likes WHERE dmi_id = ? AND user_id = ?', [dmiId, req.user.id]);
+  let liked;
+  if (existing[0]) {
+    await pool.query('DELETE FROM dmi_likes WHERE dmi_id = ? AND user_id = ?', [dmiId, req.user.id]);
+    liked = false;
+  } else {
+    await pool.query('INSERT INTO dmi_likes (dmi_id, user_id) VALUES (?, ?) ON CONFLICT (dmi_id, user_id) DO NOTHING', [dmiId, req.user.id]);
+    liked = true;
+  }
+  const [cnt] = await pool.query('SELECT COUNT(*) AS c FROM dmi_likes WHERE dmi_id = ?', [dmiId]);
+  res.json({ liked, like_count: Number(cnt[0].c) });
+}));
+
+// ── User: toggle bookmark (login required) ─────────────────────────────────
+router.post('/:id/bookmark', requireUser, asyncHandler(async (req, res) => {
+  const dmiId = parseInt(req.params.id);
+  const [existing] = await pool.query('SELECT id FROM dmi_bookmarks WHERE dmi_id = ? AND user_id = ?', [dmiId, req.user.id]);
+  let bookmarked;
+  if (existing[0]) {
+    await pool.query('DELETE FROM dmi_bookmarks WHERE dmi_id = ? AND user_id = ?', [dmiId, req.user.id]);
+    bookmarked = false;
+  } else {
+    await pool.query('INSERT INTO dmi_bookmarks (dmi_id, user_id) VALUES (?, ?) ON CONFLICT (dmi_id, user_id) DO NOTHING', [dmiId, req.user.id]);
+    bookmarked = true;
+  }
+  res.json({ bookmarked });
 }));
 
 // ── Admin: list all content ────────────────────────────────────────────────

@@ -180,6 +180,13 @@
       .dmi-locked { opacity:.55; pointer-events:none; cursor:not-allowed; }
       .cat-pill { padding:.45rem 1.1rem; border-radius:50px; font-size:.82rem; font-weight:600; cursor:pointer; border:2px solid #e2e8f0; background:white; color:#64748b; transition:all .2s; }
       .cat-pill.active, .cat-pill:hover { background:#0066FF; color:white; border-color:#0066FF; }
+      .dmi-social { display:flex; align-items:center; gap:.15rem; margin-top:.9rem; padding-top:.75rem; border-top:1px solid #eef2f7; }
+      .dmi-soc { display:inline-flex; align-items:center; gap:.35rem; background:none; border:none; cursor:pointer; color:#94a3b8; font-size:.82rem; font-weight:600; padding:.32rem .5rem; border-radius:8px; transition:all .15s; font-family:inherit; }
+      .dmi-soc:hover { background:#f1f5f9; color:#0A2540; }
+      .dmi-share-menu { position:fixed; z-index:10000; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(10,37,64,.22); padding:.4rem; display:flex; gap:.2rem; }
+      .dmi-share-opt { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border-radius:10px; border:none; background:#f1f5f9; color:#0A2540; font-size:1rem; cursor:pointer; text-decoration:none; transition:all .15s; }
+      .dmi-share-opt:hover { background:#0066FF; color:#fff; transform:translateY(-1px); }
+      .dmi-toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#0A2540; color:#fff; padding:.7rem 1.2rem; border-radius:10px; z-index:10001; font-size:.9rem; font-weight:500; box-shadow:0 8px 30px rgba(0,0,0,.3); }
     </style>
     </style>
 <script src="/analytics-tracker.js" defer></script>
@@ -519,6 +526,7 @@
           const pc = planColor(item.plan_access);
           const planLabel = item.plan_access === 'all' ? 'Free' : item.plan_access;
           const lockedClass = item.accessible ? '' : 'dmi-locked';
+          const escT = (item.title || '').replace(/'/g, "\\'");
 
           let actionBtn = '';
           if (!item.accessible) {
@@ -555,6 +563,18 @@
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;">
                 <span style="font-size:.78rem;color:#94a3b8;"><i class="fas ${ts.icon}"></i> ${ts.label}</span>
                 ${actionBtn}
+              </div>
+              <div class="dmi-social">
+                <button class="dmi-soc" onclick="event.stopPropagation();dmiLike(${item.id},this)" title="Like">
+                  <i class="${item.liked ? 'fas' : 'far'} fa-heart" style="${item.liked ? 'color:#ef4444;' : ''}"></i>
+                  <span>${item.like_count || 0}</span>
+                </button>
+                <button class="dmi-soc" onclick="event.stopPropagation();dmiBookmark(${item.id},this)" title="Save course">
+                  <i class="${item.bookmarked ? 'fas' : 'far'} fa-bookmark" style="${item.bookmarked ? 'color:#0066FF;' : ''}"></i>
+                </button>
+                <button class="dmi-soc dmi-share-toggle" onclick="event.stopPropagation();dmiShare(${item.id},'${escT}',this)" title="Share" style="margin-left:auto;">
+                  <i class="fas fa-share-nodes"></i>
+                </button>
               </div>
             </div>
           </div>`;
@@ -593,6 +613,77 @@
           </div>`;
         document.body.appendChild(overlay);
         overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      };
+
+      function dmiToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'dmi-toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2600);
+      }
+
+      function dmiNeedsLogin() {
+        if (token) return false;
+        window.location.href = '/user/login.html?redirect=' + encodeURIComponent(window.location.href);
+        return true;
+      }
+
+      window.dmiLike = async function (id, btn) {
+        if (dmiNeedsLogin()) return;
+        try {
+          const res = await fetch('/api/dmi/' + id + '/like', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+          if (!res.ok) return;
+          const d = await res.json();
+          const icon = btn.querySelector('i'), cnt = btn.querySelector('span');
+          icon.className = (d.liked ? 'fas' : 'far') + ' fa-heart';
+          icon.style.color = d.liked ? '#ef4444' : '';
+          if (cnt) cnt.textContent = d.like_count;
+        } catch {}
+      };
+
+      window.dmiBookmark = async function (id, btn) {
+        if (dmiNeedsLogin()) return;
+        try {
+          const res = await fetch('/api/dmi/' + id + '/bookmark', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+          if (!res.ok) return;
+          const d = await res.json();
+          const icon = btn.querySelector('i');
+          icon.className = (d.bookmarked ? 'fas' : 'far') + ' fa-bookmark';
+          icon.style.color = d.bookmarked ? '#0066FF' : '';
+          dmiToast(d.bookmarked ? 'Saved to your courses' : 'Removed from saved courses');
+        } catch {}
+      };
+
+      window.dmiShare = function (id, title, btn) {
+        const existing = document.getElementById('dmiShareMenu');
+        if (existing) { existing.remove(); return; }
+        const url = window.location.origin + '/dmi/index?course=' + id;
+        const menu = document.createElement('div');
+        menu.id = 'dmiShareMenu';
+        menu.className = 'dmi-share-menu';
+        menu.innerHTML =
+          '<button class="dmi-share-opt" data-a="copy" title="Copy link"><i class="fas fa-link"></i></button>' +
+          '<a class="dmi-share-opt" href="https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '" target="_blank" rel="noopener" title="Facebook"><i class="fab fa-facebook-f"></i></a>' +
+          '<a class="dmi-share-opt" href="https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title) + '" target="_blank" rel="noopener" title="X"><i class="fab fa-x-twitter"></i></a>' +
+          '<button class="dmi-share-opt" data-a="ig" title="Instagram"><i class="fab fa-instagram"></i></button>';
+        document.body.appendChild(menu);
+        const r = btn.getBoundingClientRect();
+        menu.style.top = (r.bottom + 8) + 'px';
+        menu.style.left = Math.max(8, r.right - menu.offsetWidth) + 'px';
+        const copyLink = () => {
+          if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+          else { const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); } catch {} ta.remove(); }
+        };
+        menu.querySelector('[data-a="copy"]').onclick = () => { copyLink(); menu.remove(); dmiToast('Link copied to clipboard'); };
+        menu.querySelector('[data-a="ig"]').onclick = () => {
+          if (navigator.share) navigator.share({ title: title, url: url }).catch(() => {});
+          else { copyLink(); dmiToast('Link copied — paste it into your Instagram story or bio'); }
+          menu.remove();
+        };
+        setTimeout(() => document.addEventListener('click', function h(e) {
+          if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', h); }
+        }), 10);
       };
 
       async function loadContent() {
