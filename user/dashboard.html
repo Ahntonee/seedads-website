@@ -515,31 +515,30 @@
     const el = document.getElementById('dmiContent');
     if (!userData) { el.innerHTML = '<div style="text-align:center;padding:2rem;"><i class="fas fa-spinner fa-spin"></i></div>'; return; }
 
-    if (!userData.approved) {
-      const s = userData.payment_status;
-      const msg = s === 'pending'
-        ? 'Your payment receipt is being reviewed. DMI access will be granted once approved - usually within 24 hours.'
-        : 'DMI courses are available after your payment is verified. Upload your receipt on the Payment page to get started.';
-      el.innerHTML = `
-        <div class="card">
-          <div class="dmi-locked">
-            <i class="fas fa-lock"></i>
-            <h3>DMI Courses - Access Restricted</h3>
-            <p>${msg}</p>
-            ${s !== 'pending' ? `<button class="btn btn-primary btn-lg" onclick="showPage('payment')"><i class="fas fa-upload"></i> Upload Payment Receipt</button>` : `<div style="color:var(--warning);font-weight:600;font-size:.9rem;"><i class="fas fa-clock"></i> Review in progress...</div>`}
-          </div>
-        </div>`;
-      return;
-    }
-
     el.innerHTML = '<div style="text-align:center;padding:2rem;"><i class="fas fa-spinner fa-spin"></i> Loading courses...</div>';
+    const typeIcon = { pdf:'fa-file-pdf', video:'fa-play-circle', zip:'fa-file-archive', link:'fa-external-link-alt' };
+    const typeColor = { pdf:'#ef4444', video:'#6366f1', zip:'#f59e0b', link:'#10b981' };
     try {
       const res = await fetch(API + '/dmi', { headers: { Authorization: 'Bearer ' + token } });
       const data = await res.json();
       const items = data.items || [];
       const planLabel = data.userPlan || userData.plan || '';
-      const typeIcon = { pdf:'fa-file-pdf', video:'fa-play-circle', zip:'fa-file-archive', link:'fa-external-link-alt' };
-      const typeColor = { pdf:'#ef4444', video:'#6366f1', zip:'#f59e0b', link:'#10b981' };
+      const approved = !!userData.approved;
+      const pending  = userData.payment_status === 'pending';
+
+      // Header badge reflects access level (full access vs preview-only).
+      const headerBadge = approved
+        ? `<span style="background:rgba(0,212,170,0.1);color:var(--success);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px;"><i class="fas fa-check-circle"></i> ${planLabel ? planLabel + ' Plan' : 'Full Access'}</span>`
+        : `<span style="background:rgba(0,102,255,0.1);color:var(--primary-blue);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px;"><i class="fas fa-eye"></i> Preview Access</span>`;
+
+      // Unapproved users can browse + preview; a banner tells them how to unlock.
+      let bannerHtml = '';
+      if (!approved) {
+        bannerHtml = pending
+          ? `<div style="padding:1rem 1.25rem;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;margin-bottom:1.5rem;color:#92400e;font-size:.88rem;"><i class="fas fa-clock"></i> Your payment receipt is being reviewed. You can preview courses below &mdash; full videos and materials unlock once verified (usually within 24 hours).</div>`
+          : `<div style="padding:1rem 1.25rem;background:#E6F0FF;border:1px solid #bfdbfe;border-radius:12px;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.75rem;"><span style="color:#1e3a8a;font-size:.88rem;"><i class="fas fa-unlock-alt"></i> Preview any course below. Upload your payment receipt to unlock the full videos and materials.</span><button class="btn btn-primary" onclick="showPage('payment')"><i class="fas fa-upload"></i> Upload Receipt</button></div>`;
+      }
+
       let contentHtml = '';
       if (!items.length) {
         contentHtml = '<p style="color:var(--text-gray);text-align:center;padding:2rem;">Course materials are being prepared. Check back soon!</p>';
@@ -550,19 +549,31 @@
           contentHtml += `<div style="margin-bottom:1.5rem;"><h4 style="font-size:.9rem;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem;">Available Resources (${accessible.length})</h4><div class="dmi-courses">${accessible.map(item => {
             const icon = typeIcon[item.type] || 'fa-file';
             const color = typeColor[item.type] || '#6366f1';
+            const jt = (item.title || '').replace(/'/g, "\\'");
             let action = '';
-            if (item.type === 'video' && item.file_path) { action = `href="#" onclick="event.preventDefault();openDmiVideo('${item.file_path}','${item.title.replace(/'/g,"\\'")}')"`; }
+            if (item.type === 'video' && item.file_path) { action = `href="#" onclick="event.preventDefault();openDmiVideo('${item.file_path}','${jt}')"`; }
             else if (item.file_path) { action = `href="${item.file_path}" download target="_blank"`; }
             else if (item.external_url) { action = `href="${item.external_url}" target="_blank" rel="noopener"`; }
             else { action = 'href="../dmi/index.html"'; }
-            return `<a class="course-card" ${action}><div class="course-icon" style="background:${color}20;"><i class="fas ${icon}" style="color:${color};font-size:1.5rem;"></i></div><div class="course-title">${item.title}</div><div class="course-desc">${item.description || item.category || ''}</div></a>`;
+            return `<a class="course-card" ${action}><div class="course-icon" style="background:${color}20;"><i class="fas ${icon}" style="color:${color};font-size:1.5rem;"></i></div><div class="course-title">${escHtml(item.title)}</div><div class="course-desc">${escHtml(item.description || item.category || '')}</div></a>`;
           }).join('')}</div></div>`;
         }
         if (locked.length) {
-          contentHtml += `<div style="margin-top:1.5rem;padding:1.25rem;background:#faf5ff;border-radius:12px;border:1px solid #e9d5ff;"><h4 style="font-size:.9rem;font-weight:700;color:#7c3aed;margin-bottom:.5rem;"><i class="fas fa-lock"></i> Upgrade to Unlock ${locked.length} More Resource${locked.length > 1 ? 's' : ''}</h4><p style="font-size:.83rem;color:var(--text-gray);margin-bottom:1rem;">These resources require a higher plan. <a href="../pricing.html" style="color:#6366f1;font-weight:600;">View Plans</a></p><div style="display:flex;flex-wrap:wrap;gap:.5rem;">${locked.map(i => `<span style="background:white;border:1px solid #e9d5ff;border-radius:50px;padding:.3rem .75rem;font-size:.78rem;color:#7c3aed;"><i class="fas fa-lock" style="font-size:.65rem;"></i> ${i.title}</span>`).join('')}</div></div>`;
+          const unlockNote = approved
+            ? 'Preview these now &mdash; unlock the full content by upgrading your plan. <a href="../pricing.html" style="color:var(--primary-blue);font-weight:600;">View Plans</a>'
+            : 'Preview these now &mdash; the full videos and materials unlock once your payment is verified.';
+          contentHtml += `<div style="margin-top:1.5rem;"><h4 style="font-size:.9rem;font-weight:700;color:var(--text-gray);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;"><i class="fas fa-lock"></i> Locked Courses (${locked.length})</h4><p style="font-size:.83rem;color:var(--text-gray);margin-bottom:1rem;">${unlockNote}</p><div class="dmi-courses">${locked.map(item => {
+            const icon = typeIcon[item.type] || 'fa-file';
+            const color = typeColor[item.type] || '#6366f1';
+            const jt = (item.title || '').replace(/'/g, "\\'");
+            const previewBtn = item.preview_url
+              ? `<button class="btn btn-primary" style="width:100%;margin-top:.85rem;font-size:.8rem;padding:.5rem;background:#00D4AA;" onclick="openDmiVideo('${item.preview_url}','${jt} — Preview')"><i class="fas fa-play"></i> Watch Preview</button>`
+              : `<div style="margin-top:.85rem;font-size:.78rem;color:var(--text-gray);text-align:center;"><i class="fas fa-lock"></i> Preview coming soon</div>`;
+            return `<div class="course-card" style="cursor:default;"><div class="course-icon" style="background:${color}20;"><i class="fas ${icon}" style="color:${color};font-size:1.5rem;"></i></div><div class="course-title">${escHtml(item.title)} <i class="fas fa-lock" style="font-size:.7rem;color:#94a3b8;"></i></div><div class="course-desc">${escHtml(item.description || item.category || '')}</div>${previewBtn}</div>`;
+          }).join('')}</div></div>`;
         }
       }
-      el.innerHTML = `<div class="card"><div class="card-header"><h2><i class="fas fa-graduation-cap"></i> DMI - Digital Marketing Institute</h2><span style="background:rgba(0,212,170,0.1);color:var(--success);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px;"><i class="fas fa-check-circle"></i> ${planLabel ? planLabel + ' Plan' : 'Full Access'}</span></div><p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;">Welcome back, ${userData.first_name}! Here are your available DMI resources. <a href="../dmi/index.html" style="color:var(--primary-blue);font-weight:600;margin-left:.5rem;">Browse full library <i class="fas fa-arrow-right" style="font-size:.75rem;"></i></a></p>${contentHtml}</div>`;
+      el.innerHTML = `<div class="card"><div class="card-header"><h2><i class="fas fa-graduation-cap"></i> DMI - Digital Marketing Institute</h2>${headerBadge}</div><p style="color:var(--text-gray);font-size:.88rem;margin-bottom:1.5rem;">Welcome back, ${escHtml(userData.first_name)}! Browse and preview courses below. <a href="../dmi/index.html" style="color:var(--primary-blue);font-weight:600;margin-left:.5rem;">Browse full library <i class="fas fa-arrow-right" style="font-size:.75rem;"></i></a></p>${bannerHtml}${contentHtml}</div>`;
     } catch {
       el.innerHTML = '<div class="card"><p style="color:var(--text-gray);text-align:center;padding:2rem;">Could not load DMI content. Please try again.</p></div>';
     }
