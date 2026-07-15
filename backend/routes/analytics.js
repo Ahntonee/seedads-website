@@ -21,25 +21,32 @@ router.get('/pageviews', requireAuth, asyncHandler(async (req, res) => {
   const [topPages] = await pool.query(`
     SELECT path, COUNT(*) as views
     FROM page_views
-    WHERE created_at >= NOW() - INTERVAL 30 DAY
+    WHERE CAST(created_at AS DATE) >= CURRENT_DATE - 30
     GROUP BY path ORDER BY views DESC LIMIT 20
   `);
 
   const [daily] = await pool.query(`
-    SELECT DATE(created_at) as day, COUNT(*) as views
+    SELECT CAST(created_at AS DATE) as day, COUNT(*) as views
     FROM page_views
-    WHERE created_at >= NOW() - INTERVAL 30 DAY
+    WHERE CAST(created_at AS DATE) >= CURRENT_DATE - 30
     GROUP BY day ORDER BY day ASC
   `);
 
-  const [totalRow] = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE created_at >= NOW() - INTERVAL 30 DAY`);
-  const [todayRow] = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE DATE(created_at) = CURDATE()`);
+  const [totalRow] = await pool.query(`SELECT COUNT(*) as c FROM page_views WHERE CAST(created_at AS DATE) >= CURRENT_DATE - 30`);
+
+  // Derive today's count from the daily buckets (DB-agnostic; avoids a
+  // separate CURRENT_DATE query that some engines evaluate inconsistently).
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayViews = daily.reduce((sum, d) => {
+    const ds = (d.day instanceof Date ? d.day.toISOString() : String(d.day)).slice(0, 10);
+    return ds === todayStr ? sum + parseInt(d.views) : sum;
+  }, 0);
 
   res.json({
     topPages,
     daily,
     total:      parseInt(totalRow[0].c),
-    todayViews: parseInt(todayRow[0].c),
+    todayViews,
   });
 }));
 

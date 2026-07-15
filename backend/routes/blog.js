@@ -81,10 +81,10 @@ router.patch('/:id', requireAuth, asyncHandler(async (req, res) => {
       category    = COALESCE(?, category),
       status      = COALESCE(?, status),
       author      = COALESCE(?, author),
-      cover_image = CASE WHEN ? IS NOT NULL THEN ? ELSE cover_image END,
+      cover_image = COALESCE(?, cover_image),
       updated_at  = CURRENT_TIMESTAMP
      WHERE id = ?`,
-    [title, excerpt, content, category, status, author, cover_image, cover_image, req.params.id]
+    [title, excerpt, content, category, status, author, cover_image, req.params.id]
   );
   res.json({ success: true });
 }));
