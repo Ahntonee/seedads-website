@@ -2880,6 +2880,56 @@
         </div>
     </section>
 
+    <!-- Blog Section -->
+    <section class="blog-home" id="blog" style="padding:6rem 5%;background:#FAFBFC;">
+        <div class="section-header">
+            <span class="section-tag">Our Blog</span>
+            <h2 class="section-title">Latest from the Blog</h2>
+            <p class="section-subtitle">Insights, tips and strategies to help you grow your brand and stay ahead in digital marketing.</p>
+        </div>
+        <div id="homeBlogGrid" style="max-width:1200px;margin:3rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;">
+            <div style="grid-column:1/-1;text-align:center;padding:2rem;color:#6B7280;"><i class="fas fa-spinner fa-spin"></i> Loading latest posts&hellip;</div>
+        </div>
+        <div style="text-align:center;margin-top:3rem;">
+            <a href="blog/articles.html" style="display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#0A2540,#0066FF);color:#fff;padding:.9rem 2rem;border-radius:50px;text-decoration:none;font-weight:600;font-size:.9rem;box-shadow:0 4px 20px rgba(0,102,255,0.3);">View All Articles <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </section>
+    <script>
+    (function(){
+        var grid = document.getElementById('homeBlogGrid');
+        if(!grid) return;
+        function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+        function fmtDate(d){ if(!d) return ''; try{return new Date(d).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'});}catch(e){return '';} }
+        var icons={SEO:'fa-search',PPC:'fa-bullseye','Social Media':'fa-share-nodes','Content Marketing':'fa-pen-nib',Content:'fa-pen-nib','Email Marketing':'fa-envelope',Email:'fa-envelope',News:'fa-newspaper'};
+        fetch('/api/blog?status=published&limit=3')
+            .then(function(r){return r.json();})
+            .then(function(data){
+                var posts=(data&&data.posts)||[];
+                if(!posts.length){
+                    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#6B7280;"><i class="fas fa-pen-nib" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.75rem;"></i>No articles published yet. Check back soon!</div>';
+                    return;
+                }
+                grid.innerHTML=posts.map(function(p){
+                    var img=p.cover_image
+                        ? '<div style="height:200px;overflow:hidden;"><img src="'+esc(p.cover_image)+'" alt="'+esc(p.title)+'" style="width:100%;height:100%;object-fit:cover;"></div>'
+                        : '<div style="height:200px;background:linear-gradient(135deg,#0A2540,#0066FF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:2.5rem;"><i class="fas '+(icons[p.category]||'fa-newspaper')+'"></i></div>';
+                    return '<a href="blog/post.html?id='+encodeURIComponent(p.id)+'" style="text-decoration:none;color:inherit;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px rgba(10,37,64,0.08);border:1px solid rgba(0,102,255,0.08);display:block;transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform=\'translateY(-5px)\';this.style.boxShadow=\'0 20px 50px rgba(10,37,64,0.15)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'0 10px 40px rgba(10,37,64,0.08)\'">'+
+                        img+
+                        '<div style="padding:1.5rem;">'+
+                            '<div style="display:flex;align-items:center;gap:.75rem;font-size:.78rem;color:#6B7280;margin-bottom:.75rem;flex-wrap:wrap;"><span style="background:#E6F0FF;color:#0066FF;padding:.25rem .7rem;border-radius:50px;font-weight:600;">'+esc(p.category||'General')+'</span><span><i class="far fa-calendar"></i> '+fmtDate(p.created_at)+'</span></div>'+
+                            '<h3 style="font-size:1.15rem;font-weight:700;color:#0A2540;margin-bottom:.6rem;line-height:1.4;">'+esc(p.title)+'</h3>'+
+                            '<p style="color:#6B7280;font-size:.9rem;line-height:1.6;margin-bottom:1rem;">'+esc(p.excerpt||'')+'</p>'+
+                            '<span style="color:#0066FF;font-weight:600;font-size:.85rem;">Read more <i class="fas fa-arrow-right"></i></span>'+
+                        '</div>'+
+                    '</a>';
+                }).join('');
+            })
+            .catch(function(){
+                grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:2rem;color:#6B7280;">Could not load posts right now.</div>';
+            });
+    })();
+    </script>
+
     <!-- CTA Section -->
     <section class="cta" id="contact">
         <div class="cta-container">
