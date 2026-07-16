@@ -4,25 +4,41 @@
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Marketing Services | SeedsAds</title>
-    <meta name="description" content="Reach customers on every device with our mobile marketing solutions. SMS, app marketing, and mobile-optimized campaigns.">
+    <title>Billboard &amp; Outdoor Advertising | Out-of-Home (OOH) Media | SeedsAds</title>
+    <meta name="description" content="Command attention offline with SeedsAds out-of-home advertising: billboard and digital billboard campaigns, transit and outdoor advertising, plus strategic outdoor media planning and buying across Nigeria.">
+    <meta name="keywords" content="billboard advertising, digital billboard advertising, outdoor advertising, out-of-home advertising, OOH advertising, transit advertising, outdoor media planning, media buying, Nigeria">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary-dark: #0A2540; --primary-blue: #0066FF; --accent-blue: #4D9FFF; --light-blue: #E6F0FF; --soft-white: #FAFBFC; --text-dark: #1A1A2E; --text-gray: #6B7280; --success: #00D4AA; --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%); }
+        :root {
+            --primary-dark: #0A2540;
+            --primary-blue: #0066FF;
+            --accent-blue: #4D9FFF;
+            --light-blue: #E6F0FF;
+            --soft-white: #FAFBFC;
+            --text-dark: #1A1A2E;
+            --text-gray: #6B7280;
+            --success: #00D4AA;
+            --gradient-blue: linear-gradient(135deg, #0A2540 0%, #0066FF 100%);
+        }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body { font-family: 'Inter', sans-serif; background-color: var(--soft-white); color: var(--text-dark); line-height: 1.6; overflow-x: hidden; }
+
+        /* Navigation */
         nav { position: fixed; top: 0; width: 100%; background: rgba(250, 251, 252, 0.95); backdrop-filter: blur(20px); z-index: 1000; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 102, 255, 0.1); transition: all 0.3s ease; padding: 1.1rem 6%; min-height: 80px; }
         nav.scrolled { box-shadow: 0 10px 40px rgba(10, 37, 64, 0.1); }
         .logo { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--primary-dark); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
         .logo span { color: var(--primary-blue); }
+        
         .nav-links { display: flex; gap: 0.5rem; list-style: none; align-items: center; margin: 0 auto; }
         .nav-item { position: relative; }
         .nav-link { text-decoration: none; color: var(--text-dark); font-weight: 500; font-size: 0.9rem; padding: 0.6rem 0.8rem; display: flex; align-items: center; gap: 0.3rem; transition: all 0.3s; cursor: pointer; border-radius: 8px; white-space: nowrap; }
         .nav-link:hover { color: var(--primary-blue); background: var(--light-blue); }
         .nav-link i { font-size: 0.7rem; transition: transform 0.3s; }
         .nav-item:hover .nav-link i { transform: rotate(180deg); }
+        
         .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); }
         .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem; border-radius: 12px; text-decoration: none; transition: all 0.3s; }
@@ -32,12 +48,16 @@
         .dropdown-content h4 { font-size: 0.9rem; font-weight: 600; color: var(--primary-dark); margin-bottom: 0.2rem; }
         .dropdown-content p { font-size: 0.75rem; color: var(--text-gray); line-height: 1.3; }
         .dropdown-divider { height: 1px; background: rgba(0, 102, 255, 0.1); margin: 0.5rem 0; }
+        
         .nav-buttons { display: flex; gap: 0.75rem; align-items: center; flex-shrink: 0; }
-        .nav-cta { background: var(--gradient-blue); color: white; padding: 0.65rem 1.25rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+        .nav-cta { background: var(--gradient-blue); color: white; padding: 0.65rem 1.25rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3); display: flex; align-items: center; gap: 0.4rem; position: relative; overflow: hidden; white-space: nowrap; }
         .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 102, 255, 0.5); }
         .nav-contact { background: transparent; color: var(--primary-dark); padding: 0.65rem 1.25rem; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 0.85rem; transition: all 0.3s; border: 2px solid var(--primary-blue); display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
         .nav-contact:hover { background: var(--primary-blue); color: white; transform: translateY(-2px); }
+        
         .mobile-menu-btn { display: none; font-size: 1.5rem; cursor: pointer; color: var(--primary-dark); background: none; border: none; padding: 0.5rem; z-index: 1002; }
+
+        /* Mobile Menu */
         .mobile-menu-overlay { position: fixed; top: 0; right: -100%; width: 85%; max-width: 380px; height: 100vh; background: white; z-index: 1001; padding: 5rem 1.5rem 2rem; transition: right 0.4s ease; box-shadow: -10px 0 40px rgba(10, 37, 64, 0.2); overflow-y: auto; }
         .mobile-menu-overlay.active { right: 0; }
         .mobile-nav-item { border-bottom: 1px solid rgba(0, 102, 255, 0.1); }
@@ -54,6 +74,8 @@
         .menu-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: rgba(10, 37, 64, 0.5); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
         .menu-backdrop.active { opacity: 1; visibility: visible; }
         body.menu-open { overflow: hidden; }
+
+        /* Hero Section */
         .page-hero { min-height: 50vh; display: flex; align-items: center; padding: 8rem 5% 4rem; position: relative; overflow: hidden; background: var(--gradient-blue); }
         .page-hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 50%); animation: rotate 20s linear infinite; }
         @keyframes rotate { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -63,34 +85,48 @@
         .breadcrumb { display: flex; justify-content: center; gap: 0.5rem; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
         .breadcrumb a { color: rgba(255, 255, 255, 0.8); text-decoration: none; }
         .breadcrumb a:hover { color: white; }
+
+        /* Content Sections */
         .content-section { padding: 4rem 5%; }
         .container { max-width: 1200px; margin: 0 auto; }
         .section-title { font-size: 2.2rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 1.5rem; text-align: center; }
         .section-subtitle { color: var(--text-gray); font-size: 1.1rem; text-align: center; max-width: 700px; margin: 0 auto 3rem; }
+
+        /* Features Grid */
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem; }
         .feature-card { background: white; border-radius: 20px; padding: 2rem; box-shadow: 0 10px 40px rgba(10, 37, 64, 0.08); border: 1px solid rgba(0, 102, 255, 0.1); transition: all 0.3s; }
         .feature-card:hover { transform: translateY(-5px); box-shadow: 0 20px 60px rgba(10, 37, 64, 0.15); }
         .feature-icon { width: 60px; height: 60px; background: var(--light-blue); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--primary-blue); font-size: 1.5rem; margin-bottom: 1.5rem; }
         .feature-card h3 { font-size: 1.2rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 1rem; }
         .feature-card p { color: var(--text-gray); font-size: 0.95rem; line-height: 1.7; }
+
+        /* Process Section */
         .process-section { padding: 4rem 5%; background: var(--light-blue); }
         .process-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 3rem; }
         .process-step { text-align: center; }
         .step-number { width: 60px; height: 60px; background: var(--primary-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; font-weight: 700; margin: 0 auto 1.5rem; }
         .process-step h3 { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); margin-bottom: 0.75rem; }
         .process-step p { color: var(--text-gray); font-size: 0.9rem; }
+
+        /* Stats Section */
         .stats-section { padding: 3rem 5%; background: var(--primary-dark); }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; text-align: center; }
         .stat-item h3 { font-size: 2.5rem; font-weight: 800; color: white; margin-bottom: 0.5rem; }
         .stat-item p { color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; }
+
+        /* CTA Section */
         .cta-section { background: var(--light-blue); text-align: center; padding: 4rem 5%; }
         .cta-content { max-width: 700px; margin: 0 auto; }
         .cta-section h2 { font-size: 2rem; color: var(--primary-dark); margin-bottom: 1rem; }
         .cta-section p { color: var(--text-gray); margin-bottom: 1.5rem; }
         .cta-btn { background: var(--gradient-blue); color: white; padding: 1rem 2.5rem; border-radius: 50px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; transition: all 0.3s; box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3); }
         .cta-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0, 102, 255, 0.5); }
+
+        /* WhatsApp Float */
         .whatsapp-float { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: #25D366; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.8rem; text-decoration: none; box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4); transition: all 0.3s; z-index: 999; }
         .whatsapp-float:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(37, 211, 102, 0.6); }
+
+        /* Footer */
         footer { background: var(--primary-dark); color: white; padding: 4rem 5% 2rem; }
         .footer-container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 4rem; }
         .footer-brand h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.8rem; margin-bottom: 1rem; }
@@ -108,14 +144,35 @@
         .footer-bottom-links { display: flex; gap: 2rem; }
         .footer-bottom-links a { color: rgba(255, 255, 255, 0.5); text-decoration: none; transition: color 0.3s; }
         .footer-bottom-links a:hover { color: white; }
+
+        /* Responsive */
         @media (max-width: 1024px) { .nav-buttons .nav-contact { display: none; } .process-grid { grid-template-columns: repeat(2, 1fr); } .stats-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 900px) { .nav-links { display: none; } .nav-buttons { display: none; } .mobile-menu-btn { display: block; } }
-        @media (max-width: 768px) { .page-hero { padding: 6rem 4% 3rem; min-height: auto; } .page-hero h1 { font-size: 1.8rem; } .page-hero p { font-size: 1rem; } .breadcrumb { font-size: 0.8rem; } .content-section { padding: 3rem 4%; } .section-title { font-size: 1.6rem; } .features-grid { grid-template-columns: 1fr; gap: 1.5rem; } .feature-card { padding: 1.5rem; } .process-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; } .stat-item h3 { font-size: 2rem; } .footer-container { grid-template-columns: 1fr; gap: 2rem; text-align: center; } .social-links { justify-content: center; } .footer-bottom { flex-direction: column; text-align: center; } .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; } }
+        @media (max-width: 768px) {
+            .page-hero { padding: 6rem 4% 3rem; min-height: auto; }
+            .page-hero h1 { font-size: 1.8rem; }
+            .page-hero p { font-size: 1rem; }
+            .breadcrumb { font-size: 0.8rem; }
+            .content-section { padding: 3rem 4%; }
+            .section-title { font-size: 1.6rem; }
+            .features-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+            .feature-card { padding: 1.5rem; }
+            .process-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+            .stat-item h3 { font-size: 2rem; }
+            .footer-container { grid-template-columns: 1fr; gap: 2rem; text-align: center; }
+            .social-links { justify-content: center; }
+            .footer-bottom { flex-direction: column; text-align: center; }
+            .whatsapp-float { width: 50px; height: 50px; font-size: 1.5rem; bottom: 20px; right: 20px; }
+        }
     </style>
 <script src="/analytics-tracker.js" defer></script>
 </head>
 <body>
+    <!-- Mobile Menu Backdrop -->
     <div class="menu-backdrop" id="menuBackdrop"></div>
+
+    <!-- Mobile Menu Overlay -->
     <div class="mobile-menu-overlay" id="mobileMenu">
         <div class="mobile-nav-item">
             <div class="mobile-nav-header" onclick="toggleMobileDropdown(this)"><span>Our Services</span><i class="fas fa-chevron-down"></i></div>
@@ -186,6 +243,7 @@
         <a href="../about/contact.html" class="nav-contact" onclick="closeMenu()">Contact Us</a>
     </div>
 
+    <!-- Navigation -->
     <nav id="navbar">
         <a href="../index.html" class="logo"><i class="fas fa-seedling"></i>SeedsAds<span>.</span></a>
         <ul class="nav-links">
@@ -249,10 +307,12 @@
                     <a href="../dmi/certification.html" class="dropdown-item"><div class="dropdown-icon"><i class="fas fa-certificate"></i></div><div class="dropdown-content"><h4>Certification</h4><p>Get certified with SeedsAds</p></div></a>
                 </div>
             </li>
-            <li class="nav-item"><a href="../pricing.html" class="nav-link">Pricing</a>
+            <li class="nav-item">
+                <a href="../pricing.html" class="nav-link">Pricing</a>
             </li>
             <li class="nav-item">
-                <a href="../shop.html" class="nav-link">Shop</a></li>
+                <a href="../shop.html" class="nav-link">Shop</a>
+            </li>
         </ul>
         <div class="nav-buttons">
             <a href="../about/contact.html" class="nav-contact"><i class="fas fa-phone"></i> Contact Us</a>
@@ -261,107 +321,123 @@
         <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu"><i class="fas fa-bars" id="menuIcon"></i></button>
     </nav>
 
+    <!-- Hero Section -->
     <section class="page-hero">
         <div class="page-hero-container">
             <div class="breadcrumb">
-                <a href="../index.html">Home</a> <i class="fas fa-chevron-right"></i> <a href="../index.html#services">Our Services</a> <i class="fas fa-chevron-right"></i> Mobile Marketing
+                <a href="../index.html">Home</a> <i class="fas fa-chevron-right"></i> <a href="../index.html#services">Our Services</a> <i class="fas fa-chevron-right"></i> Billboard &amp; Outdoor Advertising
             </div>
-            <h1>Mobile Marketing</h1>
-            <p>Reach customers on every device with strategic mobile marketing campaigns that drive engagement and conversions.</p>
+            <h1>Billboard &amp; Outdoor Advertising</h1>
+            <p>Command attention in the real world. From billboards and digital screens to transit and street-level formats, we plan, buy and manage out-of-home (OOH) campaigns that put your brand where your audience lives, works and travels.</p>
         </div>
     </section>
 
+    <!-- Features Section -->
     <section class="content-section">
         <div class="container">
-            <h2 class="section-title">Our Mobile Marketing Services</h2>
-            <p class="section-subtitle">Comprehensive solutions tailored to your business goals and target audience.</p>
+            <h2 class="section-title">Our Out-of-Home Advertising Services</h2>
+            <p class="section-subtitle">Full-service billboard and outdoor advertising — from prime site selection to creative, buying and campaign management.</p>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-mobile-alt"></i></div>
-                    <h3>SMS Marketing</h3>
-                    <p>Direct, high-open-rate messaging that reaches customers instantly with personalized offers and updates.</p>
+                    <div class="feature-icon"><i class="fas fa-rectangle-ad"></i></div>
+                    <h3>Billboard Advertising</h3>
+                    <p>High-impact static billboards in prime, high-traffic locations. We secure the best sites for your brand and manage everything from booking to installation and monitoring.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-app-store"></i></div>
-                    <h3>App Marketing</h3>
-                    <p>Drive app installs, engagement, and retention with targeted campaigns across app stores and ad networks.</p>
+                    <div class="feature-icon"><i class="fas fa-display"></i></div>
+                    <h3>Digital Billboard Advertising</h3>
+                    <p>Dynamic digital and LED billboard campaigns with day-parting, motion creative, and real-time updates that let you reach the right audience at the right moment.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-globe"></i></div>
-                    <h3>Mobile Web Optimization</h3>
-                    <p>Ensure your website delivers a seamless experience on every device with mobile-first design and optimization.</p>
+                    <div class="feature-icon"><i class="fas fa-map-location-dot"></i></div>
+                    <h3>Outdoor Media Planning &amp; Buying</h3>
+                    <p>Strategic media planning and buying backed by audience and traffic data. We negotiate the best rates and build placement plans that maximise reach and value.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-comment-dots"></i></div>
-                    <h3>Push Notifications</h3>
-                    <p>Re-engage users with timely, personalized push notifications that drive app opens and conversions.</p>
+                    <div class="feature-icon"><i class="fas fa-bus"></i></div>
+                    <h3>Transit &amp; Outdoor Advertising</h3>
+                    <p>Reach people on the move with buses, taxis, terminals, street furniture and other transit formats that keep your brand visible across the city.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-qrcode"></i></div>
-                    <h3>QR Code Campaigns</h3>
-                    <p>Bridge offline and online experiences with strategic QR code campaigns that drive mobile engagement.</p>
+                    <div class="feature-icon"><i class="fas fa-palette"></i></div>
+                    <h3>Creative Design &amp; Production</h3>
+                    <p>Attention-grabbing outdoor creative built for a three-second glance. Our team designs and produces artwork optimised for scale, distance and impact.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon"><i class="fas fa-map-marked-alt"></i></div>
-                    <h3>Location-Based Marketing</h3>
-                    <p>Target customers based on their location with geofencing and proximity marketing campaigns.</p>
+                    <div class="feature-icon"><i class="fas fa-chart-pie"></i></div>
+                    <h3>Campaign Tracking &amp; Reporting</h3>
+                    <p>Verified installation photos, estimated impressions and coverage reporting so you know exactly where your brand appeared and how your campaign performed.</p>
                 </div>
-                
             </div>
         </div>
     </section>
 
+    <!-- Process Section -->
     <section class="process-section">
         <div class="container">
-            <h2 class="section-title">Our Process</h2>
-            <p class="section-subtitle">A proven methodology that delivers sustainable results.</p>
+            <h2 class="section-title">Our OOH Campaign Process</h2>
+            <p class="section-subtitle">From brief to billboard — a clear path to high-impact outdoor campaigns.</p>
 
             <div class="process-grid">
                 <div class="process-step">
                     <div class="step-number">1</div>
-                    <h3>Discovery</h3>
-                    <p>Deep dive into your business, audience, and competitive landscape.</p>
+                    <h3>Discovery & Objectives</h3>
+                    <p>We define your audience, goals, budget and target locations to shape the right outdoor strategy.</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">2</div>
-                    <h3>Strategy</h3>
-                    <p>Custom roadmap aligned with your growth objectives.</p>
+                    <h3>Site & Media Planning</h3>
+                    <p>We recommend the best billboard, digital and transit sites and negotiate the buy on your behalf.</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">3</div>
-                    <h3>Execution</h3>
-                    <p>Agile implementation with rapid testing and iteration.</p>
+                    <h3>Design & Deployment</h3>
+                    <p>We produce standout creative and handle printing, installation and go-live across every site.</p>
                 </div>
                 <div class="process-step">
                     <div class="step-number">4</div>
-                    <h3>Optimize</h3>
-                    <p>Continuous improvement based on performance data.</p>
+                    <h3>Track & Optimize</h3>
+                    <p>We verify placements, report on reach and impressions, and optimise the plan for the best return.</p>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- Stats Section -->
     <section class="stats-section">
         <div class="container">
             <div class="stats-grid">
-                <div class="stat-item"><h3>85%</h3><p>Mobile Open Rate</p></div>
-                <div class="stat-item"><h3>3x</h3><p>Higher Engagement</p></div>
-                <div class="stat-item"><h3>200%</h3><p>Conversion Lift</p></div>
-                <div class="stat-item"><h3>50M+</h3><p>Mobile Reach</p></div>
-                
+                <div class="stat-item">
+                    <h3>500+</h3>
+                    <p>Billboard & Outdoor Sites</p>
+                </div>
+                <div class="stat-item">
+                    <h3>50M+</h3>
+                    <p>Monthly Impressions</p>
+                </div>
+                <div class="stat-item">
+                    <h3>200+</h3>
+                    <p>OOH Campaigns Delivered</p>
+                </div>
+                <div class="stat-item">
+                    <h3>36</h3>
+                    <p>States Covered</p>
+                </div>
             </div>
         </div>
     </section>
 
+    <!-- CTA Section -->
     <section class="cta-section">
         <div class="cta-content">
-            <h2>Ready to Get Started?</h2>
-            <p>Get a free consultation and discover how we can help grow your business.</p>
-            <a href="../about/contact.html" class="cta-btn">Get Free Consultation <i class="fas fa-arrow-right"></i></a>
+            <h2>Ready to Own the Streets?</h2>
+            <p>Get a free outdoor media plan with site recommendations and pricing for your next campaign.</p>
+            <a href="../about/contact.html" class="cta-btn">Get a Free Media Plan <i class="fas fa-arrow-right"></i></a>
         </div>
     </section>
 
+    <!-- WhatsApp Float -->
     <!-- Quick Inquiry Form -->
     <section style="padding:4rem 5%;background:white;">
         <div style="max-width:680px;margin:0 auto;text-align:center;">
@@ -415,6 +491,7 @@
     </script>
     <a href="https://wa.me/2347061112102" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
 
+    <!-- Footer -->
     <footer>
         <div class="footer-container">
             <div class="footer-brand">
@@ -502,6 +579,7 @@
         window.addEventListener('resize', () => { if (window.innerWidth > 900 && isMenuOpen) closeMenu(); });
     </script>
     <script>
+    /* ── CMS: hydrate Service page from API ────────────────────────────────── */
     (function () {
       function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
       var slug = (location.pathname.split('/').pop()||'').replace('.html','');
@@ -509,12 +587,55 @@
         .then(function(r){return r.json();})
         .then(function(data){
           var s = data.sections || {};
-          try{ if(s.hero){var h1=document.querySelector('.page-hero h1');if(h1)h1.textContent=s.hero.title||'';var p=document.querySelector('.page-hero-container > p');if(p)p.textContent=s.hero.subtitle||'';}}catch(e){}
-          try{ if(s.features){var sec=document.querySelector('.content-section');if(sec){var t=sec.querySelector('.section-title');if(t)t.textContent=s.features.title||'';var sb=sec.querySelector('.section-subtitle');if(sb)sb.textContent=s.features.subtitle||'';var grid=sec.querySelector('.features-grid');if(grid&&Array.isArray(s.features.items)){grid.innerHTML=s.features.items.map(function(it){return'<div class="feature-card"><div class="feature-icon"><i class="'+esc(it.icon)+'"></i></div><h3>'+esc(it.title)+'</h3><p>'+esc(it.desc)+'</p></div>';}).join('');}}} }catch(e){}
-          try{ if(s.process){var ps=document.querySelector('.process-section');if(ps){var pt=ps.querySelector('.section-title');if(pt)pt.textContent=s.process.title||'';var psb=ps.querySelector('.section-subtitle');if(psb)psb.textContent=s.process.subtitle||'';var pg=ps.querySelector('.process-grid');if(pg&&Array.isArray(s.process.steps)){pg.innerHTML=s.process.steps.map(function(st){return'<div class="process-step"><div class="step-number">'+esc(st.number)+'</div><h3>'+esc(st.title)+'</h3><p>'+esc(st.desc)+'</p></div>';}).join('');}}} }catch(e){}
-          try{ if(s.stats&&Array.isArray(s.stats)){var sg=document.querySelector('.stats-grid');if(sg)sg.innerHTML=s.stats.map(function(st){return'<div class="stat-item"><h3>'+esc(st.value)+'</h3><p>'+esc(st.label)+'</p></div>';}).join('');}}catch(e){}
-          try{ if(s.cta){var cs=document.querySelector('.cta-section');if(cs){var ch=cs.querySelector('h2');if(ch)ch.textContent=s.cta.headline||'';var cp=cs.querySelector('p');if(cp)cp.textContent=s.cta.subtitle||'';var cb=cs.querySelector('.cta-btn');if(cb){if(s.cta.btn_text)cb.innerHTML=esc(s.cta.btn_text)+' <i class="fas fa-arrow-right"></i>';if(s.cta.btn_href)cb.href=s.cta.btn_href;}}}}catch(e){}
-        }).catch(function(){});
+          try{ if(s.hero){
+            var h1=document.querySelector('.page-hero h1'); if(h1) h1.textContent=s.hero.title||'';
+            var p=document.querySelector('.page-hero-container > p'); if(p) p.textContent=s.hero.subtitle||'';
+          }}catch(e){}
+          try{ if(s.features){
+            var sec=document.querySelector('.content-section');
+            if(sec){
+              var t=sec.querySelector('.section-title'); if(t) t.textContent=s.features.title||'';
+              var sb=sec.querySelector('.section-subtitle'); if(sb) sb.textContent=s.features.subtitle||'';
+              var grid=sec.querySelector('.features-grid');
+              if(grid&&Array.isArray(s.features.items)){
+                grid.innerHTML=s.features.items.map(function(it){
+                  return '<div class="feature-card"><div class="feature-icon"><i class="'+esc(it.icon)+'"></i></div>'+
+                    '<h3>'+esc(it.title)+'</h3><p>'+esc(it.desc)+'</p></div>';
+                }).join('');
+              }
+            }
+          }}catch(e){}
+          try{ if(s.process){
+            var ps=document.querySelector('.process-section');
+            if(ps){
+              var pt=ps.querySelector('.section-title'); if(pt) pt.textContent=s.process.title||'';
+              var psb=ps.querySelector('.section-subtitle'); if(psb) psb.textContent=s.process.subtitle||'';
+              var pg=ps.querySelector('.process-grid');
+              if(pg&&Array.isArray(s.process.steps)){
+                pg.innerHTML=s.process.steps.map(function(st){
+                  return '<div class="process-step"><div class="step-number">'+esc(st.number)+'</div>'+
+                    '<h3>'+esc(st.title)+'</h3><p>'+esc(st.desc)+'</p></div>';
+                }).join('');
+              }
+            }
+          }}catch(e){}
+          try{ if(s.stats&&Array.isArray(s.stats)){
+            var sg=document.querySelector('.stats-grid');
+            if(sg) sg.innerHTML=s.stats.map(function(st){
+              return '<div class="stat-item"><h3>'+esc(st.value)+'</h3><p>'+esc(st.label)+'</p></div>';
+            }).join('');
+          }}catch(e){}
+          try{ if(s.cta){
+            var cs=document.querySelector('.cta-section');
+            if(cs){
+              var ch=cs.querySelector('h2'); if(ch) ch.textContent=s.cta.headline||'';
+              var cp=cs.querySelector('p'); if(cp) cp.textContent=s.cta.subtitle||'';
+              var cb=cs.querySelector('.cta-btn');
+              if(cb){if(s.cta.btn_text) cb.innerHTML=esc(s.cta.btn_text)+' <i class="fas fa-arrow-right"></i>'; if(s.cta.btn_href) cb.href=s.cta.btn_href;}
+            }
+          }}catch(e){}
+        })
+        .catch(function(){});
     })();
     </script>
 <!-- Donate widget -->
