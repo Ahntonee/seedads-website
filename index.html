@@ -165,8 +165,7 @@
             transform: translateY(10px);
             transition: all 0.3s ease;
             z-index: 1001;
-            border: 1px solid rgba(0, 102, 255, 0.1);
-        }
+            border: 1px solid rgba(0, 102, 255, 0.1); overflow-y: auto; max-height: calc(100vh - 90px); }
 
         .nav-item:hover .dropdown {
             opacity: 1;
@@ -411,7 +410,7 @@
         }
 
         .mobile-nav-item.active .mobile-dropdown {
-            max-height: 600px;
+            max-height: 1000px;
         }
 
         .mobile-dropdown-item {

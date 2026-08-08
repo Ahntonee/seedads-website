@@ -43,7 +43,7 @@
         .nav-link i { font-size: 0.7rem; transition: transform 0.3s; }
         .nav-item:hover .nav-link i { transform: rotate(180deg); }
         
-        .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); }
+        .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); overflow-y: auto; max-height: calc(100vh - 90px); }
         .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem; border-radius: 12px; text-decoration: none; transition: all 0.3s; }
         .dropdown-item:hover { background: var(--light-blue); }
@@ -72,7 +72,7 @@
         .mobile-nav-header i { font-size: 0.9rem; color: var(--text-gray); transition: transform 0.3s; }
         .mobile-nav-item.active .mobile-nav-header i { transform: rotate(180deg); }
         .mobile-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-        .mobile-nav-item.active .mobile-dropdown { max-height: 600px; }
+        .mobile-nav-item.active .mobile-dropdown { max-height: 1000px; }
         .mobile-dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 0 0.875rem 1rem; text-decoration: none; color: var(--text-gray); font-size: 0.95rem; transition: color 0.3s; }
         .mobile-dropdown-item:hover { color: var(--primary-blue); }
         .mobile-dropdown-item i { width: 28px; height: 28px; background: var(--light-blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--primary-blue); }
