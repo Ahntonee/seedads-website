@@ -156,6 +156,20 @@ async function createTables() {
       created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`,
+    `CREATE TABLE IF NOT EXISTS guides (
+      id           SERIAL PRIMARY KEY,
+      title        VARCHAR(500) NOT NULL,
+      description  TEXT,
+      category     VARCHAR(100),
+      image_url    VARCHAR(500),
+      file_url     VARCHAR(500),
+      file_name    VARCHAR(300),
+      external_url VARCHAR(500),
+      published    SMALLINT DEFAULT 1,
+      sort_order   INT DEFAULT 0,
+      created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
     `CREATE TABLE IF NOT EXISTS login_attempts (
       id         SERIAL PRIMARY KEY,
       identifier VARCHAR(200) NOT NULL,

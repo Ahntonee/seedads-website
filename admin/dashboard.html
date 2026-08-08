@@ -247,6 +247,7 @@
     <div class="nav-section-label">Content</div>
     <div class="nav-item" onclick="showPage('blog')"><i class="fas fa-pen-nib"></i> Blog Posts</div>
     <div class="nav-item" onclick="showPage('dmi')"><i class="fas fa-graduation-cap"></i> DMI Content</div>
+    <div class="nav-item" onclick="showPage('guides')"><i class="fas fa-book"></i> Guides</div>
     <div class="nav-section-label">CMS</div>
     <div class="nav-item" onclick="showPage('pricing')"><i class="fas fa-tags"></i> Pricing Plans</div>
     <div class="nav-item" onclick="showPage('faqs')"><i class="fas fa-question-circle"></i> FAQs</div>
@@ -401,6 +402,19 @@
           <table><thead><tr><th>Title</th><th>Type</th><th>Category</th><th>Plan Access</th><th>Status</th><th>Actions</th></tr></thead><tbody id="dmiBody"></tbody></table>
         </div>
         <div id="dmiEmpty" class="empty-state" style="display:none"><i class="fas fa-graduation-cap"></i>No DMI resources yet. Upload the first one!</div>
+      </div>
+    </div>
+
+    <div class="page" id="page-guides">
+      <div class="section-header"><h2>Resource Guides</h2><button class="btn btn-primary" onclick="openGuideModal()"><i class="fas fa-plus"></i> Add Guide</button></div>
+      <div class="table-card">
+        <div class="table-toolbar">
+          <div class="search-wrap"><i class="fas fa-search"></i><input class="search-input" type="text" placeholder="Search guides..." id="guideSearch" oninput="loadGuides()"></div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table><thead><tr><th>Title</th><th>Category</th><th>File</th><th>Status</th><th>Actions</th></tr></thead><tbody id="guidesBody"></tbody></table>
+        </div>
+        <div id="guidesEmpty" class="empty-state" style="display:none"><i class="fas fa-book"></i>No guides yet. Add the first one!</div>
       </div>
     </div>
 
@@ -737,6 +751,37 @@
       </div>
     </form>
     <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('dmiModal')">Cancel</button><button class="btn btn-primary" onclick="saveDmi()"><i class="fas fa-upload"></i> Save Resource</button></div>
+  </div>
+</div>
+
+<!-- Guide Modal -->
+<div class="modal-overlay" id="guideModal">
+  <div class="modal">
+    <div class="modal-header"><h3 id="guideModalTitle">Add Guide</h3><button class="modal-close" onclick="closeModal('guideModal')"><i class="fas fa-times"></i></button></div>
+    <form id="guideForm" enctype="multipart/form-data">
+      <div class="form-group"><label>Title *</label><input type="text" id="guideTitle" name="title" placeholder="e.g. Beginner's Guide to SEO" required></div>
+      <div class="form-group"><label>Description</label><textarea id="guideDescription" name="description" placeholder="Short description of this guide..." style="min-height:70px;"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group"><label>Category</label><input type="text" id="guideCategory" name="category" placeholder="e.g. SEO, PPC, Social Media"></div>
+        <div class="form-group"><label>Sort Order</label><input type="number" id="guideSortOrder" name="sort_order" value="0" min="0"></div>
+      </div>
+      <div class="form-group">
+        <label>Featured Image <small style="font-weight:400;color:var(--text-gray);">&mdash; shown on the card</small></label>
+        <input type="file" id="guideImage" name="image" accept="image/*" style="padding:.5rem;border:1.5px dashed rgba(0,102,255,0.3);border-radius:8px;width:100%;cursor:pointer;">
+        <small id="guideImageHint" style="color:var(--text-gray);font-size:.78rem;margin-top:.3rem;display:block;"></small>
+      </div>
+      <div class="form-group">
+        <label>Guide File <small style="font-weight:400;color:var(--text-gray);">&mdash; PDF / Word / ZIP, max 50&nbsp;MB</small></label>
+        <input type="file" id="guideFile" name="file" accept=".pdf,.doc,.docx,.zip" style="padding:.5rem;border:1.5px dashed rgba(0,102,255,0.3);border-radius:8px;width:100%;cursor:pointer;">
+        <small id="guideFileHint" style="color:var(--text-gray);font-size:.78rem;margin-top:.3rem;display:block;"></small>
+      </div>
+      <div class="form-group"><label>Or External URL <small style="font-weight:400;color:var(--text-gray);">&mdash; used if no file is uploaded</small></label><input type="url" id="guideExternalUrl" name="external_url" placeholder="https://..."></div>
+      <div class="form-group">
+        <label>Visibility</label>
+        <select id="guidePublished" name="published"><option value="1">Published</option><option value="0">Unpublished</option></select>
+      </div>
+    </form>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('guideModal')">Cancel</button><button class="btn btn-primary" onclick="saveGuide()"><i class="fas fa-save"></i> Save Guide</button></div>
   </div>
 </div>
 
@@ -1116,7 +1161,7 @@
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + page).classList.add('active');
     if (event && event.currentTarget) event.currentTarget.classList.add('active');
-    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content', media:'Media Library', shop:'Shop Products', shoporders:'Shop Orders', donations:'Donations' };
+    const titles = { overview:'Overview', payments:'Payments', contacts:'Contact Submissions', leads:'Leads & Clients', blog:'Blog Posts', dmi:'DMI Content', guides:'Guides', users:'Registered Users', settings:'Settings', pricing:'Pricing Plans', faqs:'FAQs', team:'Team Members', portfolio:'Portfolio', casestudies:'Case Studies', courses:'Courses', pagecontent:'Page Content', media:'Media Library', shop:'Shop Products', shoporders:'Shop Orders', donations:'Donations' };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     if (page === 'overview') loadOverview();
     if (page === 'payments') loadPayments();
@@ -1124,6 +1169,7 @@
     if (page === 'leads') loadLeads();
     if (page === 'blog') loadBlog();
     if (page === 'dmi') loadDmi();
+    if (page === 'guides') loadGuides();
     if (page === 'users') loadUsers();
     if (page === 'settings') loadSettings();
     if (page === 'pricing') loadCmsPricing();
@@ -2396,6 +2442,96 @@
     await api('DELETE', '/dmi/' + id);
     toast('Resource deleted');
     loadDmi();
+  }
+
+  // ── GUIDES ──
+  let currentGuideId = null;
+  function escG(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+  async function loadGuides() {
+    const search = (document.getElementById('guideSearch').value || '').toLowerCase();
+    const data = await api('GET', '/guides/admin');
+    if (!data) return;
+    let items = data.guides || [];
+    if (search) items = items.filter(g => (g.title||'').toLowerCase().includes(search) || (g.description||'').toLowerCase().includes(search) || (g.category||'').toLowerCase().includes(search));
+    const tbody = document.getElementById('guidesBody');
+    const empty = document.getElementById('guidesEmpty');
+    if (!items.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    tbody.innerHTML = items.map(g => {
+      const fileCell = g.file_name ? '<i class="fas fa-file"></i> ' + escG(g.file_name) : (g.external_url ? '<i class="fas fa-link"></i> Link' : '<span style="color:var(--text-gray)">&mdash;</span>');
+      const status = g.published
+        ? '<span style="color:var(--success);"><i class="fas fa-eye"></i> Published</span>'
+        : '<span style="color:var(--text-gray);"><i class="fas fa-eye-slash"></i> Unpublished</span>';
+      return '<tr>'+
+        '<td><strong>'+escG(g.title)+'</strong>'+(g.description?'<br><small style="color:var(--text-gray);">'+escG(g.description.slice(0,60))+(g.description.length>60?'…':'')+'</small>':'')+'</td>'+
+        '<td>'+(g.category?escG(g.category):'&mdash;')+'</td>'+
+        '<td style="font-size:.82rem;">'+fileCell+'</td>'+
+        '<td>'+status+'</td>'+
+        '<td><div class="table-actions">'+
+          '<button class="btn btn-outline btn-sm" title="'+(g.published?'Unpublish':'Publish')+'" onclick="toggleGuidePublish('+g.id+','+(g.published?0:1)+')"><i class="fas fa-'+(g.published?'eye-slash':'eye')+'"></i></button>'+
+          '<button class="btn btn-outline btn-sm" onclick="openGuideModal('+g.id+')"><i class="fas fa-edit"></i></button>'+
+          '<button class="btn btn-danger btn-sm" onclick="deleteGuide('+g.id+')"><i class="fas fa-trash"></i></button>'+
+        '</div></td>'+
+      '</tr>';
+    }).join('');
+  }
+
+  function openGuideModal(id) {
+    currentGuideId = id || null;
+    document.getElementById('guideModalTitle').textContent = id ? 'Edit Guide' : 'Add Guide';
+    document.getElementById('guideForm').reset();
+    document.getElementById('guideImageHint').textContent = '';
+    document.getElementById('guideFileHint').textContent = '';
+    if (id) {
+      api('GET', '/guides/admin').then(data => {
+        const g = data && (data.guides||[]).find(x => x.id === id);
+        if (!g) return;
+        document.getElementById('guideTitle').value = g.title || '';
+        document.getElementById('guideDescription').value = g.description || '';
+        document.getElementById('guideCategory').value = g.category || '';
+        document.getElementById('guideSortOrder').value = g.sort_order || 0;
+        document.getElementById('guideExternalUrl').value = g.external_url || '';
+        document.getElementById('guidePublished').value = g.published ? '1' : '0';
+        if (g.image_url) document.getElementById('guideImageHint').textContent = 'A featured image is set. Choose a file to replace it.';
+        if (g.file_name) document.getElementById('guideFileHint').textContent = 'Current file: ' + g.file_name;
+      });
+    }
+    document.getElementById('guideModal').classList.add('active');
+  }
+
+  async function saveGuide() {
+    const title = document.getElementById('guideTitle').value.trim();
+    if (!title) { toast('Title is required', 'error'); return; }
+    const formData = new FormData(document.getElementById('guideForm'));
+    formData.set('title', title);
+    const method = currentGuideId ? 'PATCH' : 'POST';
+    const url = API + '/guides' + (currentGuideId ? '/' + currentGuideId : '');
+    try {
+      const res = await fetch(url, { method, headers: { Authorization: 'Bearer ' + token }, body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Save failed');
+      toast(currentGuideId ? 'Guide updated' : 'Guide added');
+      closeModal('guideModal');
+      loadGuides();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function toggleGuidePublish(id, published) {
+    const fd = new FormData(); fd.set('published', published);
+    try {
+      const res = await fetch(API + '/guides/' + id, { method: 'PATCH', headers: { Authorization: 'Bearer ' + token }, body: fd });
+      if (!res.ok) throw new Error('Update failed');
+      toast(published ? 'Guide published' : 'Guide unpublished');
+      loadGuides();
+    } catch (err) { toast(err.message, 'error'); }
+  }
+
+  async function deleteGuide(id) {
+    if (!(await dialogConfirm('Delete this guide? Its image and file will also be removed.'))) return;
+    await api('DELETE', '/guides/' + id);
+    toast('Guide deleted');
+    loadGuides();
   }
 
   // â”€â”€ USERS â”€â”€

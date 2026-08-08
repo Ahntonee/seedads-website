@@ -43,7 +43,7 @@
         .nav-link i { font-size: 0.7rem; transition: transform 0.3s; }
         .nav-item:hover .nav-link i { transform: rotate(180deg); }
 
-        .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); }
+        .dropdown { position: absolute; top: 100%; left: 0; min-width: 260px; background: white; border-radius: 16px; padding: 0.75rem; box-shadow: 0 20px 60px rgba(10, 37, 64, 0.2); opacity: 0; visibility: hidden; transform: translateY(10px); transition: all 0.3s ease; z-index: 1001; border: 1px solid rgba(0, 102, 255, 0.1); overflow-y: auto; max-height: calc(100vh - 90px); }
         .nav-item:hover .dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
         .dropdown-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.875rem; border-radius: 12px; text-decoration: none; transition: all 0.3s; }
         .dropdown-item:hover { background: var(--light-blue); }
@@ -72,7 +72,7 @@
         .mobile-nav-header i { font-size: 0.9rem; color: var(--text-gray); transition: transform 0.3s; }
         .mobile-nav-item.active .mobile-nav-header i { transform: rotate(180deg); }
         .mobile-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-        .mobile-nav-item.active .mobile-dropdown { max-height: 600px; }
+        .mobile-nav-item.active .mobile-dropdown { max-height: 1000px; }
         .mobile-dropdown-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem 0 0.875rem 1rem; text-decoration: none; color: var(--text-gray); font-size: 0.95rem; transition: color 0.3s; }
         .mobile-dropdown-item:hover { color: var(--primary-blue); }
         .mobile-dropdown-item i { width: 28px; height: 28px; background: var(--light-blue); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--primary-blue); }
@@ -329,63 +329,39 @@
             <h2>Our Marketing Guides</h2>
             <p>Step-by-step resources for marketers at every level</p>
         </div>
-        <div class="guides-grid">
-            <div class="guide-card">
-                <div class="guide-image"><i class="fas fa-search"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag">SEO</span>
-                    <h3>Beginner's Guide to SEO</h3>
-                    <p>Everything you need to know to start optimizing your website for search engines and driving organic traffic.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            <div class="guide-card">
-                <div class="guide-image" style="background: linear-gradient(135deg, #ec4899, #f43f5e);"><i class="fas fa-ad"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag" style="background: rgba(236, 72, 153, 0.1); color: #ec4899;">PPC</span>
-                    <h3>Complete PPC Advertising Guide</h3>
-                    <p>Master paid advertising across Google Ads, Facebook, and other platforms with this comprehensive guide.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            <div class="guide-card">
-                <div class="guide-image" style="background: linear-gradient(135deg, #10b981, #34d399);"><i class="fas fa-share-alt"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">Social Media</span>
-                    <h3>Social Media Marketing Guide</h3>
-                    <p>Build a winning social media strategy across all major platforms with our comprehensive guide.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            <div class="guide-card">
-                <div class="guide-image" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);"><i class="fas fa-envelope"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">Email</span>
-                    <h3>Email Marketing Guide</h3>
-                    <p>Create email campaigns that convert with our step-by-step guide to email marketing success.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            <div class="guide-card">
-                <div class="guide-image" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);"><i class="fas fa-pen-fancy"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag">Content</span>
-                    <h3>Content Marketing Guide</h3>
-                    <p>Learn how to create, distribute, and optimize content that attracts and engages your target audience.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
-            <div class="guide-card">
-                <div class="guide-image" style="background: linear-gradient(135deg, #06b6d4, #22d3ee);"><i class="fas fa-chart-line"></i></div>
-                <div class="guide-content">
-                    <span class="guide-tag" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4;">Analytics</span>
-                    <h3>Marketing Analytics Guide</h3>
-                    <p>Master the art of measuring marketing performance and making data-driven decisions.</p>
-                    <a href="#" class="read-more">Read Guide <i class="fas fa-arrow-right"></i></a>
-                </div>
-            </div>
+                <div class="guides-grid" id="guidesGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#6B7280;"><i class="fas fa-spinner fa-spin"></i> Loading guides&hellip;</div>
         </div>
     </section>
+    <script>
+    (function(){
+        var grid = document.getElementById('guidesGrid');
+        if(!grid) return;
+        function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+        var STYLES={
+            'SEO':{icon:'fa-search',grad:'linear-gradient(135deg,#0066FF,#4D9FFF)',color:'#0066FF',bg:'rgba(0,102,255,0.1)'},
+            'PPC':{icon:'fa-ad',grad:'linear-gradient(135deg,#ec4899,#f43f5e)',color:'#ec4899',bg:'rgba(236,72,153,0.1)'},
+            'Social Media':{icon:'fa-share-alt',grad:'linear-gradient(135deg,#10b981,#34d399)',color:'#10b981',bg:'rgba(16,185,129,0.1)'},
+            'Email':{icon:'fa-envelope',grad:'linear-gradient(135deg,#f59e0b,#fbbf24)',color:'#f59e0b',bg:'rgba(245,158,11,0.1)'},
+            'Content':{icon:'fa-pen-fancy',grad:'linear-gradient(135deg,#8b5cf6,#a78bfa)',color:'#8b5cf6',bg:'rgba(139,92,246,0.1)'},
+            'Analytics':{icon:'fa-chart-line',grad:'linear-gradient(135deg,#06b6d4,#22d3ee)',color:'#06b6d4',bg:'rgba(6,182,212,0.1)'}
+        };
+        function styleFor(cat){ return STYLES[cat] || {icon:'fa-book',grad:'linear-gradient(135deg,#0A2540,#0066FF)',color:'#0066FF',bg:'rgba(0,102,255,0.1)'}; }
+        fetch('/api/guides').then(function(r){return r.json();}).then(function(data){
+            var guides=(data&&data.guides)||[];
+            if(!guides.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#6B7280;"><i class="fas fa-book" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:1rem;"></i>No guides available yet. Check back soon!</div>'; return; }
+            grid.innerHTML=guides.map(function(g){
+                var st=styleFor(g.category);
+                var img=g.image_url ? '<div class="guide-image" style="padding:0;overflow:hidden;"><img src="'+esc(g.image_url)+'" alt="'+esc(g.title)+'" style="width:100%;height:100%;object-fit:cover;"></div>' : '<div class="guide-image" style="background:'+st.grad+'"><i class="fas '+st.icon+'"></i></div>';
+                var href=g.file_url || g.external_url || '';
+                var linkAttrs=href ? 'href="'+esc(href)+'" target="_blank" rel="noopener"'+(g.file_url?' download':'') : 'href="javascript:void(0)" style="opacity:.5;cursor:default;"';
+                var linkLabel=g.file_url ? 'Download Guide' : 'Read Guide';
+                var tag=g.category ? '<span class="guide-tag" style="background:'+st.bg+';color:'+st.color+'">'+esc(g.category)+'</span>' : '';
+                return '<div class="guide-card">'+img+'<div class="guide-content">'+tag+'<h3>'+esc(g.title)+'</h3><p>'+esc(g.description||'')+'</p><a '+linkAttrs+' class="read-more">'+linkLabel+' <i class="fas fa-arrow-right"></i></a></div></div>';
+            }).join('');
+        }).catch(function(){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#6B7280;">Could not load guides right now.</div>'; });
+    })();
+    </script>
 
     <!-- WhatsApp Float Button -->
     <a href="https://wa.me/2347061112102" class="whatsapp-float" target="_blank" title="Chat with us on WhatsApp">
