@@ -25,6 +25,10 @@ function getTransporter() {
 }
 
 async function send(opts) {
+  // Prefer Resend (HTTP API) when configured — far more reliable than Gmail SMTP.
+  if (process.env.RESEND_API_KEY) {
+    return sendViaResend(opts);
+  }
   const t = getTransporter();
   if (!t) {
     console.log('[mailer] (no SMTP configured) To: ' + opts.to + ' | Subject: ' + opts.subject);
@@ -34,6 +38,27 @@ async function send(opts) {
     await t.sendMail({ from: '"SeedsAds" <' + process.env.SMTP_USER + '>', ...opts });
   } catch (err) {
     console.error('[mailer] send error:', err.message);
+  }
+}
+
+// Send through Resend's HTTP API (uses global fetch, Node 18+).
+async function sendViaResend(opts) {
+  const from = process.env.MAIL_FROM || 'SeedsAds <onboarding@resend.dev>';
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + process.env.RESEND_API_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error('[mailer] Resend error ' + res.status + ':', data.message || JSON.stringify(data));
+    }
+  } catch (err) {
+    console.error('[mailer] Resend send error:', err.message);
   }
 }
 
